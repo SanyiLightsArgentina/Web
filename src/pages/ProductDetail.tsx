@@ -45,6 +45,14 @@ const ProductDetail = () => {
     return url.includes('youtube.com') || url.includes('youtu.be');
   };
 
+  const isPdfFile = (url: string) => {
+    try {
+      return url.toLowerCase().trim().split('?')[0].endsWith('.pdf');
+    } catch {
+      return false;
+    }
+  };
+
   const nextImage = () => {
     if (product?.images && product.images.length > 0) {
       setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
@@ -261,18 +269,39 @@ const ProductDetail = () => {
                     {/* Contenido principal */}
                     <div className="relative mb-4">
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <img 
-                          src={product.contents[currentContentIndex]} 
-                          alt={`${product.description} - Especificaciones ${currentContentIndex + 1}`}
-                          className="w-full h-[500px] sm:h-[550px] object-contain mx-auto"
-                          style={{
-                            imageRendering: 'crisp-edges',
-                            border: 'none',
-                            outline: 'none',
-                            boxShadow: 'none',
-                            filter: 'none'
-                          }}
-                        />
+                        {isPdfFile(product.contents[currentContentIndex]) ? (
+                          <div className="w-full h-[500px] sm:h-[550px] flex flex-col gap-3">
+                            <iframe
+                              src={`${product.contents[currentContentIndex]}#toolbar=1&navpanes=0`}
+                              title={`PDF de ${product.model}`}
+                              className="w-full h-full rounded"
+                            />
+                            <div className="text-center">
+                              <a
+                                href={product.contents[currentContentIndex]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                                download
+                              >
+                                Descargar PDF
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <img 
+                            src={product.contents[currentContentIndex]} 
+                            alt={`${product.description} - Especificaciones ${currentContentIndex + 1}`}
+                            className="w-full h-[500px] sm:h-[550px] object-contain mx-auto"
+                            style={{
+                              imageRendering: 'crisp-edges',
+                              border: 'none',
+                              outline: 'none',
+                              boxShadow: 'none',
+                              filter: 'none'
+                            }}
+                          />
+                        )}
                       </div>
                       
                       {/* Botones de navegación */}
@@ -313,11 +342,17 @@ const ProductDetail = () => {
                                   : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
-                              <img
-                                src={content}
-                                alt={`Especificación ${index + 1}`}
-                                className="w-full h-full object-cover"
-                              />
+                              {isPdfFile(content) ? (
+                                <div className="w-full h-full flex items-center justify-center bg-white text-xs font-semibold text-gray-700">
+                                  PDF
+                                </div>
+                              ) : (
+                                <img
+                                  src={content}
+                                  alt={`Especificación ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
                             </button>
                           ))}
                         </div>
