@@ -10,10 +10,9 @@ export const ProductTechnicalDescription = ({ technical_description }: ProductTe
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-        <div className="p-6 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <span className="w-3 h-8 bg-orange-500 rounded-full"></span>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900">
             Descripción Técnica
           </h2>
           <p className="text-gray-600 mt-2">Especificaciones detalladas del producto</p>

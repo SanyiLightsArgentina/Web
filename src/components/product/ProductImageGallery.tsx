@@ -31,16 +31,9 @@ export const ProductImageGallery = ({ images, productDescription }: ProductImage
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-      <div className="p-4 border-b border-gray-100 bg-gray-50">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <span className="w-2 h-6 bg-blue-500 rounded-full"></span>
-          Galería de Imágenes
-        </h2>
-        <p className="text-gray-600 text-sm mt-1">Visualiza el producto desde diferentes ángulos</p>
-      </div>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
       
-      <div className="p-4">
+      <div className="p-6">
         {/* Imagen principal */}
         <div className="relative mb-3">
           <div className="bg-gray-50 rounded-lg p-3">

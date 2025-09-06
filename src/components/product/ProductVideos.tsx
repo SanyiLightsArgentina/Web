@@ -21,62 +21,62 @@ export const ProductVideos = ({ videos, productModel }: ProductVideosProps) => {
   }
 
   return (
-    <div className="mt-12">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-        <div className="p-6 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <span className="w-3 h-8 bg-purple-500 rounded-full"></span>
+    <div className="mt-8 sm:mt-12">
+      {videos.length > 1 && (
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
             Videos del Producto
           </h2>
-          <p className="text-gray-600 mt-2">Conoce más sobre {productModel} a través de nuestros videos</p>
+          <p className="text-sm sm:text-base text-gray-600 mt-2">Conoce más sobre {productModel} a través de nuestros videos</p>
         </div>
-        
-        <div className="p-6">
-          <div className={`grid gap-6 ${
-            videos.length === 1 
-              ? 'grid-cols-1 max-w-2xl mx-auto' 
-              : 'grid-cols-1 lg:grid-cols-2'
-          }`}>
+      )}
+      
+      <div className={`grid gap-4 ${
+        videos.length === 1 
+          ? 'grid-cols-1 max-w-2xl mx-auto' 
+          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2'
+      }`}>
             {videos.map((video, index) => {
               const videoId = getYouTubeVideoId(video);
               const isYouTube = isYouTubeVideo(video);
               
               return (
-                <div key={index} className="space-y-3">
-                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                    <span className="w-2 h-4 bg-purple-400 rounded-full"></span>
-                    {videos.length > 1 ? `Video ${index + 1}` : 'Video del Producto'}
-                  </h3>
-                  <div className="relative aspect-video bg-gray-50 rounded-lg overflow-hidden shadow-sm border border-gray-200">
-                    {isYouTube ? (
-                      <iframe
-                        src={`https://www.youtube.com/embed/${videoId}`}
-                        title={`Video ${index + 1} de ${productModel}`}
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <video
-                        src={video}
-                        controls
-                        className="w-full h-full object-cover"
-                        preload="metadata"
-                      >
-                        Tu navegador no soporta el elemento de video.
-                      </video>
+                <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
+                  <div className="p-3 sm:p-4 border-b border-gray-100 flex-shrink-0">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-800">
+                      {videos.length > 1 ? `Video ${index + 1}` : 'Video del Producto'}
+                    </h3>
+                  </div>
+                  <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                    <div className="relative aspect-video bg-gray-50 rounded-lg overflow-hidden shadow-sm border border-gray-200 flex-1">
+                      {isYouTube ? (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${videoId}`}
+                          title={`Video ${index + 1} de ${productModel}`}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video
+                          src={video}
+                          controls
+                          className="w-full h-full object-cover"
+                          preload="metadata"
+                        >
+                          Tu navegador no soporta el elemento de video.
+                        </video>
+                      )}
+                    </div>
+                    {videos.length > 1 && (
+                      <p className="text-xs text-gray-600 text-center mt-2">
+                        Video {index + 1} de {videos.length}
+                      </p>
                     )}
                   </div>
-                  {videos.length > 1 && (
-                    <p className="text-sm text-gray-600 text-center">
-                      Video {index + 1} de {videos.length}
-                    </p>
-                  )}
                 </div>
               );
             })}
-          </div>
-        </div>
       </div>
     </div>
   );
