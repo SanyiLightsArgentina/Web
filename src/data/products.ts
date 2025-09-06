@@ -5,6 +5,7 @@ export interface Product {
   id?: number;
   model: string;
   description: string;
+  technical_description?: string;
   category: Category;
   images?: string[];
   contents?: string[];

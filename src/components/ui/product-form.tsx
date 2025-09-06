@@ -38,6 +38,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [formData, setFormData] = useState({
     model: product?.model || '',
     description: product?.description || '',
+    technical_description: product?.technical_description || '',
     category: product?.category || Category.MOVING_HEAD,
     images: product?.images || [],
     contents: product?.contents || [],
@@ -66,6 +67,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setFormData({
       model: product?.model || '',
       description: product?.description || '',
+      technical_description: product?.technical_description || '',
       category: product?.category || Category.MOVING_HEAD,
       images: product?.images || [],
       contents: product?.contents || [],
@@ -376,6 +378,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             required
             placeholder="Descripción del producto..."
             rows={3}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="technical_description">Descripción Técnica</Label>
+          <Textarea
+            id="technical_description"
+            value={formData.technical_description}
+            onChange={(e) => setFormData(prev => ({ ...prev, technical_description: e.target.value }))}
+            placeholder="Especificaciones técnicas detalladas"
+            rows={8}
+            className="text-sm"
           />
         </div>
 

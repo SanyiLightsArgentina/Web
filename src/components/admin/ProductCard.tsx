@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Edit, Trash2, Image as ImageIcon, Video, FileText } from 'lucide-react';
+import { Edit, Trash2, Image as ImageIcon, Video, FileText, Settings } from 'lucide-react';
 import { Product } from '@/data/products';
 
 interface ProductCardProps {
@@ -15,6 +15,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDel
   const imageCount = product.images?.length || 0;
   const contentCount = product.contents?.length || 0;
   const videoCount = product.videos?.length || 0;
+  const hasTechnicalDescription = product.technical_description && product.technical_description.trim() !== '';
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -64,6 +65,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDel
                   <div className="flex items-center space-x-1">
                     <Video className="h-4 w-4" />
                     <span>{videoCount} video{videoCount !== 1 ? 's' : ''}</span>
+                  </div>
+                )}
+                {hasTechnicalDescription && (
+                  <div className="flex items-center space-x-1">
+                    <Settings className="h-4 w-4" />
+                    <span>Especificaciones</span>
                   </div>
                 )}
               </div>

@@ -80,15 +80,22 @@ export const useSupabaseProducts = () => {
         }
       }
 
+      console.log('🔍 Intentando agregar producto:', finalProduct)
+      
       const { data, error } = await supabase
         .from('products')
         .insert([finalProduct])
         .select()
 
       if (error) {
-        console.error('Error agregando producto:', error)
-        throw new Error('No se pudo agregar el producto')
+        console.error('❌ Error agregando producto:', error)
+        console.error('❌ Código de error:', error.code)
+        console.error('❌ Mensaje:', error.message)
+        console.error('❌ Detalles:', error.details)
+        throw new Error(`No se pudo agregar el producto: ${error.message}`)
       }
+
+      console.log('✅ Producto agregado exitosamente:', data)
 
       const newProducts = [...products, finalProduct]
       setProducts(newProducts)
@@ -105,16 +112,23 @@ export const useSupabaseProducts = () => {
 
   const updateProduct = async (id: number, updates: Partial<Product>) => {
     try {
+      console.log('🔍 Intentando actualizar producto:', { id, updates })
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('products')
         .update(updates)
         .eq('id', id)
+        .select()
 
       if (error) {
-        console.error('Error actualizando producto:', error)
-        throw new Error('No se pudo actualizar el producto')
+        console.error('❌ Error actualizando producto:', error)
+        console.error('❌ Código de error:', error.code)
+        console.error('❌ Mensaje:', error.message)
+        console.error('❌ Detalles:', error.details)
+        throw new Error(`No se pudo actualizar el producto: ${error.message}`)
       }
+
+      console.log('✅ Producto actualizado exitosamente:', data)
 
       const updatedProducts = products.map(p => 
         p.id === id ? { ...p, ...updates } : p
