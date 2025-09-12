@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
-import { getProductByModel, getProductsByCategory } from "@/lib/product-utils";
-import { useSupabaseProducts } from "@/hooks/use-supabase-products";
+import { getProductByModel, getProductsByCategoryId } from "@/lib/product-utils";
+import { useProductsWithCategories } from "@/hooks/use-products-with-categories";
+import { Product } from "@/data/products";
 import {
   ProductHeader,
   ProductTechnicalDescription,
@@ -17,10 +18,16 @@ import {
 const ProductDetail = () => {
   const { model } = useParams<{ model: string }>();
   const navigate = useNavigate();
-  const { products, isLoaded } = useSupabaseProducts();
+  const { products, isLoaded } = useProductsWithCategories();
 
   const product = getProductByModel(products, model || "");
-  const relatedProducts = getProductsByCategory(products, product?.category || "", 3, product?.model || "");
+  
+  // Helper function to get category name
+  const getCategoryName = (product: Product & { category_name?: string; category?: string }) => {
+    return product?.category_name || product?.category || '';
+  };
+  
+  const relatedProducts = getProductsByCategoryId(products, product?.category_id || 0, 3, product?.model || "");
 
   useEffect(() => {
     window.scrollTo(0, 0);

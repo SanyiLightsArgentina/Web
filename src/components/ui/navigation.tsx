@@ -114,11 +114,17 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
               
               {/* Dropdown que aparece con hover */}
               <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <button
+                  onClick={() => handleCategorySelect("Todos")}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors rounded-t-md"
+                >
+                  Todos
+                </button>
                 {categories.map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategorySelect(category.name)}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors first:rounded-t-md last:rounded-b-md"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors last:rounded-b-md"
                   >
                     {category.name}
                   </button>
@@ -271,6 +277,15 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
                         Productos
                       </div>
                       <div className="space-y-1">
+                        <button
+                          onClick={() => {
+                            handleCategorySelect("Todos");
+                            setIsMenuOpen(false);
+                          }}
+                          className="flex items-center px-6 py-2 text-base hover:bg-muted rounded-md transition-colors w-full text-left"
+                        >
+                          Todos
+                        </button>
                         {categories.map((category) => (
                           <button
                             key={category.id}

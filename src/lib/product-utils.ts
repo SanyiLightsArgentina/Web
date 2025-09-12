@@ -85,4 +85,16 @@ export const getProductsByCategory = (products: Product[], category: string, cou
   // Mezclar aleatoriamente y tomar los primeros 'count' productos
   const shuffled = categoryProducts.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
+};
+
+export const getProductsByCategoryId = (products: Product[], categoryId: number, count: number = 3, excludeModel?: string) => {
+  if (!categoryId) return [];
+  
+  const categoryProducts = products.filter(product => 
+    product.category_id === categoryId && product.model !== excludeModel
+  );
+  
+  // Mezclar aleatoriamente y tomar los primeros 'count' productos
+  const shuffled = categoryProducts.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
 }; 

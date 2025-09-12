@@ -13,6 +13,11 @@ interface ProductHeaderProps {
 export const ProductHeader = ({ product }: ProductHeaderProps) => {
   const { has, toggle } = useQuoteList();
 
+  // Helper function to get category name
+  const getCategoryName = (product: Product & { category_name?: string; category?: string }) => {
+    return product?.category_name || product?.category || '';
+  };
+
   return (
     <>
       <div className="mb-4">
@@ -27,7 +32,7 @@ export const ProductHeader = ({ product }: ProductHeaderProps) => {
 
       <div className="mt-4">
         <div className="flex items-center gap-2 mb-2">
-          <Badge variant="outline">{product.category}</Badge>
+          <Badge variant="outline">{getCategoryName(product)}</Badge>
         </div>
         <h1 className="text-3xl font-bold mb-2">{product.model}</h1>
         <p className="text-lg text-muted-foreground">
