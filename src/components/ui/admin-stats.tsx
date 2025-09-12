@@ -155,7 +155,9 @@ export const AdminStats: React.FC<AdminStatsProps> = ({ products, categories, is
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{product.model}</p>
-                    <p className="text-sm text-gray-600">{product.category?.name || 'Sin categoría'}</p>
+                    <p className="text-sm text-gray-600">
+                      {categories.find(cat => cat.id === product.category_id)?.name || 'Sin categoría'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">

@@ -16,10 +16,7 @@ export const useSupabaseProducts = () => {
       setIsLoaded(false)
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(id, name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (error) {

@@ -1,4 +1,5 @@
 import { Product } from "@/data/products";
+import { Category } from "@/hooks/use-supabase-categories";
 
 export const getProductByModel = (products: Product[], model: string): Product | undefined => {
   const decoded = decodeURIComponent(model);
@@ -9,7 +10,8 @@ export const filterProducts = (
   products: Product[],
   searchQuery: string = "",
   selectedCategory: string = "",
-  showOnlyNew: boolean = false
+  showOnlyNew: boolean = false,
+  categories: Category[] = []
 ) => {
   // Validar que products sea un array
   if (!Array.isArray(products)) {
@@ -20,14 +22,15 @@ export const filterProducts = (
   return products.filter(product => {
     const matchesQuery = 
       product.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesCategory = 
       selectedCategory === "" || 
       selectedCategory === "Todos" || 
-      product.category === selectedCategory;
+      (() => {
+        const category = categories.find(cat => cat.id === product.category_id);
+        return category?.name === selectedCategory;
+      })();
     
     const matchesNewFilter = !showOnlyNew || product.new;
     
@@ -65,17 +68,18 @@ export const searchProducts = (products: Product[], query: string) => {
   const searchTerm = query.toLowerCase();
   return products.filter(product => 
     product.model.toLowerCase().includes(searchTerm) ||
-    product.description.toLowerCase().includes(searchTerm) ||
-    product.category.toLowerCase().includes(searchTerm) ||
     product.description.toLowerCase().includes(searchTerm)
   );
 };
 
-export const getProductsByCategory = (products: Product[], category: string, count: number = 3, excludeModel?: string) => {
+export const getProductsByCategory = (products: Product[], category: string, count: number = 3, excludeModel?: string, categories: Category[] = []) => {
   if (!category || category === "Todos") return [];
   
+  const categoryObj = categories.find(cat => cat.name === category);
+  if (!categoryObj) return [];
+  
   const categoryProducts = products.filter(product => 
-    product.category === category && product.model !== excludeModel
+    product.category_id === categoryObj.id && product.model !== excludeModel
   );
   
   // Mezclar aleatoriamente y tomar los primeros 'count' productos

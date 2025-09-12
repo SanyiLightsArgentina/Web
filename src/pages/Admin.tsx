@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoryManager } from '@/components/ui/category-manager';
 import { AdminStats } from '@/components/ui/admin-stats';
-import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
 import { Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
-import { useProducts } from '@/hooks/use-products';
+import { useProductsWithCategories } from '@/hooks/use-products-with-categories';
 import { DatabaseUser } from '@/lib/supabase';
 import { LoginForm } from '@/components/admin/LoginForm';
 import { AdminHeader } from '@/components/admin/AdminHeader';
@@ -36,16 +35,16 @@ const Admin: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [deleteProductConfirmation, setDeleteProductConfirmation] = useState<Product | null>(null);
-  const { categories } = useSupabaseCategories();
   const { 
     products: currentProducts, 
-    loading: productsLoading,
-    error: productsError,
-    createProduct, 
+    categories,
+    isLoaded: productsLoaded,
+    isSaving: productsSaving,
+    addProduct: createProduct, 
     updateProduct, 
     deleteProduct,
-    fetchProducts
-  } = useProducts();
+    loadProductsWithCategories: fetchProducts
+  } = useProductsWithCategories();
 
   useEffect(() => {
     if (currentUser) {
@@ -135,22 +134,26 @@ const Admin: React.FC = () => {
     setIsAddingProduct(true);
     setEditingProduct(null);
     
-    // Hacer scroll hacia arriba para mostrar el formulario
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    // Scroll instantáneo al formulario
+    setTimeout(() => {
+      const formElement = document.querySelector('.product-form-container');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+    }, 50);
   };
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setIsAddingProduct(false);
     
-    // Hacer scroll hacia arriba para mostrar el formulario
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    // Scroll instantáneo al formulario
+    setTimeout(() => {
+      const formElement = document.querySelector('.product-form-container');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+    }, 50);
   };
 
   const handleDeleteProduct = async (productToDelete: Product) => {
@@ -248,8 +251,8 @@ const Admin: React.FC = () => {
           <TabsContent value="products">
             <ProductsTab
               products={currentProducts}
-              loading={productsLoading}
-              error={productsError}
+              loading={!productsLoaded}
+              error={null}
               searchTerm={searchTerm}
               selectedCategoryId={selectedCategoryId}
               isAddingProduct={isAddingProduct}
@@ -280,7 +283,7 @@ const Admin: React.FC = () => {
             <AdminStats 
               products={currentProducts} 
               categories={categories} 
-              isSaving={productsLoading}
+              isSaving={productsSaving}
               lastSaved={new Date()}
             />
             
@@ -300,7 +303,7 @@ const Admin: React.FC = () => {
           itemName={deleteProductConfirmation.model}
           itemType="producto"
           confirmText="Eliminar Producto"
-          loading={productsLoading}
+          loading={productsSaving}
         />
       )}
     </div>

@@ -6,8 +6,7 @@ import { Textarea } from './textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Badge } from './badge'
 import { Product } from '@/data/products'
-import { Category } from '@/hooks/use-supabase-categories'
-import { useSupabaseCategories } from '@/hooks/use-supabase-categories'
+import { Category } from '@/hooks/use-products-with-categories'
 import { X, Plus, Eye, Play, FileText, Image, Video } from 'lucide-react'
 import { toast } from 'sonner'
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
@@ -15,6 +14,7 @@ import { useSupabaseStorage } from '@/hooks/use-supabase-storage'
 
 interface ProductFormProps {
   product?: Product
+  categories: Category[]
   onSubmit: (product: Omit<Product, 'created_at' | 'updated_at'> & { id?: number }) => Promise<void>
   onCancel: () => void
   loading?: boolean
@@ -30,19 +30,19 @@ interface FileItem {
 
 export const ProductForm: React.FC<ProductFormProps> = ({
   product,
+  categories,
   onSubmit,
   onCancel,
   loading = false,
   isAddingProduct = false
 }) => {
   const { uploadProductImage, uploadProductContent, uploadProductVideo, isUploading } = useSupabaseStorage()
-  const { categories, isLoaded: categoriesLoaded } = useSupabaseCategories()
   
   const [formData, setFormData] = useState({
     model: product?.model || '',
     description: product?.description || '',
     technical_description: product?.technical_description || '',
-    category_id: product?.category_id || 0,
+    category_id: product?.category_id || (categories.length > 0 ? categories[0].id : 0),
     images: product?.images || [],
     contents: product?.contents || [],
     videos: product?.videos || [],
@@ -92,26 +92,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   // Inicializar category_id cuando las categorías se cargan
   React.useEffect(() => {
-    if (categoriesLoaded && categories.length > 0 && !product && formData.category_id === 0) {
+    if (categories.length > 0 && !product && formData.category_id === 0) {
       setFormData(prev => ({ ...prev, category_id: categories[0].id }))
     }
-  }, [categoriesLoaded, categories, product, formData.category_id])
+  }, [categories, product, formData.category_id])
 
-  // Hacer scroll suave hacia el formulario cuando aparece
-  React.useEffect(() => {
-    if (product || isAddingProduct) {
-      // Pequeño delay para asegurar que el DOM se haya renderizado
-      setTimeout(() => {
-        const formElement = document.querySelector('.product-form-container');
-        if (formElement) {
-          formElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }
-      }, 100);
-    }
-  }, [product, isAddingProduct])
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -366,23 +351,32 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           
           <div className="space-y-2">
             <Label htmlFor="category">Categoría *</Label>
-            <Select
-              value={formData.category_id.toString()}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: parseInt(value) }))}
-              disabled={!categoriesLoaded}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={!categoriesLoaded ? "Cargando categorías..." : "Selecciona una categoría"} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {categories.length === 0 ? (
+              <div className="p-3 border border-red-200 rounded-md bg-red-50">
+                <span className="text-sm text-red-600">No hay categorías disponibles. Por favor, crea algunas categorías primero.</span>
+              </div>
+            ) : (
+              <Select
+                value={formData.category_id > 0 ? formData.category_id.toString() : ""}
+                onValueChange={(value) => {
+                  console.log('Cambiando categoría a:', value, 'ID:', parseInt(value));
+                  setFormData(prev => ({ ...prev, category_id: parseInt(value) }))
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="description">Descripción *</Label>
@@ -735,8 +729,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading || isUploading}>
-            {loading || isUploading ? 'Guardando...' : product ? 'Actualizar Producto' : 'Crear Producto'}
+          <Button type="submit" disabled={loading || isUploading || categories.length === 0}>
+            {loading || isUploading ? 'Guardando...' : categories.length === 0 ? 'Sin categorías' : product ? 'Actualizar Producto' : 'Crear Producto'}
           </Button>
         </div>
       </form>

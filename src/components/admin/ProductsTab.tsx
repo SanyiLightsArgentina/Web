@@ -5,7 +5,7 @@ import { Product } from '@/data/products';
 import { ProductControls } from './ProductControls';
 import { ProductCard } from './ProductCard';
 import { ProductForm } from '@/components/ui/product-form';
-import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
+import { useProductsWithCategories } from '@/hooks/use-products-with-categories';
 
 interface ProductsTabProps {
   products: Product[];
@@ -42,7 +42,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   onCancelForm,
   onRetry
 }) => {
-  const { categories } = useSupabaseCategories();
+  const { categories, isLoaded } = useProductsWithCategories();
   
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,6 +50,26 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
     const matchesCategory = !selectedCategoryId || product.category_id === selectedCategoryId;
     return matchesSearch && matchesCategory;
   });
+
+  // Estado de carga general - esperar a que los productos con categorías estén cargados
+  const isFullyLoaded = !loading && isLoaded;
+
+  // Mostrar estado de carga inicial hasta que todo esté listo
+  if (!isFullyLoaded) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Cargando productos...
+          </h3>
+          <p className="text-gray-500">
+            Obteniendo productos y categorías
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -66,6 +86,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
       {(isAddingProduct || editingProduct) && (
         <ProductForm
           product={editingProduct}
+          categories={categories}
           onSubmit={onSaveProduct}
           onCancel={onCancelForm}
           loading={loading}

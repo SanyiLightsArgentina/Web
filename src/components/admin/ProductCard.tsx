@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Edit, Trash2, Image as ImageIcon, Video, FileText, Settings } from 'lucide-react';
 import { Product } from '@/data/products';
+import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
 
 interface ProductCardProps {
   product: Product;
@@ -12,10 +13,14 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete }) => {
+  const { categories } = useSupabaseCategories();
   const imageCount = product.images?.length || 0;
   const contentCount = product.contents?.length || 0;
   const videoCount = product.videos?.length || 0;
   const hasTechnicalDescription = product.technical_description && product.technical_description.trim() !== '';
+  
+  // Obtener el nombre de la categoría usando category_id
+  const categoryName = categories.find(cat => cat.id === product.category_id)?.name || 'Sin categoría';
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -48,7 +53,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDel
                 {product.description}
               </p>
               <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <Badge variant="outline">{product.category?.name || 'Sin categoría'}</Badge>
+                <Badge variant="outline">{categoryName}</Badge>
                 {imageCount > 0 && (
                   <div className="flex items-center space-x-1">
                     <ImageIcon className="h-4 w-4" />

@@ -38,7 +38,7 @@ const Products = () => {
     }
   }, [location.state]);
 
-  const filteredProducts = filterProducts(products, searchQuery, selectedCategory, showOnlyNew);
+  const filteredProducts = filterProducts(products, searchQuery, selectedCategory, showOnlyNew, categories);
   
   // Calcular paginación
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);

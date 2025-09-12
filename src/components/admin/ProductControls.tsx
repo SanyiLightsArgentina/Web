@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
-import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
+import { useProductsWithCategories } from '@/hooks/use-products-with-categories';
 
 interface ProductControlsProps {
   searchTerm: string;
@@ -19,7 +19,7 @@ export const ProductControls: React.FC<ProductControlsProps> = ({
   onCategoryChange,
   onAddProduct
 }) => {
-  const { categories } = useSupabaseCategories();
+  const { categories } = useProductsWithCategories();
   
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -37,7 +37,9 @@ export const ProductControls: React.FC<ProductControlsProps> = ({
           onChange={(e) => onCategoryChange(e.target.value ? parseInt(e.target.value) : null)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">Todas las categorías</option>
+          <option value="">
+            Todas las categorías
+          </option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
