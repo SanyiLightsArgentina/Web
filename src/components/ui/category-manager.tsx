@@ -5,7 +5,7 @@ import { Label } from './label';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Plus, Edit, Trash2, X, Check } from 'lucide-react';
-import { Category, categories } from '@/data/categories';
+import { Category, useSupabaseCategories } from '@/hooks/use-supabase-categories';
 import { toast } from 'sonner';
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
 
@@ -14,41 +14,33 @@ interface CategoryManagerProps {
 }
 
 export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChange }) => {
-  const [currentCategories, setCurrentCategories] = useState<Category[]>(categories.slice(1)); // Excluimos "ALL"
+  const { categories, addCategory, updateCategory, deleteCategory } = useSupabaseCategories();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<Category | null>(null);
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (newCategoryName.trim()) {
-      const newCategory = newCategoryName.trim() as Category;
-      if (!currentCategories.includes(newCategory)) {
-        const updatedCategories = [...currentCategories, newCategory];
-        setCurrentCategories(updatedCategories);
-        onCategoryChange(updatedCategories);
+      try {
+        await addCategory(newCategoryName.trim());
         setNewCategoryName('');
         setIsAddingCategory(false);
-        toast.success(`Categoría "${newCategory}" agregada`);
-      } else {
-        toast.error('Esta categoría ya existe');
+        onCategoryChange(categories);
+      } catch (error) {
+        // Error ya manejado en el hook
       }
     }
   };
 
-  const handleEditCategory = (oldCategory: Category, newName: string) => {
-    if (newName.trim() && newName.trim() !== oldCategory) {
-      const newCategory = newName.trim() as Category;
-      if (!currentCategories.includes(newCategory)) {
-        const updatedCategories = currentCategories.map(cat => 
-          cat === oldCategory ? newCategory : cat
-        );
-        setCurrentCategories(updatedCategories);
-        onCategoryChange(updatedCategories);
+  const handleEditCategory = async (oldCategory: Category, newName: string) => {
+    if (newName.trim() && newName.trim() !== oldCategory.name) {
+      try {
+        await updateCategory(oldCategory.id, newName.trim());
         setEditingCategory(null);
-        toast.success(`Categoría "${oldCategory}" actualizada a "${newCategory}"`);
-      } else {
-        toast.error('Esta categoría ya existe');
+        onCategoryChange(categories);
+      } catch (error) {
+        // Error ya manejado en el hook
       }
     }
   };
@@ -57,13 +49,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
     setDeleteConfirmation(categoryToDelete);
   };
 
-  const confirmDeleteCategory = () => {
+  const confirmDeleteCategory = async () => {
     if (deleteConfirmation) {
-      const updatedCategories = currentCategories.filter(cat => cat !== deleteConfirmation);
-      setCurrentCategories(updatedCategories);
-      onCategoryChange(updatedCategories);
-      toast.success(`Categoría "${deleteConfirmation}" eliminada`);
-      setDeleteConfirmation(null);
+      try {
+        await deleteCategory(deleteConfirmation.id);
+        onCategoryChange(categories);
+        setDeleteConfirmation(null);
+      } catch (error) {
+        // Error ya manejado en el hook
+      }
     }
   };
 
@@ -124,15 +118,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
 
         {/* Lista de categorías */}
         <div className="space-y-2">
-          {currentCategories.map((category) => (
+          {categories.map((category) => (
             <div
-              key={category}
+              key={category.id}
               className="flex items-center justify-between p-3 bg-white border rounded-lg hover:bg-gray-50"
             >
               {editingCategory === category ? (
                 <div className="flex items-center space-x-2 flex-1">
                   <Input
-                    value={category}
+                    value={category.name}
                     onChange={(e) => {
                       const newName = e.target.value;
                       if (newName.trim()) {
@@ -141,11 +135,11 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
                     }}
                     className="flex-1"
                     onKeyPress={(e) => e.key === 'Enter' && handleEditCategory(category, e.currentTarget.value)}
-                    onBlur={() => handleEditCategory(category, category)}
+                    onBlur={() => handleEditCategory(category, category.name)}
                     autoFocus
                   />
                   <Button
-                    onClick={() => handleEditCategory(category, category)}
+                    onClick={() => handleEditCategory(category, category.name)}
                     size="sm"
                     className="h-8 px-3"
                   >
@@ -162,7 +156,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
                 </div>
               ) : (
                 <>
-                  <span className="font-medium text-gray-900">{category}</span>
+                  <span className="font-medium text-gray-900">{category.name}</span>
                   <div className="flex items-center space-x-2">
                     <Button
                       onClick={() => startEditing(category)}
@@ -187,7 +181,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
           ))}
         </div>
 
-        {currentCategories.length === 0 && (
+        {categories.length === 0 && (
           <div className="text-center py-6 text-gray-500">
             <p>No hay categorías definidas</p>
             <p className="text-sm">Agrega tu primera categoría para empezar</p>
@@ -202,7 +196,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
             onConfirm={confirmDeleteCategory}
             title="Confirmar eliminación"
             description="¿Estás seguro de que quieres eliminar la categoría"
-            itemName={deleteConfirmation}
+            itemName={deleteConfirmation.name}
             itemType="categoría"
             confirmText="Eliminar Categoría"
           />

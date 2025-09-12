@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Package, TrendingUp, Eye, Star, BarChart3, Users, ShoppingCart } from 'lucide-react';
 import { Product } from '@/data/products';
-import { Category } from '@/data/categories';
+import { Category } from '@/hooks/use-supabase-categories';
 
 interface AdminStatsProps {
   products: Product[];
@@ -18,10 +18,10 @@ export const AdminStats: React.FC<AdminStatsProps> = ({ products, categories, is
   const productsWithVideo = products.filter(p => p.videos && p.videos.length > 0).length;
   const productsWithSecondaryImage = products.filter(p => p.contents && p.contents.length > 1).length;
 
-  const categoryStats = categories.slice(1).map(category => ({
-    name: category,
-    count: products.filter(p => p.category === category).length,
-    percentage: totalProducts > 0 ? (products.filter(p => p.category === category).length / totalProducts) * 100 : 0
+  const categoryStats = categories.map(category => ({
+    name: category.name,
+    count: products.filter(p => p.category_id === category.id).length,
+    percentage: totalProducts > 0 ? (products.filter(p => p.category_id === category.id).length / totalProducts) * 100 : 0
   }));
 
   const recentProducts = products.slice(0, 5);
@@ -155,7 +155,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({ products, categories, is
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{product.model}</p>
-                    <p className="text-sm text-gray-600">{product.category}</p>
+                    <p className="text-sm text-gray-600">{product.category?.name || 'Sin categoría'}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">

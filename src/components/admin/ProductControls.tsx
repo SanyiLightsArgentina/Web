@@ -2,23 +2,25 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
-import { Category } from '@/data/categories';
+import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
 
 interface ProductControlsProps {
   searchTerm: string;
-  selectedCategory: Category;
+  selectedCategoryId: number | null;
   onSearchChange: (value: string) => void;
-  onCategoryChange: (category: Category) => void;
+  onCategoryChange: (categoryId: number | null) => void;
   onAddProduct: () => void;
 }
 
 export const ProductControls: React.FC<ProductControlsProps> = ({
   searchTerm,
-  selectedCategory,
+  selectedCategoryId,
   onSearchChange,
   onCategoryChange,
   onAddProduct
 }) => {
+  const { categories } = useSupabaseCategories();
+  
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-4 flex-1">
@@ -31,13 +33,14 @@ export const ProductControls: React.FC<ProductControlsProps> = ({
           />
         </div>
         <select
-          value={selectedCategory}
-          onChange={(e) => onCategoryChange(e.target.value as Category)}
+          value={selectedCategoryId || ''}
+          onChange={(e) => onCategoryChange(e.target.value ? parseInt(e.target.value) : null)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {Object.values(Category).map((category) => (
-            <option key={category} value={category}>
-              {category}
+          <option value="">Todas las categorías</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
             </option>
           ))}
         </select>

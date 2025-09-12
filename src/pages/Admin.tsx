@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoryManager } from '@/components/ui/category-manager';
 import { AdminStats } from '@/components/ui/admin-stats';
-import { Category, categories } from '@/data/categories';
+import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
 import { Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
 import { useProducts } from '@/hooks/use-products';
@@ -34,8 +34,9 @@ const Admin: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Category>(Category.ALL);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [deleteProductConfirmation, setDeleteProductConfirmation] = useState<Product | null>(null);
+  const { categories } = useSupabaseCategories();
   const { 
     products: currentProducts, 
     loading: productsLoading,
@@ -250,11 +251,11 @@ const Admin: React.FC = () => {
               loading={productsLoading}
               error={productsError}
               searchTerm={searchTerm}
-              selectedCategory={selectedCategory}
+              selectedCategoryId={selectedCategoryId}
               isAddingProduct={isAddingProduct}
               editingProduct={editingProduct}
               onSearchChange={setSearchTerm}
-              onCategoryChange={setSelectedCategory}
+              onCategoryChange={setSelectedCategoryId}
               onAddProduct={handleAddProduct}
               onEditProduct={handleEditProduct}
               onDeleteProduct={handleDeleteProduct}

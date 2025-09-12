@@ -5,18 +5,18 @@ import { Product } from '@/data/products';
 import { ProductControls } from './ProductControls';
 import { ProductCard } from './ProductCard';
 import { ProductForm } from '@/components/ui/product-form';
-import { Category } from '@/data/categories';
+import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
 
 interface ProductsTabProps {
   products: Product[];
   loading: boolean;
   error: string | null;
   searchTerm: string;
-  selectedCategory: Category;
+  selectedCategoryId: number | null;
   isAddingProduct: boolean;
   editingProduct: Product | null;
   onSearchChange: (value: string) => void;
-  onCategoryChange: (category: Category) => void;
+  onCategoryChange: (categoryId: number | null) => void;
   onAddProduct: () => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (product: Product) => void;
@@ -30,7 +30,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   loading,
   error,
   searchTerm,
-  selectedCategory,
+  selectedCategoryId,
   isAddingProduct,
   editingProduct,
   onSearchChange,
@@ -42,10 +42,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   onCancelForm,
   onRetry
 }) => {
+  const { categories } = useSupabaseCategories();
+  
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === Category.ALL || product.category === selectedCategory;
+    const matchesCategory = !selectedCategoryId || product.category_id === selectedCategoryId;
     return matchesSearch && matchesCategory;
   });
 
@@ -54,7 +56,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
       {/* Controls */}
       <ProductControls
         searchTerm={searchTerm}
-        selectedCategory={selectedCategory}
+        selectedCategoryId={selectedCategoryId}
         onSearchChange={onSearchChange}
         onCategoryChange={onCategoryChange}
         onAddProduct={onAddProduct}
@@ -90,7 +92,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
             No se encontraron productos
           </h3>
           <p className="text-gray-500">
-            {searchTerm || selectedCategory !== Category.ALL
+            {searchTerm || selectedCategoryId
               ? 'Intenta ajustar los filtros de búsqueda'
               : 'No hay productos en el catálogo'}
           </p>

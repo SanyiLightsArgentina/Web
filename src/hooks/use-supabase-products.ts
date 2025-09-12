@@ -16,7 +16,10 @@ export const useSupabaseProducts = () => {
       setIsLoaded(false)
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          category:categories(id, name)
+        `)
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -168,11 +171,11 @@ export const useSupabaseProducts = () => {
   }
 
   // Buscar productos
-  const searchProducts = (searchTerm: string, category?: string) => {
+  const searchProducts = (searchTerm: string, categoryId?: number) => {
     return products.filter(product => {
       const matchesSearch = product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.description.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesCategory = !category || product.category === category
+      const matchesCategory = !categoryId || product.category_id === categoryId
       return matchesSearch && matchesCategory
     })
   }

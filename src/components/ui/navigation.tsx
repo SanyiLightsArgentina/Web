@@ -5,7 +5,7 @@ import { Menu, ChevronDown, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { SearchDialog } from "./search-dialog";
-import { categories } from "@/data/categories";
+import { useSupabaseCategories } from "@/hooks/use-supabase-categories";
 import logo from "/src/assets/logo.png";
 import { useQuoteList } from "@/hooks/use-quote-list";
 import { openWhatsAppForModels } from "@/lib/contact";
@@ -23,6 +23,7 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
   const location = useLocation();
   const { items, remove, clear } = useQuoteList();
   const { products } = useSupabaseProducts();
+  const { categories } = useSupabaseCategories();
 
   useEffect(() => {
     if (!isTransparent) {
@@ -115,11 +116,11 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
               <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 {categories.map((category) => (
                   <button
-                    key={category}
-                    onClick={() => handleCategorySelect(category)}
+                    key={category.id}
+                    onClick={() => handleCategorySelect(category.name)}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors first:rounded-t-md last:rounded-b-md"
                   >
-                    {category}
+                    {category.name}
                   </button>
                 ))}
               </div>
@@ -272,14 +273,14 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
                       <div className="space-y-1">
                         {categories.map((category) => (
                           <button
-                            key={category}
+                            key={category.id}
                             onClick={() => {
-                              handleCategorySelect(category);
+                              handleCategorySelect(category.name);
                               setIsMenuOpen(false);
                             }}
                             className="flex items-center px-6 py-2 text-base hover:bg-muted rounded-md transition-colors w-full text-left"
                           >
-                            {category}
+                            {category.name}
                           </button>
                         ))}
                       </div>

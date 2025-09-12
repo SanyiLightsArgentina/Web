@@ -48,7 +48,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDel
                 {product.description}
               </p>
               <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <Badge variant="outline">{product.category}</Badge>
+                <Badge variant="outline">{product.category?.name || 'Sin categoría'}</Badge>
                 {imageCount > 0 && (
                   <div className="flex items-center space-x-1">
                     <ImageIcon className="h-4 w-4" />

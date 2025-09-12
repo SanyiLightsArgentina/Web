@@ -4,8 +4,10 @@ import { Input } from './input'
 import { Label } from './label'
 import { Textarea } from './textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
+import { Badge } from './badge'
 import { Product } from '@/data/products'
-import { Category } from '@/data/categories'
+import { Category } from '@/hooks/use-supabase-categories'
+import { useSupabaseCategories } from '@/hooks/use-supabase-categories'
 import { X, Plus, Eye, Play, FileText, Image, Video } from 'lucide-react'
 import { toast } from 'sonner'
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
@@ -34,12 +36,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   isAddingProduct = false
 }) => {
   const { uploadProductImage, uploadProductContent, uploadProductVideo, isUploading } = useSupabaseStorage()
+  const { categories, isLoaded: categoriesLoaded } = useSupabaseCategories()
   
   const [formData, setFormData] = useState({
     model: product?.model || '',
     description: product?.description || '',
     technical_description: product?.technical_description || '',
-    category: product?.category || Category.MOVING_HEAD,
+    category_id: product?.category_id || 0,
     images: product?.images || [],
     contents: product?.contents || [],
     videos: product?.videos || [],
@@ -68,7 +71,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       model: product?.model || '',
       description: product?.description || '',
       technical_description: product?.technical_description || '',
-      category: product?.category || Category.MOVING_HEAD,
+      category_id: product?.category_id || (categories.length > 0 ? categories[0].id : 0),
       images: product?.images || [],
       contents: product?.contents || [],
       videos: product?.videos || [],
@@ -85,7 +88,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setNewImageUrl('')
     setNewContentUrl('')
     setNewVideoUrl('')
-  }, [product])
+  }, [product, categories])
+
+  // Inicializar category_id cuando las categorías se cargan
+  React.useEffect(() => {
+    if (categoriesLoaded && categories.length > 0 && !product && formData.category_id === 0) {
+      setFormData(prev => ({ ...prev, category_id: categories[0].id }))
+    }
+  }, [categoriesLoaded, categories, product, formData.category_id])
 
   // Hacer scroll suave hacia el formulario cuando aparece
   React.useEffect(() => {
@@ -224,6 +234,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       return
     }
 
+    if (!formData.category_id || formData.category_id === 0) {
+      toast.error('Debe seleccionar una categoría')
+      return
+    }
+
     try {
       // Procesar archivos y URLs
       const finalProductData = {
@@ -352,22 +367,22 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="category">Categoría *</Label>
             <Select
-              value={formData.category}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value as Category }))}
+              value={formData.category_id.toString()}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: parseInt(value) }))}
+              disabled={!categoriesLoaded}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder={!categoriesLoaded ? "Cargando categorías..." : "Selecciona una categoría"} />
               </SelectTrigger>
               <SelectContent>
-                {Object.values(Category).filter(cat => cat !== Category.ALL).map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {String(category).replace('_', ' ')}
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id.toString()}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        </div>
 
         <div className="space-y-2">
           <Label htmlFor="description">Descripción *</Label>

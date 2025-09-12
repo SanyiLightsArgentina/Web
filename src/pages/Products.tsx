@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
-import { categories } from "@/data/categories";
 import { filterProducts } from "@/lib/product-utils";
 import { useSupabaseProducts } from "@/hooks/use-supabase-products";
+import { useSupabaseCategories } from "@/hooks/use-supabase-categories";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 const Products = () => {
@@ -20,8 +20,9 @@ const Products = () => {
   const [showOnlyNew, setShowOnlyNew] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Usar productos desde Supabase
+  // Usar productos y categorías desde Supabase
   const { products, isLoaded } = useSupabaseProducts();
+  const { categories } = useSupabaseCategories();
   
   // Configuración de paginación
   const PRODUCTS_PER_PAGE = 20;
@@ -112,16 +113,25 @@ const Products = () => {
             
             {/* Chips de categorías */}
             <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={selectedCategory === "Todos" ? "default" : "secondary"}
+                className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 ${
+                  selectedCategory === "Todos" ? "bg-primary text-primary-foreground" : ""
+                }`}
+                onClick={() => handleCategorySelect("Todos")}
+              >
+                Todos
+              </Badge>
               {categories.map((category) => (
                 <Badge
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "secondary"}
+                  key={category.id}
+                  variant={selectedCategory === category.name ? "default" : "secondary"}
                   className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 ${
-                    selectedCategory === category ? "bg-primary text-primary-foreground" : ""
+                    selectedCategory === category.name ? "bg-primary text-primary-foreground" : ""
                   }`}
-                  onClick={() => handleCategorySelect(category)}
+                  onClick={() => handleCategorySelect(category.name)}
                 >
-                  {category}
+                  {category.name}
                 </Badge>
               ))}
             </div>
