@@ -6,6 +6,8 @@ interface AdminHeaderProps {
   onLogout: () => void;
 }
 
+//test
+
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ onLogout }) => {
   return (
     <header className="bg-white shadow-sm border-b">
