@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { useProductsWithCategories } from "@/hooks/use-products-with-categories";
+import { getProductByModel } from "@/lib/product-utils";
 
 const getStorageVideoUrl = (path: string): string => {
   const { data } = supabase.storage
@@ -44,6 +46,8 @@ export const HeroSection = () => {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { products, isLoaded } = useProductsWithCategories();
 
   const oneSecond = 1000;
 
@@ -101,6 +105,23 @@ export const HeroSection = () => {
       return 'bg-white text-black hover:bg-white/90';
     }
     return 'border-white text-white bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:border-white/80';
+  };
+
+  const handleProductClick = (productRoute: string) => {
+    window.scrollTo(0, 0);
+    const model = productRoute.replace('/producto/', '');
+    const decodedModel = decodeURIComponent(model);
+    
+    if (isLoaded && products.length > 0) {
+      const product = getProductByModel(products, decodedModel);
+      if (product) {
+        navigate(productRoute);
+      } else {
+        navigate('/productos');
+      }
+    } else {
+      navigate(productRoute);
+    }
   };
 
   const getYouTubeVideoId = (url: string) => {
@@ -251,15 +272,14 @@ export const HeroSection = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                <Link to={professionalVideos[currentImageIndex].productRoute} onClick={() => window.scrollTo(0, 0)}>
-                  <Button 
-                    size="lg" 
-                    className="bg-white text-black hover:bg-red-600 hover:text-white shadow-elegant group w-auto text-base sm:text-lg lg:text-xl px-6 sm:px-8 py-6 sm:py-8 font-bold tracking-wide hover:scale-105 transition-all duration-300"
-                  >
-                    DESCUBRILO
-                    <ArrowRight className="ml-3 h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-2 transition-transform duration-300" />
-                  </Button>
-                </Link>
+                <Button 
+                  size="lg" 
+                  onClick={() => handleProductClick(professionalVideos[currentImageIndex].productRoute)}
+                  className="bg-white text-black hover:bg-red-600 hover:text-white shadow-elegant group w-auto text-base sm:text-lg lg:text-xl px-6 sm:px-8 py-6 sm:py-8 font-bold tracking-wide hover:scale-105 transition-all duration-300"
+                >
+                  DESCUBRILO
+                  <ArrowRight className="ml-3 h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-2 transition-transform duration-300" />
+                </Button>
               </div>
             </div>
           </div>
