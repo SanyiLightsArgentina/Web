@@ -92,12 +92,20 @@ export const useSupabaseStorage = () => {
     }
   };
 
+  const getPublicUrl = (bucket: string, path: string): string => {
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   return {
     isUploading,
     uploadFile,
     uploadProductImage,
     uploadProductContent,
     uploadProductVideo,
-    deleteFile
+    deleteFile,
+    getPublicUrl
   };
 };

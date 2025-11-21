@@ -2,10 +2,18 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+
+const getStorageVideoUrl = (path: string): string => {
+  const { data } = supabase.storage
+    .from('videos')
+    .getPublicUrl(path);
+  return data.publicUrl;
+};
 
 const professionalVideos = [
   {
-    src: "/videos/video1.mp4",
+    src: getStorageVideoUrl("video1.mp4"),
     title: "SPL-LED-1260S",
     subtitle: "12*60W LED MOVING BAR ZOOM",
     productRoute: "/producto/SPL-LED-1260S",
@@ -21,11 +29,11 @@ const professionalVideos = [
     new: true
   },
   {
-    src: "/videos/video3.mp4",
+    src: getStorageVideoUrl("video3.mp4"),
     title: "SPL-LED-M700W Profile IP",
     subtitle: "LED Moving Head Lights",
     productRoute: "/producto/SPL-LED-M700W Profile IP",
-    type: "youtube",
+    type: "local",
     new: true
   }
 ];
