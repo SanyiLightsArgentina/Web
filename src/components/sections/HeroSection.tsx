@@ -2,24 +2,15 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
 import { useProductsWithCategories } from "@/hooks/use-products-with-categories";
 import { getProductByModel } from "@/lib/product-utils";
 
-const getStorageVideoUrl = (path: string): string => {
-  const { data } = supabase.storage
-    .from('videos')
-    .getPublicUrl(path);
-  return data.publicUrl;
-};
-
 const professionalVideos = [
   {
-    src: getStorageVideoUrl("video1.mp4"),
+    src: "https://youtu.be/V8Z_ymp_-kg",
     title: "SPL-LED-1260S",
     subtitle: "12*60W LED MOVING BAR ZOOM",
     productRoute: "/producto/SPL-LED-1260S",
-    type: "local",
     new: false
   },
   {
@@ -27,15 +18,13 @@ const professionalVideos = [
     title: "SPL-LED-M1260YZ IP",
     subtitle: "12*60W LED moving bar zoom",
     productRoute: "/producto/SPL-LED-M1260YZ IP",
-    type: "youtube",
     new: true
   },
   {
-    src: getStorageVideoUrl("video3.mp4"),
+    src: "https://youtu.be/bDumjs4uDW8",
     title: "SPL-LED-M700W Profile IP",
     subtitle: "LED Moving Head Lights",
     productRoute: "/producto/SPL-LED-M700W Profile IP",
-    type: "local",
     new: true
   }
 ];
@@ -159,31 +148,17 @@ export const HeroSection = () => {
   const activeVideo = professionalVideos[currentImageIndex];
 
   const renderVideoContent = (video: typeof professionalVideos[0]) => {
-    if (video.type === "youtube") {
-      const videoId = getYouTubeVideoId(video.src);
-      const startTime = getYouTubeStartTime(video.src);
-      if (!videoId) return null;
-      return (
-        <iframe
-          key={video.src}
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&start=${startTime}`}
-          title={video.title}
-          className="w-full h-full object-cover"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      );
-    }
+    const videoId = getYouTubeVideoId(video.src);
+    const startTime = getYouTubeStartTime(video.src);
+    if (!videoId) return null;
     return (
-      <video
+      <iframe
         key={video.src}
-        src={video.src}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&start=${startTime}`}
+        title={video.title}
         className="w-full h-full object-cover"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
       />
     );
   };
