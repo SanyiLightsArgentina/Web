@@ -156,42 +156,34 @@ export const HeroSection = () => {
     return parseInt(timeStr) || 0;
   };
 
-  const renderVideoContent = (video: typeof professionalVideos[0], isActive: boolean = false) => {
+  const activeVideo = professionalVideos[currentImageIndex];
+
+  const renderVideoContent = (video: typeof professionalVideos[0]) => {
     if (video.type === "youtube") {
       const videoId = getYouTubeVideoId(video.src);
       const startTime = getYouTubeStartTime(video.src);
-      
-      if (videoId) {
-        return (
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=${isActive ? 1 : 0}&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&start=${startTime}`}
-            title={video.title}
-            className="w-full h-full object-cover"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        );
-      }
+      if (!videoId) return null;
+      return (
+        <iframe
+          key={video.src}
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&start=${startTime}`}
+          title={video.title}
+          className="w-full h-full object-cover"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      );
     }
-    
-    // Video local
     return (
       <video
-        key={`${video.src}-${isActive}`}
+        key={video.src}
         src={video.src}
-        autoPlay={isActive}
+        autoPlay
         muted
-        loop={isActive}
+        loop
         playsInline
+        preload="auto"
         className="w-full h-full object-cover"
-        onLoadStart={() => {
-          if (isActive) {
-            const videoElement = document.querySelector(`video[src="${video.src}"]`) as HTMLVideoElement;
-            if (videoElement) {
-              videoElement.currentTime = 0;
-            }
-          }
-        }}
       />
     );
   };
@@ -205,22 +197,11 @@ export const HeroSection = () => {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {professionalVideos.map((video, index) => (
-          <div
-            key={`${video.src}-${index}-${currentImageIndex}`}
-            className={`absolute inset-0 transition-all duration-2000 ease-in-out ${
-              index === currentImageIndex 
-                ? 'opacity-100 scale-100 translate-x-0' 
-                : index < currentImageIndex
-                ? 'opacity-0 scale-105 -translate-x-1/6'
-                : 'opacity-0 scale-105 translate-x-1/6'
-            }`}
-          >
-            {renderVideoContent(video, index === currentImageIndex)}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
-          </div>
-        ))}
+        <div className="absolute inset-0">
+          {renderVideoContent(activeVideo)}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
+        </div>
       </div>
 
       <div className="absolute bottom-6 right-6 z-20 flex flex-col gap-3">
@@ -248,8 +229,7 @@ export const HeroSection = () => {
         <div className="w-full">
           <div className="max-w-4xl text-white mb-8 sm:mb-12 mx-auto text-center">
             <div className="animate-fade-in">
-              {/* Chip de Nuevo Producto */}
-              {professionalVideos[currentImageIndex].new && (
+              {activeVideo.new && (
                 <div className="mb-6">
                   <span className="inline-block bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white font-bold text-base sm:text-lg px-6 py-3 rounded-full shadow-2xl border-2 border-white/20 animate-pulse">
                     NUEVO
@@ -261,20 +241,20 @@ export const HeroSection = () => {
                 key={currentImageIndex} 
                 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 md:mb-6 leading-tight animate-in slide-in-from-bottom-8 duration-1500 ease-out"
               >
-                {professionalVideos[currentImageIndex].title}
+                {activeVideo.title}
               </h1>
               
               <p
                 key={`subtitle-${currentImageIndex}`}
                 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4 sm:mb-6 md:mb-8 max-w-3xl mx-auto opacity-90 leading-relaxed animate-in slide-in-from-bottom-8 duration-1500 ease-out delay-300"
               >
-                {professionalVideos[currentImageIndex].subtitle}
+                {activeVideo.subtitle}
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                 <Button 
                   size="lg" 
-                  onClick={() => handleProductClick(professionalVideos[currentImageIndex].productRoute)}
+                  onClick={() => handleProductClick(activeVideo.productRoute)}
                   className="bg-white text-black hover:bg-red-600 hover:text-white shadow-elegant group w-auto text-base sm:text-lg lg:text-xl px-6 sm:px-8 py-6 sm:py-8 font-bold tracking-wide hover:scale-105 transition-all duration-300"
                 >
                   DESCUBRILO
