@@ -13,7 +13,13 @@ import Videos from "./pages/Videos";
 import Admin from "./pages/Admin";
 import { QuoteListProvider } from "@/hooks/use-quote-list";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Componente condicional para el botón de WhatsApp
 const WhatsAppButton = () => {
