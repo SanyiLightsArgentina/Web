@@ -93,6 +93,7 @@ export const ProductImageGallery = ({ images, productDescription }: ProductImage
                     src={image}
                     alt={`Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </button>
               ))}

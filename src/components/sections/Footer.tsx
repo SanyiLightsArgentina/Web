@@ -25,6 +25,7 @@ export const Footer = () => {
                 src={logo}
                 alt="Sanyi Lights Argentina" 
                 className="w-6 h-6 md:w-8 md:h-8 object-contain"
+                loading="lazy"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';

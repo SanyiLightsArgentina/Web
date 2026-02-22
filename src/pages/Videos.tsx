@@ -93,6 +93,7 @@ const Videos = () => {
                     src={getVideoThumbnail(video.id)}
                     alt={video.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                     onError={(e) => {
                       // Fallback to a default thumbnail if the image fails to load
                       const target = e.target as HTMLImageElement;

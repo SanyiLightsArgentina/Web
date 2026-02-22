@@ -239,6 +239,7 @@ const About = () => {
                   src={mapImage} 
                   alt="Mapa de Presencia Global de Sanyi Lights" 
                   className="w-full h-full object-contain object-center"
+                  loading="lazy"
                 />
               </div>
             </div>
