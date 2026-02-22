@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -48,7 +48,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/productos" element={<Products />} />
-            <Route path="/products" element={<Products />} />
+            <Route path="/products" element={<Navigate to="/productos" replace />} />
             <Route path="/producto/:model" element={<ProductDetail />} />
             <Route path="/about" element={<About />} />
             <Route path="/videos" element={<Videos />} />

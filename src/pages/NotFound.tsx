@@ -1,12 +1,19 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home, Search, Lightbulb, Zap } from "lucide-react";
+import { Home, Search, Lightbulb, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getButtonClasses } from "@/lib/colors";
+import { useSEO } from "@/hooks/useSEO";
 
 const NotFound = () => {
   const location = useLocation();
+
+  useSEO({
+    title: "Página no encontrada",
+    description: "La página que buscás no existe. Volvé al inicio o explorá nuestros productos.",
+    noIndex: true,
+  });
 
   useEffect(() => {
     console.error(

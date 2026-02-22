@@ -5,6 +5,7 @@ import { Users, Award, Truck, Shield, ChevronLeft, ChevronRight } from "lucide-r
 import { Footer } from "@/components/sections/Footer";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import mapImage from "@/assets/map.jpeg";
 import prof2 from "@/assets/prof2.jpg";
 import prof3 from "@/assets/prof3.jpg";
@@ -39,6 +40,12 @@ const About = () => {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  useSEO({
+    title: "Nosotros",
+    description:
+      "Más de 23 años de experiencia en iluminación escénica. Distribuidor oficial de Sanyi Lights en Argentina. Tecnología LED y consolas DMX.",
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);

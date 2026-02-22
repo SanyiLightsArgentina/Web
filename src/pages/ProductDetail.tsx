@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
 import { getProductByModel, getProductsByCategoryId } from "@/lib/product-utils";
 import { useProductsWithCategories } from "@/hooks/use-products-with-categories";
+import { useSEO } from "@/hooks/useSEO";
 import { Product } from "@/data/products";
 import {
   ProductHeader,
@@ -15,13 +16,27 @@ import {
   RelatedProducts
 } from "@/components/product";
 
+const MAX_META_DESCRIPTION_LENGTH = 160;
+
 const ProductDetail = () => {
   const { model } = useParams<{ model: string }>();
   const navigate = useNavigate();
   const { products, isLoaded } = useProductsWithCategories();
 
   const product = getProductByModel(products, model || "");
-  
+
+  const description =
+    product?.description?.slice(0, MAX_META_DESCRIPTION_LENGTH).trim() +
+    (product?.description && product.description.length > MAX_META_DESCRIPTION_LENGTH ? "…" : "") ||
+    `Equipo de iluminación profesional ${product?.model || model}. Cotizá por WhatsApp.`;
+
+  useSEO({
+    title: product?.model ?? "Producto",
+    description: product ? description : "Producto no encontrado.",
+    image: product?.images?.[0] ?? undefined,
+    noIndex: !product,
+  });
+
   // Helper function to get category name
   const getCategoryName = (product: Product & { category_name?: string; category?: string }) => {
     return product?.category_name || product?.category || '';

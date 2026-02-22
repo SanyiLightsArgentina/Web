@@ -7,10 +7,7 @@
     Deny from all
 </Files>
 
-<Files "*.txt">
-    Order allow,deny
-    Deny from all
-</Files>
+# Allow robots.txt for SEO (required by search engines). Do not block *.txt globally.
 
 # Bloquear acceso a archivos de configuración
 <Files "*.env">

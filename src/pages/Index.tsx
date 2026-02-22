@@ -5,8 +5,14 @@ import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { WhyChooseUs } from "@/components/sections/WhyChooseUs";
 import { Footer } from "@/components/sections/Footer";
 import { useEffect } from "react";
+import { useSEO } from "@/hooks/useSEO";
 
 const Index = () => {
+  useSEO({
+    title: "Sanyi Lights Argentina - Iluminación Profesional",
+    description:
+      "Equipos de iluminación profesional para eventos, espectáculos, TV y escenarios. Calidad premium en Argentina.",
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
