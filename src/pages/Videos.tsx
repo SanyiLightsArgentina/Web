@@ -2,6 +2,7 @@ import { Navigation } from "@/components/ui/navigation";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Play, Eye, Clock } from "lucide-react";
 import { Footer } from "@/components/sections/Footer";
+import { useSEO } from "@/hooks/useSEO";
 
 interface Video {
   id: string;
@@ -10,6 +11,12 @@ interface Video {
 }
 
 const Videos = () => {
+  useSEO({
+    title: "Videos",
+    description:
+      "Videos de demostración de equipos Sanyi: cabezales móviles LED, barras zoom, láser. Ver en acción antes de cotizar.",
+  });
+
   const getVideoIdFromUrl = (url: string): string => {
     const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
     const match = url.match(regex);
@@ -86,6 +93,7 @@ const Videos = () => {
                     src={getVideoThumbnail(video.id)}
                     alt={video.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                     onError={(e) => {
                       // Fallback to a default thumbnail if the image fails to load
                       const target = e.target as HTMLImageElement;

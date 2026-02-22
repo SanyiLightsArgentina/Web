@@ -25,7 +25,7 @@ export const authenticateUser = async (username: string, password: string) => {
     
     const { data, error } = await supabase
       .from('users')
-      .select('*')
+      .select('id, username, password_hash, role')
       .eq('username', username)
       .single();
     
@@ -71,7 +71,7 @@ export const createUser = async (username: string, password: string, role: 'admi
 export const getUserByUsername = async (username: string) => {
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, username, password_hash, role, created_at, updated_at')
     .eq('username', username)
     .single();
   

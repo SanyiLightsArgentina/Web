@@ -11,10 +11,17 @@ import { Footer } from "@/components/sections/Footer";
 import { filterProducts } from "@/lib/product-utils";
 import { useSupabaseProducts } from "@/hooks/use-supabase-products";
 import { useSupabaseCategories } from "@/hooks/use-supabase-categories";
+import { useSEO } from "@/hooks/useSEO";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 const Products = () => {
   const location = useLocation();
+
+  useSEO({
+    title: "Productos",
+    description:
+      "Catálogo de equipos de iluminación profesional Sanyi: cabezales móviles LED, barras zoom, proyectores. Cotizá por WhatsApp.",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   const [showOnlyNew, setShowOnlyNew] = useState(false);

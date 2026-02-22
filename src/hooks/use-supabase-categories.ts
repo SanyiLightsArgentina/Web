@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { queryKeys, SUPABASE_STALE_TIME_MS, SUPABASE_GC_TIME_MS } from '@/lib/query-keys'
+import { fetchCategories as fetchCategoriesFn } from '@/lib/supabase-queries'
 
 export interface Category {
   id: number
@@ -10,122 +12,95 @@ export interface Category {
 }
 
 export const useSupabaseCategories = () => {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isLoaded, setIsLoaded] = useState(false)
+  const queryClient = useQueryClient()
 
-  const loadCategories = async () => {
-    try {
-      setIsLoaded(false)
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name', { ascending: true })
+  const {
+    data: categories = [],
+    isLoading,
+    refetch: loadCategories,
+  } = useQuery({
+    queryKey: queryKeys.categories,
+    queryFn: fetchCategoriesFn,
+    staleTime: SUPABASE_STALE_TIME_MS,
+    gcTime: SUPABASE_GC_TIME_MS,
+  })
 
-      if (error) {
-        toast.error('Error cargando categorías desde la base de datos')
-        return []
-      }
-
-      return data || []
-    } catch (error) {
-      console.error('Error cargando categorías:', error)
-      return []
-    } finally {
-      setIsLoaded(true)
-    }
-  }
-
-  useEffect(() => {
-    loadCategories().then(setCategories).catch(() => {
-      setCategories([])
-      setIsLoaded(true)
-    })
-  }, [])
-
-  const addCategory = async (name: string) => {
-    try {
+  const addMutation = useMutation({
+    mutationFn: async (name: string) => {
       const { data, error } = await supabase
         .from('categories')
         .insert([{ name }])
         .select()
+      if (error) throw new Error(`No se pudo agregar la categoría: ${error.message}`)
+      return data[0]
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
+      toast.success('Categoría agregada exitosamente')
+    },
+    onError: (err) => {
+      toast.error(`Error agregando categoría: ${err instanceof Error ? err.message : 'Error desconocido'}`)
+    },
+  })
 
-      if (error) {
-        throw new Error(`No se pudo agregar la categoría: ${error.message}`)
-      }
-
-      const newCategory = data[0]
-      setCategories(prev => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
-      toast.success(`Categoría "${name}" agregada exitosamente`)
-      return newCategory
-    } catch (error) {
-      console.error('Error agregando categoría:', error)
-      toast.error(`Error agregando categoría: ${error instanceof Error ? error.message : 'Error desconocido'}`)
-      throw error
-    }
-  }
-
-  const updateCategory = async (id: number, name: string) => {
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: number; name: string }) => {
       const { data, error } = await supabase
         .from('categories')
         .update({ name })
         .eq('id', id)
         .select()
+      if (error) throw new Error(`No se pudo actualizar la categoría: ${error.message}`)
+      return data[0]
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
+      toast.success('Categoría actualizada exitosamente')
+    },
+    onError: (err) => {
+      toast.error(`Error actualizando categoría: ${err instanceof Error ? err.message : 'Error desconocido'}`)
+    },
+  })
 
-      if (error) {
-        throw new Error(`No se pudo actualizar la categoría: ${error.message}`)
-      }
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase.from('categories').delete().eq('id', id)
+      if (error) throw new Error('No se pudo eliminar la categoría')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
+      toast.success('Categoría eliminada exitosamente')
+    },
+    onError: (err) => {
+      toast.error(`Error eliminando categoría: ${err instanceof Error ? err.message : 'Error desconocido'}`)
+    },
+  })
 
-      const updatedCategory = data[0]
-      setCategories(prev => 
-        prev.map(cat => cat.id === id ? updatedCategory : cat)
-        .sort((a, b) => a.name.localeCompare(b.name))
-      )
-      toast.success(`Categoría actualizada exitosamente`)
-      return updatedCategory
-    } catch (error) {
-      console.error('Error actualizando categoría:', error)
-      toast.error(`Error actualizando categoría: ${error instanceof Error ? error.message : 'Error desconocido'}`)
-      throw error
-    }
+  const addCategory = async (name: string) => {
+    const newCategory = await addMutation.mutateAsync(name)
+    return newCategory
+  }
+
+  const updateCategory = async (id: number, name: string) => {
+    const updated = await updateMutation.mutateAsync({ id, name })
+    return updated
   }
 
   const deleteCategory = async (id: number) => {
-    try {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id)
-
-      if (error) {
-        throw new Error('No se pudo eliminar la categoría')
-      }
-
-      setCategories(prev => prev.filter(cat => cat.id !== id))
-      toast.success('Categoría eliminada exitosamente')
-    } catch (error) {
-      console.error('Error eliminando categoría:', error)
-      toast.error(`Error eliminando categoría: ${error instanceof Error ? error.message : 'Error desconocido'}`)
-      throw error
-    }
+    await deleteMutation.mutateAsync(id)
   }
 
-  const getCategoryById = (id: number) => {
-    return categories.find(cat => cat.id === id)
-  }
-
-  const getCategoryByName = (name: string) => {
-    return categories.find(cat => cat.name === name)
-  }
+  const getCategoryById = (id: number) => categories.find((cat) => cat.id === id)
+  const getCategoryByName = (name: string) => categories.find((cat) => cat.name === name)
 
   return {
     categories,
-    isLoaded,
+    isLoaded: !isLoading,
     addCategory,
     updateCategory,
     deleteCategory,
     getCategoryById,
     getCategoryByName,
-    loadCategories
+    loadCategories,
   }
 }

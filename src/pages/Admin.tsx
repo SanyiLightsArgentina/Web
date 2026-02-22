@@ -4,26 +4,24 @@ import { CategoryManager } from '@/components/ui/category-manager';
 import { AdminStats } from '@/components/ui/admin-stats';
 import { Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
+import { useSEO } from '@/hooks/useSEO';
 import { useProductsWithCategories } from '@/hooks/use-products-with-categories';
 import { DatabaseUser } from '@/lib/supabase';
 import { LoginForm } from '@/components/admin/LoginForm';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { ProductsTab } from '@/components/admin/ProductsTab';
 import { ProductStats } from '@/components/admin/ProductStats';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { ResponsiveDeleteModal } from "@/components/ui/responsive-delete-modal";
 
 const Admin: React.FC = () => {
   const { toast } = useToast();
+
+  useSEO({
+    title: "Administración",
+    description: "Panel de administración",
+    noIndex: true,
+  });
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

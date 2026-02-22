@@ -1,19 +1,36 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import NotFound from "./pages/NotFound";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { openWhatsApp } from "./lib/contact";
-import About from "./pages/About";
-import Videos from "./pages/Videos";
-import Admin from "./pages/Admin";
 import { QuoteListProvider } from "@/hooks/use-quote-list";
 
-const queryClient = new QueryClient();
+// Lazy load pages to reduce initial bundle and improve TTI
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const About = lazy(() => import("./pages/About"));
+const Videos = lazy(() => import("./pages/Videos"));
+const Admin = lazy(() => import("./pages/Admin"));
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background" aria-label="Cargando">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Componente condicional para el botón de WhatsApp
 const WhatsAppButton = () => {
@@ -45,16 +62,18 @@ function App() {
         <Toaster />
         <BrowserRouter>
           <QuoteListProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/productos" element={<Products />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/producto/:model" element={<ProductDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/videos" element={<Videos />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/productos" element={<Products />} />
+              <Route path="/products" element={<Navigate to="/productos" replace />} />
+              <Route path="/producto/:model" element={<ProductDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/videos" element={<Videos />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
           
           <WhatsAppButton />
           </QuoteListProvider>
