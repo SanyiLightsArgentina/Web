@@ -1,5 +1,4 @@
 import { lazy, Suspense } from "react";
-import { Analytics } from "@vercel/analytics/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
@@ -79,7 +78,6 @@ function App() {
           <WhatsAppButton />
           </QuoteListProvider>
         </BrowserRouter>
-        <Analytics />
       </TooltipProvider>
     </QueryClientProvider>
   );
