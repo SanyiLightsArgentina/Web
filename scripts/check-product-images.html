@@ -1,0 +1,21 @@
+<!doctype html><html><head><title>Image upload check</title></head><body><pre id="result">Checking browser image conversion…</pre>
+<script type="module">
+import { resizeProductImage } from '/src/lib/product-images.ts';
+try {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2000; canvas.height = 1000;
+  const context = canvas.getContext('2d');
+  context.fillStyle = 'red'; context.fillRect(0, 0, 1000, 1000);
+  const input = new File([await new Promise(resolve => canvas.toBlob(resolve))], 'check.png', { type: 'image/png' });
+  for (const [size, width] of [['thumb',128],['card',640],['detail',1600]]) {
+    const blob = await resizeProductImage(input, size);
+    const image = await createImageBitmap(blob);
+    if (blob.type !== 'image/webp' || image.width !== width || image.height !== width / 2) throw new Error(`${size}: wrong dimensions or format`);
+    const output = document.createElement('canvas'); output.width = image.width; output.height = image.height;
+    const ctx = output.getContext('2d'); ctx.drawImage(image, 0, 0);
+    if (ctx.getImageData(width-1, 0, 1, 1).data[3] !== 0) throw new Error(`${size}: transparency lost`);
+    image.close();
+  }
+  document.querySelector('#result').textContent = 'PASS: all three WebP sizes preserve aspect ratio and transparency';
+} catch (error) { document.querySelector('#result').textContent = `FAIL: ${error.message}`; }
+</script></body></html>

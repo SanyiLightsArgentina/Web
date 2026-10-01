@@ -1,3 +1,4 @@
+import { productImageUrl } from '@/lib/product-images';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -53,7 +54,7 @@ export const SearchDialog = () => {
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       <div className="aspect-square overflow-hidden relative">
         <img 
-          src={product.images?.[0] || ""} 
+          src={productImageUrl(product.images?.[0], 'card')}
           alt={product.description}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           loading="lazy"

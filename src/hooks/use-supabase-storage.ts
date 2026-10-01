@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { resizeProductImage, type ImageSize } from '@/lib/product-images';
 
 export const useSupabaseStorage = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -8,7 +9,8 @@ export const useSupabaseStorage = () => {
   const uploadFile = async (
     file: File, 
     bucket: string, 
-    path: string
+    path: string,
+    cacheControl = '3600'
   ): Promise<string | null> => {
     setIsUploading(true);
     
@@ -16,7 +18,7 @@ export const useSupabaseStorage = () => {
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(path, file, {
-          cacheControl: '3600',
+          cacheControl,
           upsert: false
         });
 
@@ -45,10 +47,21 @@ export const useSupabaseStorage = () => {
   };
 
   const uploadProductImage = async (file: File, productModel: string): Promise<string | null> => {
-    const fileName = `${Date.now()}_${file.name}`;
+    const fileName = `${crypto.randomUUID()}_${file.name}`;
     const path = `products/${productModel}/${fileName}`;
-    
-    return uploadFile(file, 'product-images', path);
+    const sizes: ImageSize[] = ['thumb', 'card', 'detail'];
+    const variants = await Promise.all(sizes.map(size => resizeProductImage(file, size)));
+    if (!await uploadFile(file, 'product-images', path, '31536000')) {
+      throw new Error('No se pudo subir la imagen original');
+    }
+    let detailUrl = '';
+    for (const [index, size] of sizes.entries()) {
+      const variant = new File([variants[index]], `${size}.webp`, { type: 'image/webp' });
+      const url = await uploadFile(variant, 'product-images', `${path}/optimized-v1/${size}.webp`, '31536000');
+      if (!url) throw new Error('No se pudieron subir todas las versiones de la imagen');
+      if (size === 'detail') detailUrl = url;
+    }
+    return detailUrl;
   };
 
   const uploadProductContent = async (file: File, productModel: string): Promise<string | null> => {

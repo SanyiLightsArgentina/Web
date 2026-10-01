@@ -1,3 +1,4 @@
+import { productImageUrl } from '@/lib/product-images';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,7 @@ export const ProductCard = (product: Product) => {
         <CardHeader className="p-0 relative flex-shrink-0">
           <div className="aspect-square overflow-hidden">
             <img 
-              src={product.images?.[0]} 
+              src={productImageUrl(product.images?.[0], 'card')}
               alt={product.description}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"

@@ -1,3 +1,4 @@
+import { productImageUrl } from '@/lib/product-images';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -38,7 +39,7 @@ export const ProductImageGallery = ({ images, productDescription }: ProductImage
         <div className="relative mb-3">
           <div className="bg-gray-50 rounded-lg p-3">
             <img 
-              src={images[currentImageIndex]} 
+              src={productImageUrl(images[currentImageIndex], 'detail')}
               alt={`${productDescription} - Imagen ${currentImageIndex + 1}`}
               className="w-full h-[250px] sm:h-[280px] object-contain mx-auto"
               style={{
@@ -90,7 +91,7 @@ export const ProductImageGallery = ({ images, productDescription }: ProductImage
                   }`}
                 >
                   <img
-                    src={image}
+                    src={productImageUrl(image, 'thumb')}
                     alt={`Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"
                     loading="lazy"

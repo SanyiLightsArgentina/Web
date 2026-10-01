@@ -1,3 +1,4 @@
+import { productImageUrl } from '@/lib/product-images';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDel
             <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
               {product.images && product.images.length > 0 ? (
                 <img
-                  src={product.images[0]}
+                  src={productImageUrl(product.images[0], 'card')}
                   alt={product.model}
                   className="w-full h-full object-cover rounded-lg"
                 />

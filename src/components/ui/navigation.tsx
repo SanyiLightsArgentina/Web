@@ -1,3 +1,4 @@
+import { productImageUrl } from '@/lib/product-images';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, ChevronDown, X } from "lucide-react";
@@ -186,7 +187,7 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
                           className="flex items-center gap-3 p-3 rounded-md border bg-background"
                         >
                           <img
-                            src={product?.images?.[0] || ''}
+                            src={productImageUrl(product?.images?.[0], 'thumb')}
                             alt={product?.description || model}
                             className="w-16 h-16 rounded object-contain bg-muted"
                             onError={(e) => {
