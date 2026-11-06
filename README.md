@@ -15,6 +15,19 @@ npm run dev
 npm run build
 ```
 
+## 🧪 Tests
+
+El proyecto usa [Vitest](https://vitest.dev/) con React Testing Library y `jsdom`.
+
+```bash
+npm test           # corre toda la suite una vez
+npm run test:watch # modo interactivo
+npm run test:coverage
+npm run typecheck  # tsc sobre src
+```
+
+Los tests viven junto al código (`src/**/*.test.ts|tsx`). Los helpers puros del catálogo, medios, configuración y presentación se prueban directamente; los componentes se montan con React Testing Library.
+
 ## 📁 Estructura del Proyecto
 
 ```
