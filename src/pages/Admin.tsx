@@ -11,22 +11,35 @@ import { useToast } from '@/hooks/use-toast';
 import { useSEO } from '@/hooks/useSEO';
 import { useCatalog } from '@/hooks/use-catalog';
 import { useCatalogWrites } from '@/hooks/use-catalog-writes';
-import { supabase } from '@/lib/supabase';
-import { authenticateUser, getAdminUser } from '@/lib/auth';
+import { useAdminSession } from '@/hooks/use-admin-session';
 import { LoginForm } from '@/components/admin/LoginForm';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { ProductsTab } from '@/components/admin/ProductsTab';
 import { ProductStats } from '@/components/admin/ProductStats';
 import { ResponsiveDeleteModal } from "@/components/ui/responsive-delete-modal";
 
-const Admin: React.FC = () => {
-  const { toast } = useToast();
-
+const AdminRoute: React.FC = () => {
   useSEO({
     title: "Administración",
     description: "Panel de administración",
     noIndex: true,
   });
+
+  const session = useAdminSession();
+
+  if (session.status === 'loading') {
+    return <div role="status" className="min-h-screen grid place-items-center">Cargando sesión...</div>;
+  }
+
+  if (session.status === 'signed-out') {
+    return <LoginForm onAuthenticate={session.login} loading={session.isLoggingIn} />;
+  }
+
+  return <AdminWorkspace onLogout={session.logout} />;
+};
+
+const AdminWorkspace: React.FC<{ onLogout: () => Promise<void> }> = ({ onLogout }) => {
+  const { toast } = useToast();
 
   const [desktopNavigation, setDesktopNavigation] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
   useEffect(() => {
@@ -37,12 +50,7 @@ const Admin: React.FC = () => {
   }, []);
   const [activeTab, setActiveTab] = useState('products');
   const activeSection = adminSections.find(section => section.value === activeTab) || adminSections[0];
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  
+
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,100 +71,10 @@ const Admin: React.FC = () => {
     deleteProduct,
   } = useCatalogWrites();
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const admin = getAdminUser(session?.user ?? null);
-      setIsAuthenticated(!!admin);
-      setAuthLoading(false);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (!username.trim()) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "❌ Por favor ingresa el nombre de usuario"
-        });
-        return;
-      }
-      
-      if (!password.trim()) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "❌ Por favor ingresa la contraseña"
-        });
-        return;
-      }
-      
-      setIsLoggingIn(true);
-      
-      const user = await authenticateUser(username.trim(), password);
-      
-      if (user && user.role === 'admin') {
-        setIsAuthenticated(true);
-        setPassword('');
-        toast({
-          title: "¡Bienvenido!",
-          description: `✅ ¡Bienvenido ${user.username}!`
-        });
-      } else if (user && user.role !== 'admin') {
-        toast({
-          variant: "destructive",
-          title: "Acceso denegado",
-          description: "❌ Solo administradores pueden acceder."
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "❌ Error inesperado en la autenticación"
-        });
-      }
-      
-    } catch (error) {
-      console.error('🚨 Error en login:', error);
-      
-      if (error instanceof Error) {
-        const errorMessage = error.message;
-        
-        // Mensaje de error genérico para no revelar información específica
-        toast({
-          variant: "destructive",
-          title: "Error de autenticación",
-          description: "❌ Usuario o contraseña incorrectos. Verifica tus credenciales."
-        });
-      }
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({ title: 'No se pudo cerrar la sesión', variant: 'destructive' });
-      return;
-    }
-    setIsAuthenticated(false);
-    setUsername('');
-    setPassword('');
-    toast({
-      title: "Sesión cerrada",
-      description: "Sesión cerrada exitosamente"
-    });
-  };
-
   const handleAddProduct = () => {
     setIsAddingProduct(true);
     setEditingProduct(null);
-    
-    // Scroll instantáneo al formulario
+
     setTimeout(() => {
       const formElement = document.querySelector('.product-form-container');
       if (formElement) {
@@ -168,8 +86,7 @@ const Admin: React.FC = () => {
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setIsAddingProduct(false);
-    
-    // Scroll instantáneo al formulario
+
     setTimeout(() => {
       const formElement = document.querySelector('.product-form-container');
       if (formElement) {
@@ -221,27 +138,12 @@ const Admin: React.FC = () => {
     setEditingProduct(null);
   };
 
-  if (authLoading) return <div role="status" className="min-h-screen grid place-items-center">Cargando sesión...</div>;
-
-  if (!isAuthenticated) {
-    return (
-      <LoginForm
-        username={username}
-        password={password}
-        onUsernameChange={setUsername}
-        onPasswordChange={setPassword}
-        onSubmit={handleLogin}
-        loading={isLoggingIn}
-      />
-    );
-  }
-
   return (
     <div className="min-h-screen bg-muted/30">
       <Tabs orientation={desktopNavigation ? 'vertical' : 'horizontal'} value={activeTab} onValueChange={setActiveTab} className="min-h-svh lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
         <AdminNavigation />
         <div className="min-w-0">
-          <AdminHeader onLogout={handleLogout} section={activeSection.label} />
+          <AdminHeader onLogout={onLogout} section={activeSection.label} />
           <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
             <div className="mb-7">
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{activeSection.label}</h1>
@@ -269,14 +171,7 @@ const Admin: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="categories" className="space-y-6">
-            <CategoryManager
-              onCategoryChange={(newCategories) => {
-                toast({
-                  title: "Éxito",
-                  description: "Categorías actualizadas"
-                });
-              }}
-            />
+            <CategoryManager onCategoryChange={() => undefined} />
           </TabsContent>
 
           {(['hero', 'videos', 'contact'] as const).map(section => (
@@ -284,24 +179,23 @@ const Admin: React.FC = () => {
           ))}
           <TabsContent value="clients"><ClientsTab /></TabsContent>
           <TabsContent value="overview" className="space-y-6">
-            <AdminStats 
-              products={currentProducts} 
-              categories={categories} 
+            <AdminStats
+              products={currentProducts}
+              categories={categories}
               isSaving={productsSaving}
               lastSaved={lastSaved}
             />
-            
+
             <ProductStats products={currentProducts} />
           </TabsContent>
           </main>
         </div>
       </Tabs>
 
-      {/* Modal de confirmación para eliminar producto */}
       {deleteProductConfirmation && (
         <ResponsiveDeleteModal
           isOpen={!!deleteProductConfirmation}
-          onClose={() => setDeleteProductConfirmation(null)}
+          onClose={cancelDeleteProduct}
           onConfirm={confirmDeleteProduct}
           title="Confirmar eliminación"
           description="¿Estás seguro de que quieres eliminar el producto"
@@ -315,4 +209,4 @@ const Admin: React.FC = () => {
   );
 };
 
-export default Admin;
+export default AdminRoute;
