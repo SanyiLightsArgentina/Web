@@ -9,8 +9,8 @@ import { AdminStats } from '@/components/ui/admin-stats';
 import { Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
 import { useSEO } from '@/hooks/useSEO';
-import { useProductsWithCategories } from '@/hooks/use-products-with-categories';
 import { useCatalog } from '@/hooks/use-catalog';
+import { useCatalogWrites } from '@/hooks/use-catalog-writes';
 import { supabase } from '@/lib/supabase';
 import { authenticateUser, getAdminUser } from '@/lib/auth';
 import { LoginForm } from '@/components/admin/LoginForm';
@@ -53,6 +53,7 @@ const Admin: React.FC = () => {
     categories,
     isLoaded: productsLoaded,
     error: productsError,
+    refetch: fetchProducts,
   } = useCatalog();
   const {
     isSaving: productsSaving,
@@ -60,8 +61,7 @@ const Admin: React.FC = () => {
     addProduct: createProduct,
     updateProduct,
     deleteProduct,
-    loadProductsWithCategories: fetchProducts
-  } = useProductsWithCategories();
+  } = useCatalogWrites();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -186,11 +186,7 @@ const Admin: React.FC = () => {
     if (deleteProductConfirmation) {
       try {
         if (deleteProductConfirmation.id) {
-          await deleteProduct(deleteProductConfirmation.id);
-          toast({
-            title: "Éxito",
-            description: `🗑️ Producto "${deleteProductConfirmation.model}" eliminado exitosamente`
-          });
+          await deleteProduct(deleteProductConfirmation.id, deleteProductConfirmation.model);
         } else {
           toast({
             variant: "destructive",
@@ -198,12 +194,8 @@ const Admin: React.FC = () => {
             description: "No se puede eliminar el producto: ID no encontrado"
           });
         }
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: `Error eliminando producto: ${error instanceof Error ? error.message : 'Error desconocido'}`
-        });
+      } catch {
+        // The catalog write module reports the error.
       } finally {
         setDeleteProductConfirmation(null);
       }
@@ -215,29 +207,12 @@ const Admin: React.FC = () => {
   };
 
   const handleSaveProduct = async (productData: Omit<Product, 'created_at' | 'updated_at'> & { id?: number }) => {
-    try {
-      if (editingProduct && editingProduct.id) {
-        await updateProduct(editingProduct.id, productData);
-        setEditingProduct(null);
-        toast({
-          title: "Éxito",
-          description: `🔄 Producto "${productData.model}" actualizado exitosamente`
-        });
-      } else {
-        await createProduct(productData);
-        setIsAddingProduct(false);
-        toast({
-          title: "Éxito",
-          description: `✅ Producto "${productData.model}" agregado exitosamente`
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `❌ Error guardando producto: ${error instanceof Error ? error.message : 'Error desconocido'}`
-      });
-      throw error;
+    if (editingProduct && editingProduct.id) {
+      await updateProduct(editingProduct.id, productData, productData.model);
+      setEditingProduct(null);
+    } else {
+      await createProduct(productData);
+      setIsAddingProduct(false);
     }
   };
 

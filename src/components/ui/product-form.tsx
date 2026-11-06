@@ -12,6 +12,7 @@ import { toast as notify } from '@/hooks/use-toast'
 
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
 import { useSupabaseStorage } from '@/hooks/use-supabase-storage'
+import { CatalogWriteError } from '@/lib/catalog-writes'
 
 const toast = {
   success: (title: string) => notify({ title }),
@@ -288,11 +289,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       }
 
       await onSubmit(finalProductData)
-      toast.success(product ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente')
-      
     } catch (error) {
       console.error('Error al guardar el producto:', error)
-      toast.error(error instanceof Error ? error.message : 'Error al guardar el producto')
+      // Catalog write failures are already reported by the write module.
+      if (!(error instanceof CatalogWriteError)) {
+        toast.error(error instanceof Error ? error.message : 'Error al guardar el producto')
+      }
     } finally {
       submitInProgress.current = false
       setIsSubmitting(false)

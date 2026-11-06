@@ -1,6 +1,7 @@
 export const queryKeys = {
   products: ['products'] as const,
   categories: ['categories'] as const,
+  siteSettings: ['site-settings'] as const,
 }
 
 export const SUPABASE_STALE_TIME_MS = 5 * 60 * 1000

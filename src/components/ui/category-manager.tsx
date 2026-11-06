@@ -6,7 +6,8 @@ import { Label } from './label';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Plus, Edit, Trash2, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
-import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
+import { useCatalog } from '@/hooks/use-catalog';
+import { useCatalogWrites } from '@/hooks/use-catalog-writes';
 import type { Category } from '@/lib/catalog';
 import { toast } from '@/hooks/use-toast';
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
@@ -16,7 +17,8 @@ interface CategoryManagerProps {
 }
 
 export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChange }) => {
-  const { categories, addCategory, updateCategory, deleteCategory } = useSupabaseCategories();
+  const { categories } = useCatalog();
+  const { addCategory, updateCategory, deleteCategory } = useCatalogWrites();
   const reorder = useSaveSiteSection();
   const moveCategory = async (index: number, direction: number) => {
     const ids = categories.map(c => c.id);
@@ -76,7 +78,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
   const confirmDeleteCategory = async () => {
     if (deleteConfirmation) {
       try {
-        await deleteCategory(deleteConfirmation.id);
+        await deleteCategory(deleteConfirmation.id, deleteConfirmation.name);
         onCategoryChange(categories);
         setDeleteConfirmation(null);
       } catch (error) {
