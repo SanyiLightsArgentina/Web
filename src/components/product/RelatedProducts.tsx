@@ -1,8 +1,9 @@
-import { Product } from "@/data/products";
+import type { CatalogProduct } from "@/lib/catalog";
+import { presentProduct } from "@/lib/product-presentation";
 import { ProductCard } from "@/components/ui/product-card";
 
 interface RelatedProductsProps {
-  relatedProducts: Product[];
+  relatedProducts: CatalogProduct[];
 }
 
 export const RelatedProducts = ({ relatedProducts }: RelatedProductsProps) => {
@@ -22,7 +23,7 @@ export const RelatedProducts = ({ relatedProducts }: RelatedProductsProps) => {
         {relatedProducts.map((relatedProduct) => (
           <div key={relatedProduct.model} className="flex justify-center">
             <div className="w-full max-w-sm transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
-              <ProductCard {...relatedProduct} />
+              <ProductCard product={presentProduct(relatedProduct)} />
             </div>
           </div>
         ))}

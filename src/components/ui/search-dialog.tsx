@@ -1,4 +1,3 @@
-import { productImageUrl } from '@/lib/product-images';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,14 +11,15 @@ import { Search, X, Star, Eye } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchProducts, getFeaturedProducts } from "@/lib/product-utils";
-import type { CatalogProduct } from "@/lib/catalog";
+import { presentProduct } from "@/lib/product-presentation";
+import type { ProductPresentation } from "@/lib/product-summary";
 import { useQuoteList } from "@/hooks/use-quote-list";
 import { useCatalog } from "@/hooks/use-catalog";
 
 export const SearchDialog = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { products } = useCatalog();
+  const { products, categories } = useCatalog();
   const featuredProducts = getFeaturedProducts(products, 8);
   const searchResults = searchQuery.trim() ? searchProducts(products, searchQuery) : [];
   const navigate = useNavigate();
@@ -38,16 +38,16 @@ export const SearchDialog = () => {
     navigate(`/producto/${encodeURIComponent(productModel)}`);
   };
 
-  const ProductCardSearch = ({ product }: { product: CatalogProduct }) => (
+  const ProductCardSearch = ({ product }: { product: ProductPresentation }) => (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       <div className="aspect-square overflow-hidden relative">
         <img 
-          src={productImageUrl(product.images?.[0], 'card')}
+          src={product.cardImage}
           alt={product.description}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           loading="lazy"
         />
-        {product.new && (
+        {product.isNew && (
           <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded shadow-lg">
             Nuevo
           </div>
@@ -135,7 +135,7 @@ export const SearchDialog = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {featuredProducts.map((product) => (
                   <div key={product.model} className="w-full">
-                    <ProductCardSearch product={product} />
+                    <ProductCardSearch product={presentProduct(product, categories)} />
                   </div>
                 ))}
               </div>
@@ -155,7 +155,7 @@ export const SearchDialog = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {searchResults.map((product) => (
                     <div key={product.model} className="w-full">
-                      <ProductCardSearch product={product} />
+                      <ProductCardSearch product={presentProduct(product, categories)} />
                     </div>
                   ))}
                 </div>

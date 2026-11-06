@@ -7,7 +7,6 @@ import { getProductsByCategoryId } from "@/lib/product-utils";
 import { findProductByModel } from "@/lib/catalog";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
-import { Product } from "@/data/products";
 import {
   ProductHeader,
   ProductTechnicalDescription,
@@ -38,11 +37,6 @@ const ProductDetail = () => {
     noIndex: !product,
   });
 
-  // Helper function to get category name
-  const getCategoryName = (product: Product & { category_name?: string; category?: string }) => {
-    return product?.category_name || product?.category || '';
-  };
-  
   const relatedProducts = getProductsByCategoryId(products, product?.category_id || 0, 3, product?.model || "");
 
   useEffect(() => {

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCatalog } from '@/hooks/use-catalog';
 import { useSEO } from '@/hooks/useSEO';
-import { productImageUrl } from '@/lib/product-images';
+import { presentProduct } from '@/lib/product-presentation';
 import { isWebUrl } from '@/lib/site-settings';
 import { consoleProfiles, resourceLabel } from '@/lib/support-resources';
 import { openWhatsApp } from '@/lib/contact';
@@ -21,10 +21,12 @@ export default function Support() {
   const [onlyNew, setOnlyNew] = useState(false);
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const withFiles = products.map(product => ({ ...product, files: (product.contents ?? []).filter(isWebUrl) })).filter(product => product.files.length > 0);
-  const availableCategories = categories.filter(c => withFiles.some(p => p.category_id === c.id));
+  const withFiles = products
+    .map(product => ({ ...presentProduct(product, categories), files: (product.contents ?? []).filter(isWebUrl) }))
+    .filter(product => product.files.length > 0);
+  const availableCategories = categories.filter(c => withFiles.some(p => p.categoryId === c.id));
   const filtered = withFiles.filter(p =>
-    (!onlyNew || p.new) && (category === 'all' || String(p.category_id) === category) &&
+    (!onlyNew || p.isNew) && (category === 'all' || String(p.categoryId) === category) &&
     `${p.model} ${p.description}`.toLowerCase().includes(search.trim().toLowerCase())
   );
   const reset = () => { setSearch(''); setCategory('all'); setOnlyNew(false); };
@@ -60,14 +62,14 @@ export default function Support() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map(product => <article key={product.id ?? product.model} className="rounded-xl border bg-card overflow-hidden flex flex-col">
               <div className="p-5 flex items-center gap-4 border-b">
-                <img src={productImageUrl(product.images?.[0], 'thumb')} alt={product.model} loading="lazy" className="w-20 h-20 object-contain shrink-0" />
-                <div className="min-w-0"><div className="flex flex-wrap gap-2 items-center mb-1"><h3 className="font-bold break-words">{product.model}</h3>{product.new && <Badge className="bg-green-600">Nuevo</Badge>}</div><p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p></div>
+                <img src={product.thumbImage} alt={product.model} loading="lazy" className="w-20 h-20 object-contain shrink-0" />
+                <div className="min-w-0"><div className="flex flex-wrap gap-2 items-center mb-1"><h3 className="font-bold break-words">{product.model}</h3>{product.isNew && <Badge className="bg-green-600">Nuevo</Badge>}</div><p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p></div>
               </div>
               <ul className="p-5 space-y-3 flex-1">{product.files.map((url, index) => {
                 const resource = resourceLabel(url, index);
                 return <li key={`${url}-${index}`}><a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 p-3 hover:bg-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" aria-label={`Abrir ${resource.name} ${index + 1} de ${product.model}`}><div className="flex gap-3 items-center"><FileText className="w-5 h-5 text-primary shrink-0" /><div><span className="block text-sm font-medium">{resource.name}{product.files.length > 1 ? ` ${index + 1}` : ''}</span><span className="text-xs text-muted-foreground">{resource.format} · Abrir / descargar</span></div></div><Download className="w-4 h-4 shrink-0" /></a></li>;
               })}</ul>
-              <Link className="text-sm font-medium text-primary px-5 pb-5 inline-flex items-center gap-1" to={`/producto/${encodeURIComponent(product.model)}`}>Ver equipo<ArrowUpRight className="h-4 w-4" /></Link>
+              <Link className="text-sm font-medium text-primary px-5 pb-5 inline-flex items-center gap-1" to={product.href}>Ver equipo<ArrowUpRight className="h-4 w-4" /></Link>
             </article>)}
           </div>}
       </section>

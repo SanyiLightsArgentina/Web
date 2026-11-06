@@ -2,22 +2,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { Product } from "@/data/products";
+import type { CatalogProduct } from "@/lib/catalog";
 import { useQuoteList } from "@/hooks/use-quote-list";
 import { openWhatsAppForModel } from "@/lib/contact";
 
 interface ProductHeaderProps {
-  product: Product;
+  product: CatalogProduct;
 }
 
 export const ProductHeader = ({ product }: ProductHeaderProps) => {
   const location = useLocation();
   const { has, toggle } = useQuoteList();
-
-  // Helper function to get category name
-  const getCategoryName = (product: Product & { category_name?: string; category?: string }) => {
-    return product?.category_name || product?.category || '';
-  };
 
   return (
     <>
@@ -33,7 +28,7 @@ export const ProductHeader = ({ product }: ProductHeaderProps) => {
 
       <div className="mt-4">
         <div className="flex items-center gap-2 mb-2">
-          <Badge variant="outline">{getCategoryName(product)}</Badge>
+          <Badge variant="outline">{product.category_name}</Badge>
         </div>
         <h1 className="text-3xl font-bold mb-2">{product.model}</h1>
         <p className="text-lg text-muted-foreground">

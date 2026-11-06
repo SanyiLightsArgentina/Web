@@ -36,13 +36,13 @@ export const getProductByModel = (products: Product[], model: string): Product |
   return products.find(product => product.model === decoded);
 };
 
-export const filterProducts = (
-  products: Product[],
+export const filterProducts = <T extends Product>(
+  products: T[],
   searchQuery: string = "",
   selectedCategory: string = "",
   showOnlyNew: boolean = false,
   categories: Category[] = []
-) => {
+): T[] => {
   // Validar que products sea un array
   if (!Array.isArray(products)) {
     console.warn('filterProducts: products no es un array, retornando array vacío');
@@ -60,7 +60,7 @@ export const filterProducts = (
     ? new Set(categories.filter(category => category.name === selectedCategory).map(category => category.id))
     : null;
 
-  const matches: Product[] = [];
+  const matches: T[] = [];
 
   // Category/new filters do not need the text index.
   if (!query) {
@@ -144,7 +144,7 @@ export const getProductsByCategory = (products: Product[], category: string, cou
   return shuffled.slice(0, count);
 };
 
-export const getProductsByCategoryId = (products: Product[], categoryId: number, count: number = 3, excludeModel?: string) => {
+export const getProductsByCategoryId = <T extends Product>(products: T[], categoryId: number, count: number = 3, excludeModel?: string): T[] => {
   if (!categoryId) return [];
   
   const categoryProducts = products.filter(product => 

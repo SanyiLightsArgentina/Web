@@ -4,12 +4,13 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getFeaturedProducts } from "@/lib/product-utils";
+import { presentProduct } from "@/lib/product-presentation";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useRef } from "react";
 
 export const FeaturedProducts = () => {
   const { isMobile } = useIsMobile();
-  const { products, isLoaded, error } = useCatalog();
+  const { products, categories, isLoaded, error } = useCatalog();
   const featuredProducts = getFeaturedProducts(products, products.length);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -61,7 +62,7 @@ export const FeaturedProducts = () => {
                       className="animate-fade-in w-full"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <ProductCard {...product} />
+                      <ProductCard product={presentProduct(product, categories)} />
                     </div>
                   ))}
                 </div>
@@ -90,7 +91,7 @@ export const FeaturedProducts = () => {
                       className="animate-fade-in flex-shrink-0 w-80"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <ProductCard {...product} />
+                      <ProductCard product={presentProduct(product, categories)} />
                     </div>
                   ))}
                 </div>

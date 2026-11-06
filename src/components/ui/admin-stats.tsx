@@ -2,11 +2,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Package, TrendingUp, Eye, Star, BarChart3, Users, ShoppingCart } from 'lucide-react';
-import { Product } from '@/data/products';
-import type { Category } from '@/lib/catalog';
+import type { CatalogProduct, Category } from '@/lib/catalog';
 
 interface AdminStatsProps {
-  products: Product[];
+  products: CatalogProduct[];
   categories: Category[];
   isSaving?: boolean;
   lastSaved?: Date | null;
@@ -156,7 +155,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({ products, categories, is
                   <div>
                     <p className="font-medium text-gray-900">{product.model}</p>
                     <p className="text-sm text-gray-600">
-                      {categories.find(cat => cat.id === product.category_id)?.name || 'Sin categoría'}
+                      {product.category_name}
                     </p>
                   </div>
                 </div>

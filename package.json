@@ -13,7 +13,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "export-csv": "node scripts/export-all-products.js",
-    "test": "node scripts/verify-product-filter.mjs && node scripts/verify-catalog.mjs && node scripts/verify-catalog-writes.mjs && node scripts/verify-media.mjs && node scripts/verify-site-settings.mjs && node scripts/verify-admin-user.mjs"
+    "test": "node scripts/verify-product-filter.mjs && node scripts/verify-catalog.mjs && node scripts/verify-catalog-writes.mjs && node scripts/verify-media.mjs && node scripts/verify-site-settings.mjs && node scripts/verify-admin-user.mjs && node scripts/verify-product-presentation.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

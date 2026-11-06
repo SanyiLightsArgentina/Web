@@ -10,6 +10,7 @@ import { useCatalogPosition } from "@/hooks/use-catalog-position";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
 import { filterProducts } from "@/lib/product-utils";
+import { presentProduct } from "@/lib/product-presentation";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
@@ -198,7 +199,7 @@ const Products = () => {
               <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {currentProducts.map((product) => (
                   <div key={product.model} className="w-full">
-                    <ProductCard {...product} />
+                    <ProductCard product={presentProduct(product, categories)} />
                   </div>
                 ))}
               </div>

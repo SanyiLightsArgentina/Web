@@ -5,10 +5,11 @@ import { Product } from '@/data/products';
 import { ProductControls } from './ProductControls';
 import { ProductCard } from './ProductCard';
 import { ProductForm } from '@/components/ui/product-form';
-import type { Category } from '@/lib/catalog';
+import { presentProduct } from '@/lib/product-presentation';
+import type { CatalogProduct, Category } from '@/lib/catalog';
 
 interface ProductsTabProps {
-  products: Product[];
+  products: CatalogProduct[];
   categories: Category[];
   loading: boolean;
   error: string | null;
@@ -101,7 +102,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
         </div>
         <div aria-hidden="true" className="hidden md:grid grid-cols-[minmax(0,1fr)_140px_100px] xl:grid-cols-[minmax(0,1fr)_140px_160px_100px] gap-5 px-5 py-3 bg-muted/25 border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"><span>Producto</span><span>Categoría</span><span className="hidden xl:block">Archivos</span><span className="text-right">Acciones</span></div>
         <div className="divide-y divide-border/60">
-          {filteredProducts.map(product => <ProductCard key={product.id || product.model} product={product} categoryName={categories.find(category => category.id === product.category_id)?.name || 'Sin categoría'} onEdit={() => onEditProduct(product)} onDelete={() => onDeleteProduct(product)} />)}
+          {filteredProducts.map(product => <ProductCard key={product.id || product.model} presentation={presentProduct(product, categories)} onEdit={() => onEditProduct(product)} onDelete={() => onDeleteProduct(product)} />)}
         </div>
         {filteredProducts.length > 0 && <div className="border-t border-border/70 px-5 py-3 text-xs text-muted-foreground">Mostrando {filteredProducts.length} de {products.length} productos</div>}
       </section>
