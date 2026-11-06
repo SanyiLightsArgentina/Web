@@ -6,7 +6,8 @@ import { Label } from './label';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Plus, Edit, Trash2, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
-import { Category, useSupabaseCategories } from '@/hooks/use-supabase-categories';
+import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
+import type { Category } from '@/lib/catalog';
 import { toast } from '@/hooks/use-toast';
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
 

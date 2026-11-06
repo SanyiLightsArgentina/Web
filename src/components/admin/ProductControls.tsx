@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, Plus, Search } from 'lucide-react';
-import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
+import type { Category } from '@/lib/catalog';
 
 interface ProductControlsProps {
+  categories: Category[];
   searchTerm: string;
   selectedCategoryId: number | null;
   onSearchChange: (value: string) => void;
@@ -11,8 +12,7 @@ interface ProductControlsProps {
   onAddProduct: () => void;
 }
 
-export function ProductControls({ searchTerm, selectedCategoryId, onSearchChange, onCategoryChange, onAddProduct }: ProductControlsProps) {
-  const { categories } = useSupabaseCategories();
+export function ProductControls({ categories, searchTerm, selectedCategoryId, onSearchChange, onCategoryChange, onAddProduct }: ProductControlsProps) {
   return <div className="flex flex-col xl:flex-row xl:items-center gap-3 justify-between">
     <div className="flex flex-col sm:flex-row gap-3 flex-1 min-w-0">
       <div className="relative flex-1 max-w-lg"><Search aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input aria-label="Buscar productos" placeholder="Buscar productos..." value={searchTerm} onChange={event => onSearchChange(event.target.value)} className="pl-10 h-11 bg-white border border-border rounded-xl" /></div>

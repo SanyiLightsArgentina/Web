@@ -1,5 +1,5 @@
 import { Product } from "@/data/products";
-import { Category } from "@/hooks/use-supabase-categories";
+import type { Category } from "@/lib/catalog";
 
 type NormalizedProductText = {
   model: string;
@@ -111,7 +111,7 @@ export const filterProducts = (
   return matches;
 };
 
-export const getFeaturedProducts = (products: Product[], count: number = 6) => {
+export const getFeaturedProducts = <T extends Product>(products: T[], count: number = 6): T[] => {
   // Validar que products sea un array
   if (!Array.isArray(products)) {
     console.warn('getFeaturedProducts: products no es un array, retornando array vacío');
@@ -121,7 +121,7 @@ export const getFeaturedProducts = (products: Product[], count: number = 6) => {
   return products.filter(product => product.new === true).slice(0, count);
 };
 
-export const searchProducts = (products: Product[], query: string) => {
+export const searchProducts = <T extends Product>(products: T[], query: string): T[] => {
   const searchTerm = query.toLowerCase();
   return products.filter(product => 
     product.model.toLowerCase().includes(searchTerm) ||

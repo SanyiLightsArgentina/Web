@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useProductsWithCategories } from "@/hooks/use-products-with-categories";
-import { getProductByModel } from "@/lib/product-utils";
+import { useCatalog } from "@/hooks/use-catalog";
+import { findProductByModel } from "@/lib/catalog";
 
 
 export const HeroSection = () => {
@@ -16,7 +16,7 @@ export const HeroSection = () => {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { products, isLoaded } = useProductsWithCategories();
+  const { products, isLoaded } = useCatalog();
 
   const activeIndex = currentImageIndex % professionalVideos.length;
 
@@ -75,7 +75,7 @@ export const HeroSection = () => {
     const decodedModel = decodeURIComponent(model);
     
     if (isLoaded && products.length > 0) {
-      const product = getProductByModel(products, decodedModel);
+      const product = findProductByModel(products, decodedModel);
       if (product) {
         navigate(productRoute);
       } else {

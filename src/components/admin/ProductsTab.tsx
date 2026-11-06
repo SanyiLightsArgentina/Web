@@ -5,10 +5,11 @@ import { Product } from '@/data/products';
 import { ProductControls } from './ProductControls';
 import { ProductCard } from './ProductCard';
 import { ProductForm } from '@/components/ui/product-form';
-import { useProductsWithCategories } from '@/hooks/use-products-with-categories';
+import type { Category } from '@/lib/catalog';
 
 interface ProductsTabProps {
   products: Product[];
+  categories: Category[];
   loading: boolean;
   error: string | null;
   searchTerm: string;
@@ -27,6 +28,7 @@ interface ProductsTabProps {
 
 export const ProductsTab: React.FC<ProductsTabProps> = ({
   products,
+  categories,
   loading,
   error,
   searchTerm,
@@ -42,8 +44,6 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   onCancelForm,
   onRetry
 }) => {
-  const { categories, isLoaded } = useProductsWithCategories();
-  
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -51,11 +51,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
     return matchesSearch && matchesCategory;
   });
 
-  // Estado de carga general - esperar a que los productos con categorías estén cargados
-  const isFullyLoaded = !loading && isLoaded;
-
-  // Mostrar estado de carga inicial hasta que todo esté listo
-  if (!isFullyLoaded) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">
@@ -78,6 +74,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
       </div>
       {/* Controls */}
       <ProductControls
+        categories={categories}
         searchTerm={searchTerm}
         selectedCategoryId={selectedCategoryId}
         onSearchChange={onSearchChange}

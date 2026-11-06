@@ -1,31 +1,14 @@
-import { useSiteSettings } from './use-site-settings'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useCatalog } from './use-catalog'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { queryKeys, SUPABASE_STALE_TIME_MS, SUPABASE_GC_TIME_MS } from '@/lib/query-keys'
-import { fetchCategories as fetchCategoriesFn } from '@/lib/supabase-queries'
+import { queryKeys } from '@/lib/query-keys'
 
-export interface Category {
-  id: number
-  name: string
-  created_at?: string
-  updated_at?: string
-}
+export type { Category } from '@/lib/catalog'
 
 export const useSupabaseCategories = () => {
   const queryClient = useQueryClient()
-  const { settings } = useSiteSettings()
-
-  const {
-    data: categories = [],
-    isLoading,
-    refetch: loadCategories,
-  } = useQuery({
-    queryKey: queryKeys.categories,
-    queryFn: fetchCategoriesFn,
-    staleTime: SUPABASE_STALE_TIME_MS,
-    gcTime: SUPABASE_GC_TIME_MS,
-  })
+  const { categories, isLoaded } = useCatalog()
 
   const addMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -96,17 +79,13 @@ export const useSupabaseCategories = () => {
   const getCategoryByName = (name: string) => categories.find((cat) => cat.name === name)
 
   return {
-    categories: [...categories].sort((a, b) => {
-      const ai = settings.category_order.indexOf(a.id);
-      const bi = settings.category_order.indexOf(b.id);
-      return (ai < 0 ? Infinity : ai) - (bi < 0 ? Infinity : bi) || a.name.localeCompare(b.name);
-    }),
-    isLoaded: !isLoading,
+    categories,
+    isLoaded,
     addCategory,
     updateCategory,
     deleteCategory,
     getCategoryById,
     getCategoryByName,
-    loadCategories,
   }
 }
+

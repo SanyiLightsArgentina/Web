@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Package, TrendingUp, Eye, Star, BarChart3, Users, ShoppingCart } from 'lucide-react';
 import { Product } from '@/data/products';
-import { Category } from '@/hooks/use-supabase-categories';
+import type { Category } from '@/lib/catalog';
 
 interface AdminStatsProps {
   products: Product[];

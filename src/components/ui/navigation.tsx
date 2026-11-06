@@ -5,11 +5,10 @@ import { Menu, ChevronDown, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { SearchDialog } from "./search-dialog";
-import { useSupabaseCategories } from "@/hooks/use-supabase-categories";
+import { useCatalog } from "@/hooks/use-catalog";
 import logo from "/src/assets/logo.png";
 import { useQuoteList } from "@/hooks/use-quote-list";
 import { openWhatsAppForModels } from "@/lib/contact";
-import { useSupabaseProducts } from "@/hooks/use-supabase-products";
 
 interface NavigationProps {
   isTransparent?: boolean;
@@ -22,8 +21,7 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { items, remove, clear } = useQuoteList();
-  const { products } = useSupabaseProducts();
-  const { categories } = useSupabaseCategories();
+  const { products, categories } = useCatalog();
 
   useEffect(() => {
     if (!isTransparent) {

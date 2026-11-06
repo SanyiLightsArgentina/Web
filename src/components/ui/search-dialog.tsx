@@ -12,45 +12,33 @@ import { Search, X, Star, Eye } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchProducts, getFeaturedProducts } from "@/lib/product-utils";
-import { Product } from "@/data/products";
+import type { CatalogProduct } from "@/lib/catalog";
 import { useQuoteList } from "@/hooks/use-quote-list";
-import { useSupabaseProducts } from "@/hooks/use-supabase-products";
+import { useCatalog } from "@/hooks/use-catalog";
 
 export const SearchDialog = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const { products, isLoaded } = useSupabaseProducts();
+  const { products } = useCatalog();
   const featuredProducts = getFeaturedProducts(products, 8);
+  const searchResults = searchQuery.trim() ? searchProducts(products, searchQuery) : [];
   const navigate = useNavigate();
   const { has, toggle } = useQuoteList();
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (query.trim()) {
-      const results = searchProducts(products, query);
-      setSearchResults(results);
-    } else {
-      setSearchResults([]);
-    }
-  };
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     if (!newOpen) {
       setSearchQuery("");
-      setSearchResults([]);
     }
   };
 
   const handleProductClick = (productModel: string) => {
     setOpen(false);
     setSearchQuery("");
-    setSearchResults([]);
     navigate(`/producto/${encodeURIComponent(productModel)}`);
   };
 
-  const ProductCardSearch = ({ product }: { product: Product }) => (
+  const ProductCardSearch = ({ product }: { product: CatalogProduct }) => (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       <div className="aspect-square overflow-hidden relative">
         <img 
@@ -122,7 +110,7 @@ export const SearchDialog = () => {
             <Input
               placeholder="Buscar por nombre, categoría o descripción..."
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 sm:pl-12 h-10 sm:h-12 text-sm sm:text-base"
             />
             {searchQuery && (
@@ -130,7 +118,7 @@ export const SearchDialog = () => {
                 variant="ghost"
                 size="icon"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8"
-                onClick={() => handleSearch("")}
+                onClick={() => setSearchQuery("")}
               >
                 <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>

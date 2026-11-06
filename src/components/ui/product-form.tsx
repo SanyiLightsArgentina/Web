@@ -6,7 +6,7 @@ import { Textarea } from './textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Badge } from './badge'
 import { Product } from '@/data/products'
-import type { Category } from '@/hooks/use-supabase-categories'
+import type { Category } from '@/lib/catalog'
 import { X, Plus, Eye, Play, FileText, Image, Video } from 'lucide-react'
 import { toast as notify } from '@/hooks/use-toast'
 

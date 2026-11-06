@@ -4,12 +4,12 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getFeaturedProducts } from "@/lib/product-utils";
-import { useSupabaseProducts } from "@/hooks/use-supabase-products";
+import { useCatalog } from "@/hooks/use-catalog";
 import { useRef } from "react";
 
 export const FeaturedProducts = () => {
   const { isMobile } = useIsMobile();
-  const { products, isLoaded } = useSupabaseProducts();
+  const { products, isLoaded, error } = useCatalog();
   const featuredProducts = getFeaturedProducts(products, products.length);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -38,7 +38,9 @@ export const FeaturedProducts = () => {
           </p>
         </div>
 
-        {!isLoaded ? (
+        {error ? (
+          <p className="text-center text-muted-foreground mb-8">No se pudieron cargar las novedades.</p>
+        ) : !isLoaded ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground text-lg">

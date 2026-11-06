@@ -10,8 +10,7 @@ import { useCatalogPosition } from "@/hooks/use-catalog-position";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
 import { filterProducts } from "@/lib/product-utils";
-import { useSupabaseProducts } from "@/hooks/use-supabase-products";
-import { useSupabaseCategories } from "@/hooks/use-supabase-categories";
+import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
@@ -38,9 +37,7 @@ const Products = () => {
     }, { replace: true });
   };
 
-  // Usar productos y categorías desde Supabase
-  const { products, isLoaded } = useSupabaseProducts();
-  const { categories, isLoaded: categoriesLoaded } = useSupabaseCategories();
+  const { products, categories, isLoaded, error, refetch } = useCatalog();
   
   // Configuración de paginación
   const PRODUCTS_PER_PAGE = 20;
@@ -58,7 +55,7 @@ const Products = () => {
   // Calcular paginación
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
   const currentPage = Math.min(Math.floor(requestedPage), Math.max(1, totalPages));
-  useCatalogPosition(location.pathname + location.search, isLoaded && categoriesLoaded);
+  useCatalogPosition(location.pathname + location.search, isLoaded);
   const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
   const endIndex = startIndex + PRODUCTS_PER_PAGE;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
@@ -153,7 +150,9 @@ const Products = () => {
 
           <div className="mb-4 sm:mb-6">
             <div className="text-sm sm:text-base text-muted-foreground">
-              {isLoaded ? (
+              {error ? (
+                <span className="text-red-600">No se pudo cargar el catálogo.</span>
+              ) : isLoaded ? (
                 <>
                   {filteredProducts.length} productos encontrados
                   {selectedCategory && selectedCategory !== "Todos" && (
@@ -180,7 +179,14 @@ const Products = () => {
             </div>
           </div>
 
-          {!isLoaded ? (
+          {error ? (
+            <div className="text-center py-8 sm:py-12" role="alert">
+              <p className="text-base sm:text-lg text-red-600 mb-4">
+                No se pudo cargar el catálogo. Revisá tu conexión y volvé a intentar.
+              </p>
+              <Button variant="outline" onClick={() => refetch()}>Reintentar</Button>
+            </div>
+          ) : !isLoaded ? (
             <div className="text-center py-8 sm:py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground text-base sm:text-lg">

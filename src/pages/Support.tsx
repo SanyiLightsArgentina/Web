@@ -6,8 +6,7 @@ import { Footer } from '@/components/sections/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useSupabaseProducts } from '@/hooks/use-supabase-products';
-import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
+import { useCatalog } from '@/hooks/use-catalog';
 import { useSEO } from '@/hooks/useSEO';
 import { productImageUrl } from '@/lib/product-images';
 import { isWebUrl } from '@/lib/site-settings';
@@ -16,8 +15,7 @@ import { openWhatsApp } from '@/lib/contact';
 
 export default function Support() {
   useSEO({ title: 'Soporte y centro de descargas', description: 'Descargá manuales, documentación técnica y perfiles para consolas de iluminación Sanyi Lights.' });
-  const { products, isLoaded } = useSupabaseProducts();
-  const { categories } = useSupabaseCategories();
+  const { products, categories, isLoaded, error, refetch } = useCatalog();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [onlyNew, setOnlyNew] = useState(false);
@@ -58,7 +56,7 @@ export default function Support() {
             {availableCategories.map(c => <Button key={c.id} size="sm" variant={category === String(c.id) ? 'default' : 'outline'} aria-pressed={category === String(c.id)} onClick={() => setCategory(String(c.id))}>{c.name}</Button>)}
           </div>
         </div>
-        {!isLoaded ? <p role="status" className="py-12 text-center text-muted-foreground">Cargando archivos...</p> : filtered.length === 0 ? <div className="text-center rounded-xl border border-dashed py-12 px-4"><FileText className="h-10 w-10 text-muted-foreground mx-auto mb-4" /><h3 className="font-semibold text-lg mb-2">No encontramos archivos para esta búsqueda</h3><p className="text-muted-foreground mb-4">Probá con otro modelo o consultanos por WhatsApp.</p><Button variant="outline" onClick={reset}><X className="h-4 w-4 mr-2" />Limpiar filtros</Button></div> :
+        {error ? <div role="alert" className="py-12 text-center"><p className="text-muted-foreground mb-4">No se pudieron cargar los archivos.</p><Button variant="outline" onClick={() => refetch()}>Reintentar</Button></div> : !isLoaded ? <p role="status" className="py-12 text-center text-muted-foreground">Cargando archivos...</p> : filtered.length === 0 ? <div className="text-center rounded-xl border border-dashed py-12 px-4"><FileText className="h-10 w-10 text-muted-foreground mx-auto mb-4" /><h3 className="font-semibold text-lg mb-2">No encontramos archivos para esta búsqueda</h3><p className="text-muted-foreground mb-4">Probá con otro modelo o consultanos por WhatsApp.</p><Button variant="outline" onClick={reset}><X className="h-4 w-4 mr-2" />Limpiar filtros</Button></div> :
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map(product => <article key={product.id ?? product.model} className="rounded-xl border bg-card overflow-hidden flex flex-col">
               <div className="p-5 flex items-center gap-4 border-b">

@@ -10,6 +10,7 @@ import { Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
 import { useSEO } from '@/hooks/useSEO';
 import { useProductsWithCategories } from '@/hooks/use-products-with-categories';
+import { useCatalog } from '@/hooks/use-catalog';
 import { supabase } from '@/lib/supabase';
 import { authenticateUser, getAdminUser } from '@/lib/auth';
 import { LoginForm } from '@/components/admin/LoginForm';
@@ -47,13 +48,17 @@ const Admin: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [deleteProductConfirmation, setDeleteProductConfirmation] = useState<Product | null>(null);
-  const { 
-    products: currentProducts, 
+  const {
+    products: currentProducts,
     categories,
     isLoaded: productsLoaded,
+    error: productsError,
+  } = useCatalog();
+  const {
     isSaving: productsSaving,
-    addProduct: createProduct, 
-    updateProduct, 
+    lastSaved,
+    addProduct: createProduct,
+    updateProduct,
     deleteProduct,
     loadProductsWithCategories: fetchProducts
   } = useProductsWithCategories();
@@ -270,8 +275,9 @@ const Admin: React.FC = () => {
           <TabsContent value="products">
             <ProductsTab
               products={currentProducts}
+              categories={categories}
               loading={!productsLoaded}
-              error={null}
+              error={productsError?.message ?? null}
               searchTerm={searchTerm}
               selectedCategoryId={selectedCategoryId}
               isAddingProduct={isAddingProduct}
@@ -307,7 +313,7 @@ const Admin: React.FC = () => {
               products={currentProducts} 
               categories={categories} 
               isSaving={productsSaving}
-              lastSaved={new Date()}
+              lastSaved={lastSaved}
             />
             
             <ProductStats products={currentProducts} />

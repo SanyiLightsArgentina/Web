@@ -1,53 +1,23 @@
-import { useState, useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/data/products'
 import { toast } from 'sonner'
-import { queryKeys, SUPABASE_STALE_TIME_MS, SUPABASE_GC_TIME_MS } from '@/lib/query-keys'
-import { fetchProducts, fetchCategories } from '@/lib/supabase-queries'
-import type { CategoryRow } from '@/lib/supabase-queries'
-import type { Category } from '@/hooks/use-supabase-categories'
+import { queryKeys } from '@/lib/query-keys'
+import type { CatalogProduct } from '@/lib/catalog'
+import { useCatalog } from './use-catalog'
 
-export interface ProductWithCategory extends Product {
-  category_name?: string
-  categories?: { id: number; name: string }
-}
+export type ProductWithCategory = CatalogProduct
 
-function joinProductsWithCategories(
-  products: Product[],
-  categories: Category[] | CategoryRow[]
-): ProductWithCategory[] {
-  return products.map((p) => ({
-    ...p,
-    category_name: categories.find((c) => c.id === p.category_id)?.name ?? 'Sin categoría',
-  }))
-}
-
+/**
+ * Temporary write surface kept for the admin until catalog writes move behind
+ * their own seam. Reads come from the shared catalog module.
+ */
 export const useProductsWithCategories = () => {
   const queryClient = useQueryClient()
+  const { products, categories, isLoaded, error } = useCatalog()
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-
-  const productsQuery = useQuery({
-    queryKey: queryKeys.products,
-    queryFn: fetchProducts,
-    staleTime: SUPABASE_STALE_TIME_MS,
-    gcTime: SUPABASE_GC_TIME_MS,
-  })
-
-  const categoriesQuery = useQuery({
-    queryKey: queryKeys.categories,
-    queryFn: fetchCategories,
-    staleTime: SUPABASE_STALE_TIME_MS,
-    gcTime: SUPABASE_GC_TIME_MS,
-  })
-
-  const products = useMemo(
-    () => joinProductsWithCategories(productsQuery.data ?? [], categoriesQuery.data ?? []),
-    [productsQuery.data, categoriesQuery.data]
-  )
-  const categories = categoriesQuery.data ?? []
-  const isLoaded = !productsQuery.isLoading && !categoriesQuery.isLoading
 
   const loadProductsWithCategories = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.products })
@@ -61,12 +31,12 @@ export const useProductsWithCategories = () => {
     setIsSaving(true)
     try {
       const { id, created_at, updated_at, ...productData } = product
-      const { data, error } = await supabase
+      const { data, error: writeError } = await supabase
         .from('products')
         .insert([productData])
         .select()
 
-      if (error) throw new Error(`No se pudo agregar el producto: ${error.message}`)
+      if (writeError) throw new Error(`No se pudo agregar el producto: ${writeError.message}`)
 
       queryClient.invalidateQueries({ queryKey: queryKeys.products })
       setLastSaved(new Date())
@@ -77,12 +47,12 @@ export const useProductsWithCategories = () => {
         ...data[0],
         category_name: category?.name ?? 'Sin categoría',
       }
-    } catch (error) {
-      console.error('Error agregando producto:', error)
+    } catch (writeError) {
+      console.error('Error agregando producto:', writeError)
       toast.error(
-        `Error agregando producto: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        `Error agregando producto: ${writeError instanceof Error ? writeError.message : 'Error desconocido'}`
       )
-      throw error
+      throw writeError
     } finally {
       setIsSaving(false)
     }
@@ -91,13 +61,13 @@ export const useProductsWithCategories = () => {
   const updateProduct = async (id: number, updates: Partial<Product>) => {
     setIsSaving(true)
     try {
-      const { data, error } = await supabase
+      const { data, error: writeError } = await supabase
         .from('products')
         .update(updates)
         .eq('id', id)
         .select()
 
-      if (error) throw new Error(`No se pudo actualizar el producto: ${error.message}`)
+      if (writeError) throw new Error(`No se pudo actualizar el producto: ${writeError.message}`)
 
       queryClient.invalidateQueries({ queryKey: queryKeys.products })
       setLastSaved(new Date())
@@ -107,9 +77,9 @@ export const useProductsWithCategories = () => {
         ...data[0],
         category_name: category?.name ?? 'Sin categoría',
       }
-    } catch (error) {
-      console.error('Error actualizando producto:', error)
-      throw error
+    } catch (writeError) {
+      console.error('Error actualizando producto:', writeError)
+      throw writeError
     } finally {
       setIsSaving(false)
     }
@@ -118,14 +88,14 @@ export const useProductsWithCategories = () => {
   const deleteProduct = async (id: number) => {
     setIsSaving(true)
     try {
-      const { error } = await supabase.from('products').delete().eq('id', id)
-      if (error) throw new Error('No se pudo eliminar el producto')
+      const { error: writeError } = await supabase.from('products').delete().eq('id', id)
+      if (writeError) throw new Error('No se pudo eliminar el producto')
 
       queryClient.invalidateQueries({ queryKey: queryKeys.products })
       setLastSaved(new Date())
-    } catch (error) {
-      console.error('Error eliminando producto:', error)
-      throw error
+    } catch (writeError) {
+      console.error('Error eliminando producto:', writeError)
+      throw writeError
     } finally {
       setIsSaving(false)
     }
@@ -149,6 +119,7 @@ export const useProductsWithCategories = () => {
     products,
     categories,
     isLoaded,
+    error,
     isSaving,
     lastSaved,
     addProduct,

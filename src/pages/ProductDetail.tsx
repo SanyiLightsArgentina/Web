@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
-import { getProductByModel, getProductsByCategoryId } from "@/lib/product-utils";
-import { useProductsWithCategories } from "@/hooks/use-products-with-categories";
+import { getProductsByCategoryId } from "@/lib/product-utils";
+import { findProductByModel } from "@/lib/catalog";
+import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
 import { Product } from "@/data/products";
 import {
@@ -21,9 +22,9 @@ const MAX_META_DESCRIPTION_LENGTH = 160;
 const ProductDetail = () => {
   const { model } = useParams<{ model: string }>();
   const navigate = useNavigate();
-  const { products, isLoaded } = useProductsWithCategories();
+  const { products, isLoaded, error, refetch } = useCatalog();
 
-  const product = getProductByModel(products, model || "");
+  const product = findProductByModel(products, model || "");
 
   const description =
     product?.description?.slice(0, MAX_META_DESCRIPTION_LENGTH).trim() +
@@ -47,6 +48,20 @@ const ProductDetail = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [model]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation isTransparent={false} />
+        <div className="pt-20">
+          <div className="container mx-auto px-4 py-8 text-center" role="alert">
+            <p className="text-muted-foreground mb-4">No se pudo cargar el producto.</p>
+            <Button onClick={() => refetch()}>Reintentar</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isLoaded || !products || products.length === 0) {
     return (
