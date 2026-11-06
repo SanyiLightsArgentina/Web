@@ -87,7 +87,7 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
             </div>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden xl:flex items-center space-x-8">
             <Link 
               to="/" 
               className={`transition-all duration-300 px-4 py-2 rounded-md ${
@@ -154,6 +154,9 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
               Videos
             </Link>
             
+            <Link to="/soporte" className={`transition-all duration-300 px-4 py-2 rounded-md ${isActiveLink('/soporte') ? 'bg-primary text-white' : 'text-white hover:bg-white/20'}`}>
+              Soporte
+            </Link>
             <a 
               href="#contacto" 
               onClick={scrollToContact}
@@ -246,7 +249,7 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden transition-all duration-300 text-white"
+                  className="xl:hidden transition-all duration-300 text-white"
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
@@ -321,6 +324,9 @@ export const Navigation = ({ isTransparent = false }: NavigationProps) => {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Videos
+                    </Link>
+                    <Link to="/soporte" onClick={() => setIsMenuOpen(false)} className={`flex items-center px-3 py-2 text-lg font-medium rounded-md transition-colors ${isActiveLink('/soporte') ? 'bg-primary text-white' : 'hover:bg-muted'}`}>
+                      Soporte
                     </Link>
                     <a
                       href="#contacto"

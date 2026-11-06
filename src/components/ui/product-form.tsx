@@ -6,11 +6,17 @@ import { Textarea } from './textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Badge } from './badge'
 import { Product } from '@/data/products'
-import { Category } from '@/hooks/use-products-with-categories'
+import type { Category } from '@/hooks/use-supabase-categories'
 import { X, Plus, Eye, Play, FileText, Image, Video } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast as notify } from '@/hooks/use-toast'
+
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
 import { useSupabaseStorage } from '@/hooks/use-supabase-storage'
+
+const toast = {
+  success: (title: string) => notify({ title }),
+  error: (description: string) => notify({ title: 'No se pudo guardar', description, variant: 'destructive' }),
+}
 
 interface ProductFormProps {
   product?: Product
@@ -36,6 +42,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   loading = false,
   isAddingProduct = false
 }) => {
+  const submitInProgress = useRef(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { uploadProductImage, uploadProductContent, uploadProductVideo, isUploading } = useSupabaseStorage()
   
   const [formData, setFormData] = useState({
@@ -71,7 +79,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       model: product?.model || '',
       description: product?.description || '',
       technical_description: product?.technical_description || '',
-      category_id: product?.category_id || (categories.length > 0 ? categories[0].id : 0),
+      category_id: product?.category_id || 0,
       images: product?.images || [],
       contents: product?.contents || [],
       videos: product?.videos || [],
@@ -88,7 +96,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setNewImageUrl('')
     setNewContentUrl('')
     setNewVideoUrl('')
-  }, [product, categories])
+  }, [product])
 
   // Inicializar category_id cuando las categorías se cargan
   React.useEffect(() => {
@@ -104,12 +112,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleDrop = (e: React.DragEvent, field: 'images' | 'contents' | 'videos') => {
     e.preventDefault()
+    if (submitInProgress.current) return
     const files = Array.from(e.dataTransfer.files)
     
     files.forEach(file => {
       if (field === 'images' && file.type.startsWith('image/')) {
         addFile(file, field)
-      } else if (field === 'videos' && file.type.startsWith('video/')) {
+      } else if (field === 'videos' && (file.type.startsWith('video/') || /\.mp4$/i.test(file.name))) {
         addFile(file, field)
       } else if (field === 'contents') {
         addFile(file, field)
@@ -118,6 +127,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   }
 
   const handleFileSelect = (field: 'images' | 'contents' | 'videos') => {
+    if (submitInProgress.current) return
     const input = document.createElement('input')
     input.type = 'file'
     input.multiple = true
@@ -141,6 +151,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   }
 
   const addFile = (file: File, field: 'images' | 'contents' | 'videos') => {
+    if (submitInProgress.current) return
     const preview = URL.createObjectURL(file)
     const fileItem: FileItem = {
       type: 'file',
@@ -213,6 +224,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitInProgress.current) return
     
     if (!formData.model.trim()) {
       toast.error('El modelo del producto es obligatorio')
@@ -224,6 +236,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       return
     }
 
+    submitInProgress.current = true
+    setIsSubmitting(true)
     try {
       // Procesar archivos y URLs
       const finalProductData = {
@@ -278,7 +292,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       
     } catch (error) {
       console.error('Error al guardar el producto:', error)
-      toast.error('Error al guardar el producto')
+      toast.error(error instanceof Error ? error.message : 'Error al guardar el producto')
+    } finally {
+      submitInProgress.current = false
+      setIsSubmitting(false)
     }
   }
 
@@ -336,6 +353,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <fieldset disabled={isSubmitting} className="space-y-6">
         {/* Información básica */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -687,7 +705,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(item.value as string, '_blank')}
+                          onClick={() => window.open(item.type === 'file' ? item.preview : item.value as string, '_blank', 'noopener,noreferrer')}
                           className="h-6 w-6 p-0 text-white hover:bg-white hover:text-black"
                         >
                           <Play className="h-4 w-4" />
@@ -726,13 +744,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
         {/* Botones de acción */}
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading || isUploading || categories.length === 0}>
-            {loading || isUploading ? 'Guardando...' : categories.length === 0 ? 'Sin categorías' : product ? 'Actualizar Producto' : 'Crear Producto'}
+          <Button type="submit" disabled={loading || isUploading || isSubmitting || categories.length === 0}>
+            {loading || isUploading || isSubmitting ? 'Guardando...' : categories.length === 0 ? 'Sin categorías' : product ? 'Actualizar Producto' : 'Crear Producto'}
           </Button>
         </div>
+        </fieldset>
       </form>
 
       {/* Modal para ver imagen en tamaño completo */}

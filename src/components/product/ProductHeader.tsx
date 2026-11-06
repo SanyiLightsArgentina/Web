@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Product } from "@/data/products";
 import { useQuoteList } from "@/hooks/use-quote-list";
 import { openWhatsAppForModel } from "@/lib/contact";
@@ -11,6 +11,7 @@ interface ProductHeaderProps {
 }
 
 export const ProductHeader = ({ product }: ProductHeaderProps) => {
+  const location = useLocation();
   const { has, toggle } = useQuoteList();
 
   // Helper function to get category name
@@ -22,7 +23,7 @@ export const ProductHeader = ({ product }: ProductHeaderProps) => {
     <>
       <div className="mb-4">
         <Link 
-          to="/productos" 
+          to={location.state?.catalogUrl || "/productos"}
           className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { toast as notify } from '@/hooks/use-toast';
 import { resizeProductImage, type ImageSize } from '@/lib/product-images';
+const toast = {
+  success: (description: string) => notify({ title: description }),
+  error: (description: string) => notify({ title: 'Error de archivo', description, variant: 'destructive' }),
+};
 
 export const useSupabaseStorage = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -11,7 +15,7 @@ export const useSupabaseStorage = () => {
     bucket: string, 
     path: string,
     cacheControl = '3600'
-  ): Promise<string | null> => {
+  ): Promise<string> => {
     setIsUploading(true);
     
     try {
@@ -19,13 +23,13 @@ export const useSupabaseStorage = () => {
         .from(bucket)
         .upload(path, file, {
           cacheControl,
+          contentType: file.name.toLowerCase().endsWith('.mp4') ? 'video/mp4' : file.type || 'application/octet-stream',
           upsert: false
         });
 
       if (error) {
         console.error('Error subiendo archivo:', error);
-        toast.error(`Error subiendo archivo: ${error.message}`);
-        return null;
+        throw new Error(error.message);
       }
 
       // Obtener URL pública del archivo
@@ -38,15 +42,14 @@ export const useSupabaseStorage = () => {
       
       return publicUrl;
     } catch (error) {
-      console.error('Error inesperado subiendo archivo:', error);
-      toast.error('Error inesperado subiendo archivo');
-      return null;
+      const detail = error instanceof Error ? error.message : 'Error de conexión';
+      throw new Error(`No se pudo subir "${file.name}": ${detail}. El producto no se guardó; podés volver a intentar.`);
     } finally {
       setIsUploading(false);
     }
   };
 
-  const uploadProductImage = async (file: File, productModel: string): Promise<string | null> => {
+  const uploadProductImage = async (file: File, productModel: string): Promise<string> => {
     const fileName = `${crypto.randomUUID()}_${file.name}`;
     const path = `products/${productModel}/${fileName}`;
     const sizes: ImageSize[] = ['thumb', 'card', 'detail'];
@@ -64,7 +67,7 @@ export const useSupabaseStorage = () => {
     return detailUrl;
   };
 
-  const uploadProductContent = async (file: File, productModel: string): Promise<string | null> => {
+  const uploadProductContent = async (file: File, productModel: string): Promise<string> => {
     const fileName = `${Date.now()}_${file.name}`;
     
     let path: string;
@@ -77,11 +80,17 @@ export const useSupabaseStorage = () => {
     return uploadFile(file, 'product-content', path);
   };
 
-  const uploadProductVideo = async (file: File, productModel: string): Promise<string | null> => {
-    const fileName = `${Date.now()}_${file.name}`;
-    const path = `products/${productModel}/videos/${fileName}`;
+  const uploadProductVideo = async (file: File, productModel: string): Promise<string> => {
+    if (!file.type.startsWith('video/') && !/\.(mp4|webm|mov|m4v|avi)$/i.test(file.name)) throw new Error('Seleccioná un archivo de video válido.');
+    if (file.size === 0) throw new Error('El archivo de video está vacío.');
+    const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4';
+    const modelPath = productModel.normalize('NFKD').replace(/[^a-zA-Z0-9_-]/g, '_') || 'video';
+    const fileName = `${crypto.randomUUID()}.${extension}`;
+    const path = `products/${modelPath}/videos/${fileName}`;
     
-    return uploadFile(file, 'product-videos', path);
+    const video = extension === 'mp4' && file.type !== 'video/mp4'
+      ? new File([file], file.name, { type: 'video/mp4', lastModified: file.lastModified }) : file;
+    return uploadFile(video, 'product-videos', path);
   };
 
   const deleteFile = async (bucket: string, path: string): Promise<boolean> => {

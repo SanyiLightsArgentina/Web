@@ -16,6 +16,7 @@ const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const About = lazy(() => import("./pages/About"));
 const Videos = lazy(() => import("./pages/Videos"));
+const Support = lazy(() => import("./pages/Support"));
 const Admin = lazy(() => import("./pages/Admin"));
 
 function PageLoader() {
@@ -72,6 +73,8 @@ function App() {
               <Route path="/producto/:model" element={<ProductDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/videos" element={<Videos />} />
+              <Route path="/soporte" element={<Support />} />
+              <Route path="/download-center" element={<Navigate to="/soporte" replace />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

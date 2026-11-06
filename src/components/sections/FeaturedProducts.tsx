@@ -1,31 +1,18 @@
 import { ProductCard } from "@/components/ui/product-card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getFeaturedProducts } from "@/lib/product-utils";
 import { useSupabaseProducts } from "@/hooks/use-supabase-products";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 
 export const FeaturedProducts = () => {
   const { isMobile } = useIsMobile();
   const { products, isLoaded } = useSupabaseProducts();
-  const featuredProducts = getFeaturedProducts(products, 12);
+  const featuredProducts = getFeaturedProducts(products, products.length);
   
-  // Estado para controlar cuántos productos mostrar en desktop
-  const [visibleCount, setVisibleCount] = useState(6);
-  
-  // Ref para el contenedor de scroll horizontal
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  const showMore = () => {
-    setVisibleCount(prev => Math.min(prev + 3, featuredProducts.length));
-  };
-  
-  const showLess = () => {
-    setVisibleCount(prev => Math.max(prev - 3, 6));
-  };
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -47,8 +34,7 @@ export const FeaturedProducts = () => {
             Descubrí las novedades
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Los equipos más populares y solicitados de nuestro catálogo profesional. 
-            Más de 23 años de experiencia en iluminación escénica.
+            Conocé los nuevos equipos de iluminación profesional que sumamos al catálogo.
           </p>
         </div>
 
@@ -59,13 +45,15 @@ export const FeaturedProducts = () => {
               Cargando productos destacados...
             </p>
           </div>
+        ) : featuredProducts.length === 0 ? (
+          <p className="text-center text-muted-foreground mb-8">Próximamente vamos a sumar nuevas novedades.</p>
         ) : (
           <>
             {/* Vista móvil: Grid 2x2 simple */}
             {isMobile && (
               <div className="mb-10 max-w-2xl mx-auto">
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  {featuredProducts.slice(0, 4).map((product, index) => (
+                  {featuredProducts.map((product, index) => (
                     <div 
                       key={product.model}
                       className="animate-fade-in w-full"
@@ -85,6 +73,7 @@ export const FeaturedProducts = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  aria-label="Ver novedades anteriores"
                   onClick={scrollLeft}
                   className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-primary shadow-lg w-12 h-12 p-0 rounded-full"
                 >
@@ -93,7 +82,7 @@ export const FeaturedProducts = () => {
 
                 {/* Contenedor de productos con scroll horizontal */}
                 <div className="flex gap-6 overflow-x-auto pb-4 px-20" ref={scrollContainerRef}>
-                  {featuredProducts.slice(0, visibleCount).map((product, index) => (
+                  {featuredProducts.map((product, index) => (
                     <div 
                       key={product.model}
                       className="animate-fade-in flex-shrink-0 w-80"
@@ -108,6 +97,7 @@ export const FeaturedProducts = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  aria-label="Ver más novedades"
                   onClick={scrollRight}
                   className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-primary shadow-lg w-12 h-12 p-0 rounded-full"
                 >

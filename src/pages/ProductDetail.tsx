@@ -46,7 +46,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+  }, [model]);
 
   if (!isLoaded || !products || products.length === 0) {
     return (

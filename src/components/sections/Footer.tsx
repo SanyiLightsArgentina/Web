@@ -1,3 +1,4 @@
+import { useSiteSettings } from '@/hooks/use-site-settings';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -12,6 +13,7 @@ import {
 import logo from "/src/assets/logo.png";
 
 export const Footer = () => {
+  const { settings: { contact } } = useSiteSettings();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -53,7 +55,7 @@ export const Footer = () => {
                 variant="ghost" 
                 size="icon" 
                 className="text-gray-400 hover:text-white h-8 w-8 md:h-10 md:w-10"
-                onClick={() => window.open('https://www.facebook.com/sanyilightsusa', '_blank')}
+                onClick={() => window.open(contact.facebook, '_blank')}
               >
                 <Facebook className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
@@ -61,7 +63,7 @@ export const Footer = () => {
                 variant="ghost" 
                 size="icon" 
                 className="text-gray-400 hover:text-white h-8 w-8 md:h-10 md:w-10"
-                onClick={() => window.open('https://www.instagram.com/sanyilightsar/', '_blank')}
+                onClick={() => window.open(contact.instagram, '_blank')}
               >
                 <Instagram className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
@@ -73,7 +75,7 @@ export const Footer = () => {
             <div className="flex items-center space-x-2 md:space-x-3">
               <Phone className="h-3 w-3 md:h-4 md:w-4 text-red-400" />
               <div>
-                <p className="text-xs md:text-sm font-medium">(+54 9) 11 7138-8885</p>
+                <p className="text-xs md:text-sm font-medium">{contact.phoneLabel}</p>
                 <p className="text-xs text-gray-400">Contacto directo</p>
               </div>
             </div>
@@ -84,7 +86,7 @@ export const Footer = () => {
             <div className="flex items-center space-x-2 md:space-x-3">
               <Mail className="h-3 w-3 md:h-4 md:w-4 text-red-400" />
               <div>
-                <p className="text-xs md:text-sm font-medium">ventas@sanyilights.com</p>
+                <p className="text-xs md:text-sm font-medium">{contact.email}</p>
                 <p className="text-xs text-gray-400">Consultas comerciales</p>
               </div>
             </div>
@@ -96,14 +98,14 @@ export const Footer = () => {
               <div className="flex items-center space-x-2 md:space-x-3">
                 <MapPin className="h-3 w-3 md:h-4 md:w-4 text-red-400" />
                 <div>
-                  <p className="text-xs md:text-sm font-medium">Chile 1380, C.A.B.A</p>
-                  <p className="text-xs text-gray-400">Ciudad Autónoma</p>
+                  <p className="text-xs md:text-sm font-medium">{contact.address}</p>
+                  <p className="text-xs text-gray-400">{contact.city}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2 md:space-x-3">
                 <Clock className="h-3 w-3 md:h-4 md:w-4 text-red-400" />
                 <div>
-                  <p className="text-xs md:text-sm font-medium">Lun-Vie 9:00-18:00</p>
+                  <p className="text-xs md:text-sm font-medium">{contact.hours}</p>
                   <p className="text-xs text-gray-400">Horario comercial</p>
                 </div>
               </div>

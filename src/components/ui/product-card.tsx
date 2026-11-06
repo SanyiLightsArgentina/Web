@@ -3,24 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Product } from "@/data/products";
 import { useQuoteList } from "@/hooks/use-quote-list";
 
 export const ProductCard = (product: Product) => {
-  const navigate = useNavigate();
+  const location = useLocation();
   const { has, toggle } = useQuoteList();
-
-  const handleCardClick = () => {
-    // Hacer scroll al top antes de navegar
-    window.scrollTo(0, 0);
-  };
+  const catalogUrl = location.pathname === '/productos'
+    ? location.pathname + location.search : location.state?.catalogUrl;
 
   return (
     <Link 
       to={`/producto/${encodeURIComponent(product.model)}`} 
       className="block group h-full"
-      onClick={handleCardClick}
+      state={{ catalogUrl }}
     >
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer h-full flex flex-col">
         <CardHeader className="p-0 relative flex-shrink-0">
@@ -55,7 +52,6 @@ export const ProductCard = (product: Product) => {
                 <Button 
                   size="sm" 
                   className="w-full bg-gray-100 text-gray-700 hover:bg-red-500 hover:text-white transition-all duration-300 text-xs py-2 h-9"
-                  onClick={handleCardClick}
                 >
                   <Eye className="h-3 w-3 mr-1" />
                   Ver Detalles
@@ -79,7 +75,6 @@ export const ProductCard = (product: Product) => {
                 <Button 
                   size="sm" 
                   className="w-full bg-gray-100 text-gray-700 hover:bg-red-500 hover:text-white transition-all duration-300 text-xs px-2 py-2"
-                  onClick={handleCardClick}
                 >
                   <Eye className="h-3 w-3 mr-1" />
                   Detalles

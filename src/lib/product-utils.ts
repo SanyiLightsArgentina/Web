@@ -45,23 +45,7 @@ export const getFeaturedProducts = (products: Product[], count: number = 6) => {
     return [];
   }
 
-  const featuredModels = [
-    "SPL-LED-700",
-    "SPL-LED-681",
-    "SPL-LED-M600BSWF",
-    "SPL-MHL-420 IP",
-    "SPL-LED-M400B",
-    "SPL-MHL-M251G YH",
-  ];
-
-  const prioritized = products.filter(product => featuredModels.includes(product.model));
-
-  if (prioritized.length >= count) {
-    return prioritized.slice(0, count);
-  }
-
-  const remaining = products.filter(product => !featuredModels.includes(product.model));
-  return [...prioritized, ...remaining].slice(0, count);
+  return products.filter(product => product.new === true).slice(0, count);
 };
 
 export const searchProducts = (products: Product[], query: string) => {

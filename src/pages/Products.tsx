@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useCatalogPosition } from "@/hooks/use-catalog-position";
+import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
 import { filterProducts } from "@/lib/product-utils";
 import { useSupabaseProducts } from "@/hooks/use-supabase-products";
@@ -22,48 +23,54 @@ const Products = () => {
     description:
       "Catálogo de equipos de iluminación profesional Sanyi: cabezales móviles LED, barras zoom, proyectores. Cotizá por WhatsApp.",
   });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
-  const [showOnlyNew, setShowOnlyNew] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  
+  const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const searchQuery = params.get('q') ?? '';
+  const selectedCategory = params.get('categoria') ?? 'Todos';
+  const showOnlyNew = params.get('nuevos') === '1';
+  const requestedPage = Math.max(1, Number(params.get('pagina')) || 1);
+  const updateFilter = (key: string, value: string) => {
+    setParams(previous => {
+      const next = new URLSearchParams(previous);
+      if (value) next.set(key, value); else next.delete(key);
+      next.delete('pagina');
+      return next;
+    }, { replace: true });
+  };
+
   // Usar productos y categorías desde Supabase
   const { products, isLoaded } = useSupabaseProducts();
-  const { categories } = useSupabaseCategories();
+  const { categories, isLoaded: categoriesLoaded } = useSupabaseCategories();
   
   // Configuración de paginación
   const PRODUCTS_PER_PAGE = 20;
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
     if (location.state?.selectedCategory) {
-      setSelectedCategory(location.state.selectedCategory);
-      window.history.replaceState({}, document.title);
+      const next = new URLSearchParams();
+      next.set('categoria', location.state.selectedCategory);
+      navigate({ pathname: '/productos', search: next.toString() }, { replace: true, state: null });
     }
-  }, [location.state]);
+  }, [location.state, navigate]);
 
   const filteredProducts = filterProducts(products, searchQuery, selectedCategory, showOnlyNew, categories);
   
   // Calcular paginación
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+  const currentPage = Math.min(Math.floor(requestedPage), Math.max(1, totalPages));
+  useCatalogPosition(location.pathname + location.search, isLoaded && categoriesLoaded);
   const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
   const endIndex = startIndex + PRODUCTS_PER_PAGE;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
   
-  // Resetear a la primera página cuando cambien los filtros
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory, showOnlyNew]);
-  
-  // Funciones de paginación
   const goToPage = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setParams(previous => {
+      const next = new URLSearchParams(previous);
+      next.set('pagina', String(page));
+      return next;
+    });
   };
-  
+
   const goToFirstPage = () => goToPage(1);
   const goToLastPage = () => goToPage(totalPages);
   const goToNextPage = () => goToPage(currentPage + 1);
@@ -71,9 +78,9 @@ const Products = () => {
 
   const handleCategorySelect = (category: string) => {
     if (selectedCategory === category) {
-      setSelectedCategory("Todos");
+      updateFilter('categoria', '');
     } else {
-      setSelectedCategory(category);
+      updateFilter('categoria', category === 'Todos' ? '' : category);
     }
   };
 
@@ -95,7 +102,7 @@ const Products = () => {
               <Input
                 placeholder="Buscar productos..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => updateFilter('q', e.target.value)}
                 className="w-full sm:max-w-md bg-white focus:border-red-600 focus:ring-red-500 shadow-lg h-10 sm:h-12 text-sm sm:text-base"
               />
             </div>
@@ -105,7 +112,7 @@ const Products = () => {
               <Switch
                 id="new-products"
                 checked={showOnlyNew}
-                onCheckedChange={setShowOnlyNew}
+                onCheckedChange={checked => updateFilter('nuevos', checked ? '1' : '')}
                 className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-gray-300"
               />
               <Label htmlFor="new-products" className="text-sm font-medium text-gray-700 cursor-pointer">

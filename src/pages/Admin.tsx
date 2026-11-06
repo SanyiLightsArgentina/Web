@@ -1,3 +1,5 @@
+import { ClientsTab } from '@/components/admin/ClientsTab';
+import { SiteContentTab } from '@/components/admin/SiteContentTab';
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoryManager } from '@/components/ui/category-manager';
@@ -6,7 +8,8 @@ import { Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
 import { useSEO } from '@/hooks/useSEO';
 import { useProductsWithCategories } from '@/hooks/use-products-with-categories';
-import { DatabaseUser } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { authenticateUser, getAdminUser } from '@/lib/auth';
 import { LoginForm } from '@/components/admin/LoginForm';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { ProductsTab } from '@/components/admin/ProductsTab';
@@ -23,9 +26,9 @@ const Admin: React.FC = () => {
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [currentUser, setCurrentUser] = useState<DatabaseUser | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -45,10 +48,13 @@ const Admin: React.FC = () => {
   } = useProductsWithCategories();
 
   useEffect(() => {
-    if (currentUser) {
-      setIsAuthenticated(true);
-    }
-  }, [currentUser]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const admin = getAdminUser(session?.user ?? null);
+      setIsAuthenticated(!!admin);
+      setAuthLoading(false);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,13 +80,11 @@ const Admin: React.FC = () => {
       
       setIsLoggingIn(true);
       
-      const { authenticateUser } = await import('@/lib/supabase');
-      
       const user = await authenticateUser(username.trim(), password);
       
       if (user && user.role === 'admin') {
-        setCurrentUser(user);
         setIsAuthenticated(true);
+        setPassword('');
         toast({
           title: "¡Bienvenido!",
           description: `✅ ¡Bienvenido ${user.username}!`
@@ -117,11 +121,15 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({ title: 'No se pudo cerrar la sesión', variant: 'destructive' });
+      return;
+    }
     setIsAuthenticated(false);
     setUsername('');
     setPassword('');
-    setCurrentUser(null);
     toast({
       title: "Sesión cerrada",
       description: "Sesión cerrada exitosamente"
@@ -213,6 +221,7 @@ const Admin: React.FC = () => {
         title: "Error",
         description: `❌ Error guardando producto: ${error instanceof Error ? error.message : 'Error desconocido'}`
       });
+      throw error;
     }
   };
 
@@ -220,6 +229,8 @@ const Admin: React.FC = () => {
     setIsAddingProduct(false);
     setEditingProduct(null);
   };
+
+  if (authLoading) return <div role="status" className="min-h-screen grid place-items-center">Cargando sesión...</div>;
 
   if (!isAuthenticated) {
     return (
@@ -240,9 +251,13 @@ const Admin: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full h-auto grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
             <TabsTrigger value="products">Gestión de Productos</TabsTrigger>
             <TabsTrigger value="categories">Categorías</TabsTrigger>
+            <TabsTrigger value="hero">Hero</TabsTrigger>
+            <TabsTrigger value="videos">Videos</TabsTrigger>
+            <TabsTrigger value="contact">Contacto</TabsTrigger>
+            <TabsTrigger value="clients">Clientes</TabsTrigger>
             <TabsTrigger value="overview">Resumen</TabsTrigger>
           </TabsList>
 
@@ -277,6 +292,10 @@ const Admin: React.FC = () => {
             />
           </TabsContent>
 
+          {(['hero', 'videos', 'contact'] as const).map(section => (
+            <TabsContent key={section} value={section}><SiteContentTab section={section} /></TabsContent>
+          ))}
+          <TabsContent value="clients"><ClientsTab /></TabsContent>
           <TabsContent value="overview" className="space-y-6">
             <AdminStats 
               products={currentProducts} 

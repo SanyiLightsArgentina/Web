@@ -1,12 +1,13 @@
+import { useSaveSiteSection } from '@/hooks/use-site-settings';
 import React, { useState } from 'react';
 import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
-import { Plus, Edit, Trash2, X, Check } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { Category, useSupabaseCategories } from '@/hooks/use-supabase-categories';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
 
 interface CategoryManagerProps {
@@ -15,6 +16,15 @@ interface CategoryManagerProps {
 
 export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChange }) => {
   const { categories, addCategory, updateCategory, deleteCategory } = useSupabaseCategories();
+  const reorder = useSaveSiteSection();
+  const moveCategory = async (index: number, direction: number) => {
+    const ids = categories.map(c => c.id);
+    [ids[index], ids[index + direction]] = [ids[index + direction], ids[index]];
+    try {
+      await reorder.mutateAsync({ key: 'category_order', value: ids });
+      onCategoryChange(categories);
+    } catch { toast({ title: 'No se pudo guardar el orden de las categorías', variant: 'destructive' }); }
+  };
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingName, setEditingName] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -133,7 +143,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
 
         {/* Lista de categorías */}
         <div className="space-y-2">
-          {categories.map((category) => (
+          {categories.map((category, index) => (
             <div
               key={category.id}
               className="flex items-center justify-between p-3 bg-white border rounded-lg hover:bg-gray-50"
@@ -168,6 +178,8 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
                 <>
                   <span className="font-medium text-gray-900">{category.name}</span>
                   <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="icon" aria-label={`Subir ${category.name}`} disabled={index === 0 || reorder.isPending} onClick={() => moveCategory(index, -1)}><ArrowUp className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon" aria-label={`Bajar ${category.name}`} disabled={index === categories.length - 1 || reorder.isPending} onClick={() => moveCategory(index, 1)}><ArrowDown className="h-4 w-4" /></Button>
                     <Button
                       onClick={() => startEditing(category)}
                       variant="outline"

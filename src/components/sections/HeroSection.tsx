@@ -1,3 +1,5 @@
+import { useSiteSettings } from '@/hooks/use-site-settings';
+import { youtubeId, type HeroSlide } from '@/lib/site-settings';
 import { Button } from "@/components/ui/button";
 import { ArrowRight} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -5,65 +7,43 @@ import { useNavigate } from "react-router-dom";
 import { useProductsWithCategories } from "@/hooks/use-products-with-categories";
 import { getProductByModel } from "@/lib/product-utils";
 
-const professionalVideos = [
-  {
-    src: "https://youtu.be/V8Z_ymp_-kg",
-    title: "SPL-LED-1260S",
-    subtitle: "12*60W LED MOVING BAR ZOOM",
-    productRoute: "/producto/SPL-LED-1260S",
-    new: false
-  },
-  {
-    src: "https://www.youtube.com/watch?v=vYeNbPc0vc4&t=12s",
-    title: "SPL-LED-M1260YZ IP",
-    subtitle: "12*60W LED moving bar zoom",
-    productRoute: "/producto/SPL-LED-M1260YZ IP",
-    new: true
-  },
-  {
-    src: "https://youtu.be/bDumjs4uDW8",
-    title: "SPL-LED-M700W Profile IP",
-    subtitle: "LED Moving Head Lights",
-    productRoute: "/producto/SPL-LED-M700W Profile IP",
-    new: true
-  }
-];
 
 export const HeroSection = () => {
+  const { settings } = useSiteSettings();
+  const professionalVideos = settings.hero;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { products, isLoaded } = useProductsWithCategories();
 
-  const oneSecond = 1000;
+  const activeIndex = currentImageIndex % professionalVideos.length;
 
   const goToImage = (index: number) => {
-    if (index === currentImageIndex) return;
+    if (index === activeIndex) return;
     setCurrentImageIndex(index);
   };
 
   const goToNextImage = () => {
     setCurrentImageIndex((prevIndex) =>
-      prevIndex === professionalVideos.length - 1 ? 0 : prevIndex + 1
+      (prevIndex + 1) % professionalVideos.length
     );
   };
 
   const goToPrevImage = () => {
     setCurrentImageIndex((prevIndex) =>
-      prevIndex === 0 ? professionalVideos.length - 1 : prevIndex - 1
+      (prevIndex - 1 + professionalVideos.length) % professionalVideos.length
     );
   };
 
   useEffect(() => {
     const interval = setInterval(() => {
-      goToNextImage();
-    }, oneSecond * 10);
+      setCurrentImageIndex(index => (index + 1) % professionalVideos.length);
+    }, 10_000);
 
     return () => clearInterval(interval);
-  }, [currentImageIndex]);
+  }, [professionalVideos.length]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -89,13 +69,6 @@ export const HeroSection = () => {
     }
   };
 
-  const getButtonClasses = (variant: 'primary' | 'secondary') => {
-    if (variant === 'primary') {
-      return 'bg-white text-black hover:bg-white/90';
-    }
-    return 'border-white text-white bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:border-white/80';
-  };
-
   const handleProductClick = (productRoute: string) => {
     window.scrollTo(0, 0);
     const model = productRoute.replace('/producto/', '');
@@ -111,12 +84,6 @@ export const HeroSection = () => {
     } else {
       navigate(productRoute);
     }
-  };
-
-  const getYouTubeVideoId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
   };
 
   const getYouTubeStartTime = (url: string) => {
@@ -145,12 +112,13 @@ export const HeroSection = () => {
     return parseInt(timeStr) || 0;
   };
 
-  const activeVideo = professionalVideos[currentImageIndex];
+  const activeVideo = professionalVideos[activeIndex];
 
-  const renderVideoContent = (video: typeof professionalVideos[0]) => {
-    const videoId = getYouTubeVideoId(video.src);
+  const renderVideoContent = (video: HeroSlide) => {
+    if (video.type === 'image') return <img src={video.src} alt={video.title} className="w-full h-full object-cover" />;
+    const videoId = youtubeId(video.src);
     const startTime = getYouTubeStartTime(video.src);
-    if (!videoId) return null;
+    if (!videoId) return <video key={video.src} src={video.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />;
     return (
       <iframe
         key={video.src}
@@ -187,13 +155,13 @@ export const HeroSection = () => {
             size="icon"
             onClick={() => goToImage(index)}
             className={`w-8 h-8 rounded-full p-0 transition-all duration-700 font-bold text-sm relative overflow-hidden group ${
-              index === currentImageIndex
+              index === activeIndex
                 ? 'bg-gradient-to-br from-white via-white to-gray-100 text-black scale-125 shadow-2xl shadow-white/50 border-2 border-white/60 hover:scale-110'
                 : 'bg-gradient-to-br from-black/30 via-black/20 to-transparent text-white/90 hover:scale-110 hover:bg-gradient-to-br hover:from-white/20 hover:via-white/15 hover:to-transparent hover:text-white border border-white/20 hover:border-white/40'
             }`}
           >
             <span className="relative z-10">{index + 1}</span>
-            {index === currentImageIndex && (
+            {index === activeIndex && (
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
             )}
           </Button>
