@@ -7,29 +7,39 @@ import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import mapImage from "@/assets/map.jpeg";
-import prof2 from "@/assets/prof2.jpg";
-import prof3 from "@/assets/prof3.jpg";
-import professionalLightingEvent from "@/assets/professional-lighting-event.jpg";
-import messi from "@/assets/messi.jpg";
+import prof2Small from "@/assets/prof2-800.webp";
+import prof2Medium from "@/assets/prof2-1200.webp";
+import prof2Large from "@/assets/prof2-2400.webp";
+import prof3Small from "@/assets/prof3-800.webp";
+import prof3Medium from "@/assets/prof3-1200.webp";
+import prof3Large from "@/assets/prof3-2400.webp";
+import professionalLightingEventSmall from "@/assets/professional-lighting-event-800.webp";
+import professionalLightingEventLarge from "@/assets/professional-lighting-event-1200.webp";
+import messiSmall from "@/assets/messi-400.webp";
+import messiLarge from "@/assets/messi-800.webp";
 
 const professionalImages = [
   {
-    src: prof3,
+    src: prof3Large,
+    srcSet: `${prof3Small} 800w, ${prof3Medium} 1200w, ${prof3Large} 2400w`,
     title: "Iluminación Profesional",
     subtitle: "Lideres con +23 años de experiencia en equipos de iluminación escénica"
   },
   {
-    src: prof2, 
+    src: prof2Large,
+    srcSet: `${prof2Small} 800w, ${prof2Medium} 1200w, ${prof2Large} 2400w`,
     title: "Tecnología Avanzada",
     subtitle: "Cabezal movil LED, LED displays y consolas DMX"
   },
   {
-    src: professionalLightingEvent,
+    src: professionalLightingEventLarge,
+    srcSet: `${professionalLightingEventSmall} 800w, ${professionalLightingEventLarge} 1200w`,
     title: "Solicita Asesoramiento",
     subtitle: "Te ayudamos a elegir la mejor iluminación para tu evento"
   },
   {
-    src: messi,
+    src: messiLarge,
+    srcSet: `${messiSmall} 400w, ${messiLarge} 800w`,
     title: "Distribuidor Oficial",
     subtitle: "Representante exclusivo de Sanyi Lights en Argentina"
   },
@@ -37,9 +47,23 @@ const professionalImages = [
 
 const About = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<number[]>([0]);
+  const preloadedAllRef = useRef(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  const ensureImageLoaded = (index: number) => {
+    setLoadedImages(previous => previous.includes(index) ? previous : [...previous, index]);
+  };
+
+  const loadRemainingImages = () => {
+    if (preloadedAllRef.current) return;
+    preloadedAllRef.current = true;
+    // The first slide is already visible; load the rest now that they no longer
+    // compete with it for bandwidth on the initial page load.
+    setLoadedImages(professionalImages.map((_, index) => index));
+  };
 
   useSEO({
     title: "Nosotros",
@@ -62,19 +86,24 @@ const About = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    setLoadedImages(previous => previous.includes(currentImageIndex) ? previous : [...previous, currentImageIndex]);
+  }, [currentImageIndex]);
+
   const nextImage = () => {
-    setCurrentImageIndex((prevIndex) => 
-      prevIndex === professionalImages.length - 1 ? 0 : prevIndex + 1
-    );
+    const nextIndex = currentImageIndex === professionalImages.length - 1 ? 0 : currentImageIndex + 1;
+    ensureImageLoaded(nextIndex);
+    setCurrentImageIndex(nextIndex);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prevIndex) => 
-      prevIndex === 0 ? professionalImages.length - 1 : prevIndex - 1
-    );
+    const previousIndex = currentImageIndex === 0 ? professionalImages.length - 1 : currentImageIndex - 1;
+    ensureImageLoaded(previousIndex);
+    setCurrentImageIndex(previousIndex);
   };
 
   const goToImage = (index: number) => {
+    ensureImageLoaded(index);
     setCurrentImageIndex(index);
   };
 
@@ -140,11 +169,17 @@ const About = () => {
                       index === currentImageIndex ? 'opacity-100' : 'opacity-0'
                     }`}
                   >
-                    <img
-                      src={image.src}
-                      alt={image.title}
-                      className="w-full h-full object-cover"
-                    />
+                    {loadedImages.includes(index) && (
+                      <img
+                        src={image.src}
+                        srcSet={image.srcSet}
+                        sizes="(min-width: 1440px) 1400px, 100vw"
+                        alt={image.title}
+                        className="w-full h-full object-cover"
+                        decoding="async"
+                        onLoad={index === currentImageIndex ? loadRemainingImages : undefined}
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
                   </div>
                 ))}
