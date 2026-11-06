@@ -1,4 +1,4 @@
-import { ArrowUpRight, Building2 } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 import { isWebUrl } from '@/lib/site-settings';
 import { ClientLogo } from '@/components/ui/client-logo';
@@ -6,6 +6,7 @@ import { ClientLogo } from '@/components/ui/client-logo';
 export function ClientsSection() {
   const { settings } = useSiteSettings();
   const clients = settings.clients;
+  if (!clients.length) return null;
 
   return (
     <section id="clientes" aria-labelledby="clients-title" className="py-16 sm:py-20 bg-background">
@@ -15,7 +16,6 @@ export function ClientsSection() {
           <h2 id="clients-title" className="text-3xl md:text-4xl font-bold mb-4">Empresas que trabajan con nosotros</h2>
           <p className="text-muted-foreground text-lg">Acompañamos a quienes hacen posible cada evento, espectáculo y producción.</p>
         </div>
-        {clients.length ? (
           <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {clients.map(client => {
               const content = <>
@@ -26,14 +26,7 @@ export function ClientsSection() {
               return <li key={client.id}>{isWebUrl(client.link) ? <a href={client.link} target="_blank" rel="noopener noreferrer" aria-label={`${client.company} (abre en una nueva pestaña)`} className={`${className} transition-colors hover:border-primary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary`}>{content}</a> : <div className={className}>{content}</div>}</li>;
             })}
           </ul>
-        ) : (
-          <div>
-            <p className="text-center text-sm text-muted-foreground mb-6">Próximamente vas a conocer a nuestros clientes.</p>
-            <ul aria-label="Espacios reservados para clientes" className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-              {[1, 2, 3, 4].map(index => <li key={index} className="rounded-xl border border-dashed bg-muted/20 px-4 py-8 sm:py-10 text-center"><Building2 className="h-10 w-10 mx-auto text-muted-foreground/40 mb-5" aria-hidden="true" /><p className="font-medium text-muted-foreground">Empresa {String(index).padStart(2, '0')}</p><p className="text-xs text-muted-foreground/70 mt-1">Espacio reservado</p></li>)}
-            </ul>
-          </div>
-        )}
+
       </div>
     </section>
   );

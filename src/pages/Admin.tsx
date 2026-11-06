@@ -1,7 +1,9 @@
+import { AdminNavigation } from '@/components/admin/AdminNavigation';
+import { adminSections } from '@/components/admin/admin-sections';
 import { ClientsTab } from '@/components/admin/ClientsTab';
 import { SiteContentTab } from '@/components/admin/SiteContentTab';
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { CategoryManager } from '@/components/ui/category-manager';
 import { AdminStats } from '@/components/ui/admin-stats';
 import { Product } from '@/data/products';
@@ -25,6 +27,15 @@ const Admin: React.FC = () => {
     noIndex: true,
   });
 
+  const [desktopNavigation, setDesktopNavigation] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 1024px)');
+    const update = () => setDesktopNavigation(query.matches);
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  const [activeTab, setActiveTab] = useState('products');
+  const activeSection = adminSections.find(section => section.value === activeTab) || adminSections[0];
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [username, setUsername] = useState('');
@@ -246,21 +257,16 @@ const Admin: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminHeader onLogout={handleLogout} />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full h-auto grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
-            <TabsTrigger value="products">Gestión de Productos</TabsTrigger>
-            <TabsTrigger value="categories">Categorías</TabsTrigger>
-            <TabsTrigger value="hero">Hero</TabsTrigger>
-            <TabsTrigger value="videos">Videos</TabsTrigger>
-            <TabsTrigger value="contact">Contacto</TabsTrigger>
-            <TabsTrigger value="clients">Clientes</TabsTrigger>
-            <TabsTrigger value="overview">Resumen</TabsTrigger>
-          </TabsList>
-
+    <div className="min-h-screen bg-muted/30">
+      <Tabs orientation={desktopNavigation ? 'vertical' : 'horizontal'} value={activeTab} onValueChange={setActiveTab} className="min-h-svh lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
+        <AdminNavigation />
+        <div className="min-w-0">
+          <AdminHeader onLogout={handleLogout} section={activeSection.label} />
+          <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="mb-7">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{activeSection.label}</h1>
+              <p className="text-sm text-muted-foreground">{activeSection.description}</p>
+            </div>
           <TabsContent value="products">
             <ProductsTab
               products={currentProducts}
@@ -306,8 +312,9 @@ const Admin: React.FC = () => {
             
             <ProductStats products={currentProducts} />
           </TabsContent>
-        </Tabs>
-      </main>
+          </main>
+        </div>
+      </Tabs>
 
       {/* Modal de confirmación para eliminar producto */}
       {deleteProductConfirmation && (

@@ -66,7 +66,7 @@ function ClientsEditor({ initial }: { initial: SiteClient[] }) {
     <CardHeader><CardTitle>Empresas que trabajan con nosotros</CardTitle></CardHeader>
     <CardContent>
       <form onSubmit={submit} className="space-y-6">
-        <p className="text-sm text-muted-foreground">Agregá las empresas, sus logos y el enlace a sus sitios. El orden de esta lista se usa en el inicio. Mientras la lista esté vacía se muestran espacios reservados.</p>
+        <p className="text-sm text-muted-foreground">Agregá las empresas, sus logos y el enlace a sus sitios. El orden de esta lista se usa en el inicio. La sección aparece en el inicio cuando hay al menos una empresa cargada.</p>
         <fieldset disabled={busy} className="space-y-4">
           {clients.length === 0 && <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">Todavía no agregaste clientes.</div>}
           {clients.map((client, index) => <div key={client.id} className="rounded-lg border p-4 sm:p-5 space-y-4">
