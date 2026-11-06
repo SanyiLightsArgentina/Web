@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ClientLogo } from '@/components/ui/client-logo';
 import { useSiteSettings, useSaveSiteSection } from '@/hooks/use-site-settings';
-import { useSupabaseStorage } from '@/hooks/use-supabase-storage';
+import { useMediaUpload } from '@/hooks/use-media-upload';
 import { useToast } from '@/hooks/use-toast';
 import { isWebUrl, type SiteClient } from '@/lib/site-settings';
 
@@ -19,7 +19,7 @@ export function ClientsTab() {
 
 function ClientsEditor({ initial }: { initial: SiteClient[] }) {
   const [clients, setClients] = useState(() => structuredClone(initial));
-  const { uploadFile, isUploading } = useSupabaseStorage();
+  const { upload, isUploading } = useMediaUpload();
   const save = useSaveSiteSection();
   const { toast } = useToast();
   const busy = save.isPending || isUploading;
@@ -32,16 +32,15 @@ function ClientsEditor({ initial }: { initial: SiteClient[] }) {
 
   const uploadLogo = async (id: string, file?: File) => {
     if (!file || busy) return;
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size === 0 || file.size > 10 * 1024 * 1024) {
-      toast({ title: 'Revisá el logo', description: 'Usá una imagen PNG, JPG o WebP de hasta 10 MB.', variant: 'destructive' });
-      return;
-    }
     try {
-      const extension = file.type === 'image/png' ? 'png' : file.type === 'image/jpeg' ? 'jpg' : 'webp';
-      const logo = await uploadFile(file, 'product-images', `clients/${id}/${crypto.randomUUID()}.${extension}`);
+      const logo = await upload(file, { kind: 'client-logo', clientId: id });
       update(id, { logo });
-    } catch {
-      toast({ title: 'No se pudo subir el logo', description: 'Volvé a intentar. Los datos ingresados se conservan.', variant: 'destructive' });
+    } catch (error) {
+      toast({
+        title: 'No se pudo subir el logo',
+        description: error instanceof Error ? error.message : 'Volvé a intentar. Los datos ingresados se conservan.',
+        variant: 'destructive',
+      });
     }
   };
 

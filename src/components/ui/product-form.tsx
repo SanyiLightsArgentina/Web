@@ -11,7 +11,7 @@ import { X, Plus, Eye, Play, FileText, Image, Video } from 'lucide-react'
 import { toast as notify } from '@/hooks/use-toast'
 
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
-import { useSupabaseStorage } from '@/hooks/use-supabase-storage'
+import { useMediaUpload } from '@/hooks/use-media-upload'
 import { CatalogWriteError } from '@/lib/catalog-writes'
 
 const toast = {
@@ -45,7 +45,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 }) => {
   const submitInProgress = useRef(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { uploadProductImage, uploadProductContent, uploadProductVideo, isUploading } = useSupabaseStorage()
+  const { upload, isUploading } = useMediaUpload()
   
   const [formData, setFormData] = useState({
     model: product?.model || '',
@@ -255,7 +255,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           finalProductData.images.push(item.value as string)
         } else if (item.type === 'file') {
           const file = item.value as File
-          const url = await uploadProductImage(file, formData.model)
+          const url = await upload(file, { kind: 'product-image', model: formData.model })
           if (url) {
             finalProductData.images.push(url)
           }
@@ -268,7 +268,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           finalProductData.contents.push(item.value as string)
         } else if (item.type === 'file') {
           const file = item.value as File
-          const url = await uploadProductContent(file, formData.model)
+          const url = await upload(file, { kind: 'product-content', model: formData.model })
           if (url) {
             finalProductData.contents.push(url)
           }
@@ -281,7 +281,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           finalProductData.videos.push(item.value as string)
         } else if (item.type === 'file') {
           const file = item.value as File
-          const url = await uploadProductVideo(file, formData.model)
+          const url = await upload(file, { kind: 'product-video', model: formData.model })
           if (url) {
             finalProductData.videos.push(url)
           }

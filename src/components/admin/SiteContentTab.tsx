@@ -1,4 +1,4 @@
-import { useSupabaseStorage } from '@/hooks/use-supabase-storage';
+import { useMediaUpload } from '@/hooks/use-media-upload';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +39,7 @@ export function SiteContentTab({ section }: { section: Section }) {
 function ContentEditor({ section, initial }: { section: Section; initial: SiteSettings }) {
   const [draft, setDraft] = useState(() => structuredClone(initial));
   const save = useSaveSiteSection();
-  const { uploadProductVideo, isUploading } = useSupabaseStorage();
+  const { upload, isUploading } = useMediaUpload();
   const { toast } = useToast();
   const setHero = (index: number, updates: Partial<SiteSettings['hero'][number]>) => setDraft(d => ({ ...d, hero: d.hero.map((slide, i) => i === index ? { ...slide, ...updates } : slide) }));
   const setVideo = (index: number, updates: Partial<SiteSettings['videos']['items'][number]>) => setDraft(d => ({ ...d, videos: { ...d.videos, items: d.videos.items.map((video, i) => i === index ? { ...video, ...updates } : video) } }));
@@ -61,7 +61,7 @@ function ContentEditor({ section, initial }: { section: Section; initial: SiteSe
   const uploadVideo = async (file: File | undefined, update: (url: string) => void) => {
     if (!file) return;
     try {
-      const url = await uploadProductVideo(file, section === 'hero' ? 'site-hero' : 'site-videos');
+      const url = await upload(file, { kind: 'site-video', section: section === 'hero' ? 'hero' : 'videos' });
       if (url) update(url);
     } catch (error) {
       toast({ title: 'No se pudo subir el video', description: error instanceof Error ? error.message : 'Volvé a intentar.', variant: 'destructive' });
