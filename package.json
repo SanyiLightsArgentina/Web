@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "export-csv": "node scripts/export-all-products.js"
+    "export-csv": "node scripts/export-all-products.js",
+    "test": "node scripts/verify-product-filter.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
