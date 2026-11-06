@@ -104,6 +104,127 @@ export const defaultSettings: SiteSettings = {
   clients: [],
 };
 
+export interface SiteSettingsRow {
+  key: string
+  value: unknown
+}
+
+type JsonRecord = Record<string, unknown>
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const asString = (value: unknown, fallback: string): string =>
+  typeof value === 'string' ? value : fallback
+
+const asBoolean = (value: unknown, fallback: boolean): boolean =>
+  typeof value === 'boolean' ? value : fallback
+
+const clone = <T,>(value: T): T => structuredClone(value)
+
+function parseHero(value: unknown): HeroSlide[] {
+  if (!Array.isArray(value)) return clone(defaultSettings.hero)
+  const slides = value.flatMap((item): HeroSlide[] => {
+    if (!isRecord(item)) return []
+    const type = item.type === 'image' || item.type === 'video' ? item.type : null
+    if (
+      !type ||
+      typeof item.src !== 'string' ||
+      typeof item.title !== 'string' ||
+      typeof item.subtitle !== 'string' ||
+      typeof item.productRoute !== 'string'
+    ) return []
+    return [{
+      type,
+      src: item.src,
+      title: item.title,
+      subtitle: item.subtitle,
+      productRoute: item.productRoute,
+      new: asBoolean(item.new, false),
+    }]
+  })
+  return slides.length > 0 ? slides : clone(defaultSettings.hero)
+}
+
+function parseVideos(value: unknown): SiteSettings['videos'] {
+  if (!isRecord(value)) return clone(defaultSettings.videos)
+  const items = Array.isArray(value.items)
+    ? value.items.flatMap((item): SiteVideo[] => {
+        if (!isRecord(item) || typeof item.id !== 'string' || typeof item.title !== 'string' || typeof item.url !== 'string') return []
+        return [{ id: item.id, title: item.title, url: item.url }]
+      })
+    : clone(defaultSettings.videos.items)
+
+  return {
+    items: items.length > 0 ? items : clone(defaultSettings.videos.items),
+    channelUrl: asString(value.channelUrl, defaultSettings.videos.channelUrl),
+  }
+}
+
+function parseContact(value: unknown): ContactSettings {
+  if (!isRecord(value)) return clone(defaultSettings.contact)
+  return {
+    phone: asString(value.phone, defaultSettings.contact.phone),
+    phoneLabel: asString(value.phoneLabel, defaultSettings.contact.phoneLabel),
+    email: asString(value.email, defaultSettings.contact.email),
+    address: asString(value.address, defaultSettings.contact.address),
+    city: asString(value.city, defaultSettings.contact.city),
+    hours: asString(value.hours, defaultSettings.contact.hours),
+    instagram: asString(value.instagram, defaultSettings.contact.instagram),
+    facebook: asString(value.facebook, defaultSettings.contact.facebook),
+  }
+}
+
+function parseCategoryOrder(value: unknown): number[] {
+  if (!Array.isArray(value)) return clone(defaultSettings.category_order)
+  return value.filter((id): id is number => Number.isInteger(id) && id >= 0)
+}
+
+function parseClients(value: unknown): SiteClient[] {
+  if (!Array.isArray(value)) return clone(defaultSettings.clients)
+  return value.flatMap((item): SiteClient[] => {
+    if (!isRecord(item) || typeof item.id !== 'string' || typeof item.company !== 'string') return []
+    return [{
+      id: item.id,
+      company: item.company,
+      logo: asString(item.logo, ''),
+      link: asString(item.link, ''),
+    }]
+  })
+}
+
+/**
+ * Turns the stored rows into a complete SiteSettings value. Every section is
+ * parsed on its own, so a partial or invalid row falls back to that section's
+ * defaults instead of replacing the whole object.
+ */
+export function parseSiteSettings(rows: readonly SiteSettingsRow[] | null | undefined): SiteSettings {
+  const settings = clone(defaultSettings)
+  for (const row of rows ?? []) {
+    if (!isRecord(row) || typeof row.key !== 'string') continue
+    switch (row.key) {
+      case 'hero':
+        settings.hero = parseHero(row.value)
+        break
+      case 'videos':
+        settings.videos = parseVideos(row.value)
+        break
+      case 'contact':
+        settings.contact = parseContact(row.value)
+        break
+      case 'category_order':
+        settings.category_order = parseCategoryOrder(row.value)
+        break
+      case 'clients':
+        settings.clients = parseClients(row.value)
+        break
+      default:
+        break
+    }
+  }
+  return settings
+}
+
 export function youtubeId(value: string): string | null {
   try {
     const url = new URL(value);

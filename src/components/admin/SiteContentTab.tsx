@@ -44,6 +44,12 @@ function ContentEditor({ section, initial }: { section: Section; initial: SiteSe
   const setHero = (index: number, updates: Partial<SiteSettings['hero'][number]>) => setDraft(d => ({ ...d, hero: d.hero.map((slide, i) => i === index ? { ...slide, ...updates } : slide) }));
   const setVideo = (index: number, updates: Partial<SiteSettings['videos']['items'][number]>) => setDraft(d => ({ ...d, videos: { ...d.videos, items: d.videos.items.map((video, i) => i === index ? { ...video, ...updates } : video) } }));
 
+  const saveCurrentSection = () => {
+    if (section === 'hero') return save.mutateAsync({ key: 'hero', value: draft.hero });
+    if (section === 'videos') return save.mutateAsync({ key: 'videos', value: draft.videos });
+    return save.mutateAsync({ key: 'contact', value: draft.contact });
+  };
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (save.isPending || isUploading) return;
@@ -53,7 +59,7 @@ function ContentEditor({ section, initial }: { section: Section; initial: SiteSe
     if (section === 'contact' && (!/^\d{8,15}$/.test(draft.contact.phone) || !draft.contact.phoneLabel.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.contact.email) || !isWebUrl(draft.contact.instagram) || !isWebUrl(draft.contact.facebook))) error = 'Revisá el WhatsApp (código de país y número, solo dígitos), el teléfono visible, el email y las redes sociales.';
     if (error) { toast({ title: 'Revisá los datos', description: error, variant: 'destructive' }); return; }
     try {
-      await save.mutateAsync({ key: section, value: draft[section] });
+      await saveCurrentSection();
       toast({ title: 'Cambios guardados', description: 'El sitio ya muestra la nueva configuración.' });
     } catch (err) { toast({ title: 'Error al guardar', description: err instanceof Error ? err.message : 'Volvé a intentar.', variant: 'destructive' }); }
   };

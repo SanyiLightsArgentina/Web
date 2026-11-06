@@ -1,11 +1,17 @@
 import { toast } from '@/hooks/use-toast';
+import { queryClient } from './query-client';
+import { queryKeys } from './query-keys';
 import { fetchSiteSettings } from './site-settings-api';
 
 async function contact(message: string) {
   const popup = window.open('about:blank', '_blank');
   if (popup) popup.opener = null;
   try {
-    const { contact } = await fetchSiteSettings();
+    const { contact } = await queryClient.fetchQuery({
+      queryKey: queryKeys.siteSettings,
+      queryFn: fetchSiteSettings,
+      staleTime: 60_000,
+    });
     const url = `https://wa.me/${contact.phone}?text=${encodeURIComponent(message)}`;
     if (popup) popup.location.href = url;
     else window.location.assign(url);
