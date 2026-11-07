@@ -5,18 +5,16 @@ import { Eye } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuoteList } from "@/hooks/use-quote-list";
 import type { ProductPresentation } from "@/lib/product-summary";
+import { productNavigation } from '@/lib/catalog-location';
 
 export const ProductCard = ({ product }: { product: ProductPresentation }) => {
   const location = useLocation();
   const { has, toggle } = useQuoteList();
-  const catalogUrl = location.pathname === '/productos'
-    ? location.pathname + location.search : location.state?.catalogUrl;
 
   return (
     <Link
-      to={product.href}
+      {...productNavigation(location, product.href)}
       className="block group h-full"
-      state={{ catalogUrl }}
     >
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer h-full flex flex-col">
         <CardHeader className="p-0 relative flex-shrink-0">

@@ -9,7 +9,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Search, X, Star, Eye } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { productNavigation } from '@/lib/catalog-location';
 import { selectProducts, getFeaturedProducts } from "@/lib/product-utils";
 import { presentProduct } from "@/lib/product-presentation";
 import type { ProductPresentation } from "@/lib/product-summary";
@@ -23,6 +24,7 @@ export const SearchDialog = () => {
   const featuredProducts = getFeaturedProducts(products, 8);
   const searchResults = searchQuery.trim() ? selectProducts(products, { query: searchQuery }) : [];
   const navigate = useNavigate();
+  const location = useLocation();
   const { has, toggle } = useQuoteList();
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -32,10 +34,11 @@ export const SearchDialog = () => {
     }
   };
 
-  const handleProductClick = (productModel: string) => {
+  const handleProductClick = (product: ProductPresentation) => {
     setOpen(false);
     setSearchQuery("");
-    navigate(`/producto/${encodeURIComponent(productModel)}`);
+    const { to, state } = productNavigation(location, product.href);
+    navigate(to, { state });
   };
 
   const ProductCardSearch = ({ product }: { product: ProductPresentation }) => (
@@ -66,7 +69,7 @@ export const SearchDialog = () => {
           <Button 
             size="sm" 
             className="w-full bg-gray-100 text-gray-700 hover:bg-red-500 hover:text-white transition-all duration-300 text-xs py-2"
-            onClick={() => handleProductClick(product.model)}
+            onClick={() => handleProductClick(product)}
           >
             <Eye className="h-3 w-3 mr-1" />
             Ver Detalles
@@ -93,6 +96,7 @@ export const SearchDialog = () => {
       <DialogTrigger asChild>
         <Button 
           variant="ghost" 
+          aria-label="Buscar productos"
           size="icon" 
           className="relative bg-white/10 hover:bg-white/20 text-white border border-white/20 hover:border-white/30 h-9 w-9 sm:h-10 sm:w-10"
         >

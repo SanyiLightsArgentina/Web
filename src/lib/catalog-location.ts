@@ -11,3 +11,17 @@ export function catalogCriteria(params: URLSearchParams) {
     page: Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1,
   }
 }
+
+type CatalogLocation = { pathname: string; search: string; state?: unknown }
+
+/** Return context survives every Product entry point, but never points outside the catalog. */
+export function catalogReturnHref(location: CatalogLocation): string {
+  if (location.pathname === '/productos') return location.pathname + location.search
+  const state = location.state
+  const origin = state && typeof state === 'object' && 'catalogUrl' in state ? state.catalogUrl : null
+  return typeof origin === 'string' && /^\/productos(?:\?[^#]*)?$/.test(origin) ? origin : catalogHref()
+}
+
+export function productNavigation(location: CatalogLocation, href: string) {
+  return { to: href, state: { catalogUrl: catalogReturnHref(location) } }
+}

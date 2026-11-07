@@ -1,7 +1,8 @@
 import { Navigation } from "@/components/ui/navigation";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { catalogReturnHref } from '@/lib/catalog-location';
 import { Footer } from "@/components/sections/Footer";
 import { getProductsByCategoryId } from "@/lib/product-utils";
 import { findProductByModel } from "@/lib/catalog";
@@ -21,6 +22,7 @@ const MAX_META_DESCRIPTION_LENGTH = 160;
 const ProductDetail = () => {
   const { model } = useParams<{ model: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { products, isLoaded, error, refetch } = useCatalog();
 
   const product = findProductByModel(products, model || "");
@@ -86,7 +88,7 @@ const ProductDetail = () => {
               <p className="text-muted-foreground mb-4">
                 El producto "{model}" no esta disponible.
               </p>
-              <Button onClick={() => navigate('/productos')}>
+              <Button onClick={() => navigate(catalogReturnHref(location))}>
                 Volver a Productos
               </Button>
             </div>

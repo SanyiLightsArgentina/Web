@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import type { CatalogProduct } from "@/lib/catalog";
 import { useQuoteList } from "@/hooks/use-quote-list";
 import { openWhatsAppForModel } from "@/lib/contact";
+import { catalogReturnHref } from '@/lib/catalog-location';
 
 interface ProductHeaderProps {
   product: CatalogProduct;
@@ -18,7 +19,7 @@ export const ProductHeader = ({ product }: ProductHeaderProps) => {
     <>
       <div className="mb-4">
         <Link 
-          to={location.state?.catalogUrl || "/productos"}
+          to={catalogReturnHref(location)}
           className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
