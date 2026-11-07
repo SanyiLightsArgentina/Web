@@ -2,9 +2,6 @@ import { supabase } from '@/lib/supabase'
 import type { Product } from '@/data/products'
 import type { Category } from '@/lib/catalog'
 
-/** @deprecated Use Category from '@/lib/catalog'. */
-export type CategoryRow = Category
-
 export async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')

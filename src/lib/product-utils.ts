@@ -32,11 +32,6 @@ const getSearchIndex = (products: Product[]): CatalogSearchIndex => {
   return index;
 };
 
-export const getProductByModel = (products: Product[], model: string): Product | undefined => {
-  const decoded = decodeURIComponent(model);
-  return products.find(product => product.model === decoded);
-};
-
 export type ProductCriteria = {
   query?: string;
   categoryName?: string;
@@ -129,19 +124,6 @@ export const getFeaturedProducts = <T extends Product>(products: T[], count: num
   }
 
   return products.filter(product => product.new === true).slice(0, count);
-};
-
-export const getProductsByCategory = (products: Product[], category: string, count: number = 3, excludeModel?: string, categories: Category[] = []) => {
-  if (!category || category === "Todos") return [];
-  
-  const categoryObj = categories.find(cat => cat.name === category);
-  if (!categoryObj) return [];
-  
-  const categoryProducts = products.filter(product => 
-    product.category_id === categoryObj.id && product.model !== excludeModel
-  );
-  
-  return categoryProducts.slice(0, count);
 };
 
 export const getProductsByCategoryId = <T extends Product>(products: T[], categoryId: number, count: number = 3, excludeModel?: string): T[] => {
