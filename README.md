@@ -32,14 +32,13 @@ Los tests viven junto al código (`src/**/*.test.ts|tsx`). Los helpers puros del
 
 ```
 src/
-├── data/
-│   ├── products.ts      # Catálogo de productos
-│   └── categories.ts    # Categorías de productos
-├── assets/
-│   └── product-images.ts # Registro de imágenes
+├── data/products.ts     # Tipos de productos
+├── assets/              # Logo, mapa e imágenes optimizadas
 ├── components/          # Componentes de React
-├── pages/              # Páginas del sitio
-└── types/              # Definiciones de TypeScript
+├── hooks/               # Hooks de datos y UI
+├── lib/                 # Catálogo, medios y Supabase
+├── pages/               # Páginas del sitio
+└── test/                # Setup de Vitest
 ```
 
 ### 📚 Recursos Adicionales
