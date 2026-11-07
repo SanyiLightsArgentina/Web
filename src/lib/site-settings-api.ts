@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { parseSiteSettings, type SiteSettings, type SiteSettingsRow } from './site-settings';
+import { parseSiteSettings, prepareSiteSection, type SiteSectionUpdate, type SiteSettings, type SiteSettingsRow } from './site-settings';
 
 export async function fetchSiteSettings(): Promise<SiteSettings> {
   const { data, error } = await supabase.from('site_settings').select('key, value');
@@ -8,7 +8,8 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
   if (error) throw new Error('No se pudo cargar la configuración del sitio');
   return parseSiteSettings((data ?? []) as SiteSettingsRow[]);
 }
-export async function saveSiteSection<K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) {
+export async function saveSiteSection(update: SiteSectionUpdate) {
+  const { key, value } = prepareSiteSection(update);
   const { error } = await supabase.rpc('save_site_section', {
     p_key: key, p_value: value,
   });

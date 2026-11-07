@@ -1,3 +1,5 @@
+import { parseVideoSource } from './video-source'
+
 export interface HeroSlide {
   type: 'image' | 'video';
   src: string;
@@ -18,6 +20,42 @@ export interface SiteSettings {
   videos: { items: SiteVideo[]; channelUrl: string };
   contact: ContactSettings;
   category_order: number[];
+}
+export type SiteSectionUpdate = {
+  [K in keyof SiteSettings]: { key: K; value: SiteSettings[K] }
+}[keyof SiteSettings]
+
+/** Normalize and validate edits, without applying read-time defaults to invalid drafts. */
+export function prepareSiteSection(update: SiteSectionUpdate): SiteSectionUpdate {
+  switch (update.key) {
+    case 'hero':
+      if (!update.value.length || update.value.some(s => !s.title.trim() || !isWebUrl(s.src) || !/^\/(?!\/)/.test(s.productRoute))) {
+        throw new Error('Completá cada slide con título, URL de imagen o video y una ruta del sitio (por ejemplo /productos).')
+      }
+      break
+    case 'videos':
+      if (!isWebUrl(update.value.channelUrl) || update.value.items.some(v => !v.title.trim() || parseVideoSource(v.url).kind === 'unsupported')) {
+        throw new Error('Completá los títulos y usá enlaces de YouTube o URLs de archivos MP4/WebM para los videos.')
+      }
+      break
+    case 'contact':
+      if (!/^\d{8,15}$/.test(update.value.phone) || !update.value.phoneLabel.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(update.value.email) || !isWebUrl(update.value.instagram) || !isWebUrl(update.value.facebook)) {
+        throw new Error('Revisá el WhatsApp (código de país y número, solo dígitos), el teléfono visible, el email y las redes sociales.')
+      }
+      break
+    case 'clients': {
+      const value = update.value.map(c => ({ ...c, company: c.company.trim(), logo: c.logo.trim(), link: c.link.trim() }))
+      if (value.some(c => !c.company || (c.logo && !isWebUrl(c.logo)) || (c.link && !isWebUrl(c.link)))) {
+        throw new Error('Completá el nombre de cada empresa. Los logos y links deben ser URLs válidas (https://...).')
+      }
+      return { key: 'clients', value }
+    }
+    case 'category_order':
+      if (update.value.some(id => !Number.isInteger(id) || id <= 0) || new Set(update.value).size !== update.value.length) {
+        throw new Error('Revisá el orden de las categorías.')
+      }
+  }
+  return update
 }
 export const defaultSettings: SiteSettings = {
   hero: [

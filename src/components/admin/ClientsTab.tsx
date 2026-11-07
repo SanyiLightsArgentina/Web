@@ -1,34 +1,31 @@
-import { useState } from 'react';
+import type { SetStateAction } from 'react';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ClientLogo } from '@/components/ui/client-logo';
-import { useSiteSettings, useSaveSiteSection } from '@/hooks/use-site-settings';
+import { useSiteSettings } from '@/hooks/use-site-settings';
+import { useSiteDraft } from '@/hooks/use-site-draft';
 import { useMediaUpload } from '@/hooks/use-media-upload';
 import { useToast } from '@/hooks/use-toast';
-import { isWebUrl, type SiteClient } from '@/lib/site-settings';
+import { type SiteClient, type SiteSettings } from '@/lib/site-settings';
 
 export function ClientsTab() {
   const { settings, isLoading, isError, refetch } = useSiteSettings();
   if (isLoading) return <p role="status">Cargando clientes...</p>;
   if (isError) return <div role="alert">No se pudieron cargar los clientes. <Button onClick={() => refetch()}>Reintentar</Button></div>;
-  return <ClientsEditor initial={settings.clients} />;
+  return <ClientsEditor initial={settings} />;
 }
 
-function ClientsEditor({ initial }: { initial: SiteClient[] }) {
-  const [clients, setClients] = useState(() => structuredClone(initial));
+function ClientsEditor({ initial }: { initial: SiteSettings }) {
   const { upload, isUploading } = useMediaUpload();
-  const save = useSaveSiteSection();
+  const { draft, setDraft, submit, busy, isSaving, moved } = useSiteDraft(initial, 'clients', isUploading);
+  const clients = draft.clients;
+  const setClients = (action: SetStateAction<SiteClient[]>) => setDraft(previous => ({ ...previous, clients: typeof action === 'function' ? action(previous.clients) : action }));
   const { toast } = useToast();
-  const busy = save.isPending || isUploading;
   const update = (id: string, updates: Partial<SiteClient>) => setClients(items => items.map(item => item.id === id ? { ...item, ...updates } : item));
-  const move = (index: number, direction: number) => setClients(items => {
-    const next = [...items];
-    [next[index], next[index + direction]] = [next[index + direction], next[index]];
-    return next;
-  });
+  const move = (index: number, direction: number) => setClients(items => moved(items, index, index + direction));
 
   const uploadLogo = async (id: string, file?: File) => {
     if (!file || busy) return;
@@ -41,23 +38,6 @@ function ClientsEditor({ initial }: { initial: SiteClient[] }) {
         description: error instanceof Error ? error.message : 'Volvé a intentar. Los datos ingresados se conservan.',
         variant: 'destructive',
       });
-    }
-  };
-
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (busy) return;
-    const value = clients.map(client => ({ ...client, company: client.company.trim(), logo: client.logo.trim(), link: client.link.trim() }));
-    if (value.some(client => !client.company || (client.logo && !isWebUrl(client.logo)) || (client.link && !isWebUrl(client.link)))) {
-      toast({ title: 'Revisá los datos', description: 'Completá el nombre de cada empresa. Los logos y links deben ser URLs válidas (https://...).', variant: 'destructive' });
-      return;
-    }
-    try {
-      await save.mutateAsync({ key: 'clients', value });
-      setClients(value);
-      toast({ title: 'Clientes guardados', description: 'La sección del inicio ya muestra los cambios.' });
-    } catch (error) {
-      toast({ title: 'No se pudieron guardar los clientes', description: error instanceof Error ? error.message : 'Volvé a intentar.', variant: 'destructive' });
     }
   };
 
@@ -89,7 +69,7 @@ function ClientsEditor({ initial }: { initial: SiteClient[] }) {
           </div>)}
           <Button type="button" variant="outline" onClick={() => setClients(items => [...items, { id: crypto.randomUUID(), company: '', logo: '', link: '' }])}><Plus className="mr-2 h-4 w-4" />Agregar empresa</Button>
         </fieldset>
-        <Button type="submit" disabled={busy}>{isUploading ? 'Subiendo logo...' : save.isPending ? 'Guardando...' : 'Guardar clientes'}</Button>
+        <Button type="submit" disabled={busy}>{isUploading ? 'Subiendo logo...' : isSaving ? 'Guardando...' : 'Guardar clientes'}</Button>
       </form>
     </CardContent>
   </Card>;

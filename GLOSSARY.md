@@ -9,3 +9,5 @@ Catálogo de equipos de iluminación profesional y su contenido público.
 **Product media**: Imágenes, documentos y videos asociados a un Product, ya publicados o pendientes de subir durante su edición.
 
 **Category**: Una agrupación de Products por tipo de equipo.
+
+**Site section**: Un conjunto de contenido administrable del sitio: Hero, videos, contacto, clientes u orden de categorías.

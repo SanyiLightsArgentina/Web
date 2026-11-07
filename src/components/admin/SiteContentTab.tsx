@@ -1,12 +1,11 @@
 import { useMediaUpload } from '@/hooks/use-media-upload';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useSiteSettings, useSaveSiteSection } from '@/hooks/use-site-settings';
+import { useSiteSettings } from '@/hooks/use-site-settings';
+import { useSiteDraft } from '@/hooks/use-site-draft';
 import { isWebUrl, type SiteSettings } from '@/lib/site-settings';
-import { parseVideoSource } from '@/lib/video-source';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
 
@@ -24,11 +23,6 @@ function ListActions({ index, length, move, remove }: { index: number; length: n
     <Button type="button" variant="outline" size="icon" aria-label="Eliminar" disabled={length === 1} onClick={remove}><Trash2 className="h-4 w-4" /></Button>
   </div>;
 }
-function moved<T>(items: T[], from: number, to: number): T[] {
-  const copy = [...items];
-  copy.splice(to, 0, copy.splice(from, 1)[0]);
-  return copy;
-}
 
 export function SiteContentTab({ section }: { section: Section }) {
   const { settings, isLoading, isError, refetch } = useSiteSettings();
@@ -38,35 +32,14 @@ export function SiteContentTab({ section }: { section: Section }) {
 }
 
 function ContentEditor({ section, initial }: { section: Section; initial: SiteSettings }) {
-  const [draft, setDraft] = useState(() => structuredClone(initial));
-  const save = useSaveSiteSection();
   const { upload, isUploading } = useMediaUpload();
+  const { draft, setDraft, submit, busy, isSaving, moved } = useSiteDraft(initial, section, isUploading);
   const { toast } = useToast();
   const setHero = (index: number, updates: Partial<SiteSettings['hero'][number]>) => setDraft(d => ({ ...d, hero: d.hero.map((slide, i) => i === index ? { ...slide, ...updates } : slide) }));
   const setVideo = (index: number, updates: Partial<SiteSettings['videos']['items'][number]>) => setDraft(d => ({ ...d, videos: { ...d.videos, items: d.videos.items.map((video, i) => i === index ? { ...video, ...updates } : video) } }));
 
-  const saveCurrentSection = () => {
-    if (section === 'hero') return save.mutateAsync({ key: 'hero', value: draft.hero });
-    if (section === 'videos') return save.mutateAsync({ key: 'videos', value: draft.videos });
-    return save.mutateAsync({ key: 'contact', value: draft.contact });
-  };
-
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (save.isPending || isUploading) return;
-    let error = '';
-    if (section === 'hero' && (!draft.hero.length || draft.hero.some(s => !s.title.trim() || !isWebUrl(s.src) || !/^\/(?!\/)/.test(s.productRoute)))) error = 'Completá cada slide con título, URL de imagen o video y una ruta del sitio (por ejemplo /productos).';
-    if (section === 'videos' && (!isWebUrl(draft.videos.channelUrl) || draft.videos.items.some(v => !v.title.trim() || parseVideoSource(v.url).kind === 'unsupported'))) error = 'Completá los títulos y usá enlaces de YouTube o URLs de archivos MP4/WebM para los videos.';
-    if (section === 'contact' && (!/^\d{8,15}$/.test(draft.contact.phone) || !draft.contact.phoneLabel.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.contact.email) || !isWebUrl(draft.contact.instagram) || !isWebUrl(draft.contact.facebook))) error = 'Revisá el WhatsApp (código de país y número, solo dígitos), el teléfono visible, el email y las redes sociales.';
-    if (error) { toast({ title: 'Revisá los datos', description: error, variant: 'destructive' }); return; }
-    try {
-      await saveCurrentSection();
-      toast({ title: 'Cambios guardados', description: 'El sitio ya muestra la nueva configuración.' });
-    } catch (err) { toast({ title: 'Error al guardar', description: err instanceof Error ? err.message : 'Volvé a intentar.', variant: 'destructive' }); }
-  };
-
   const uploadVideo = async (file: File | undefined, update: (url: string) => void) => {
-    if (!file) return;
+    if (!file || busy) return;
     try {
       const url = await upload(file, { kind: 'site-video', section: section === 'hero' ? 'hero' : 'videos' });
       if (url) update(url);
@@ -83,7 +56,7 @@ function ContentEditor({ section, initial }: { section: Section; initial: SiteSe
   return <Card>
     <CardHeader><CardTitle>{section === 'hero' ? 'Hero de inicio' : section === 'videos' ? 'Página de videos' : 'Datos de contacto'}</CardTitle></CardHeader>
     <CardContent><form onSubmit={submit} className="space-y-6">
-      <fieldset disabled={save.isPending || isUploading} className="space-y-6">
+      <fieldset disabled={busy} className="space-y-6">
         {section === 'hero' && <>
           <p className="text-sm text-muted-foreground">Elegí fotos, enlaces de YouTube o videos con URL directa (MP4/WebM). Las diapositivas rotan en el orden indicado.</p>
           {draft.hero.map((slide, index) => <div key={index} className="border rounded-lg p-4 space-y-4">
@@ -109,7 +82,7 @@ function ContentEditor({ section, initial }: { section: Section; initial: SiteSe
         </>}
         {section === 'contact' && <div className="grid gap-4 sm:grid-cols-2">{(Object.keys(contactLabels) as (keyof SiteSettings['contact'])[]).map(key => <Field key={key} label={contactLabels[key]} value={draft.contact[key]} type={key === 'email' ? 'email' : ['instagram', 'facebook'].includes(key) ? 'url' : 'text'} onChange={value => setDraft(d => ({ ...d, contact: { ...d.contact, [key]: value } }))} />)}</div>}
       </fieldset>
-      <Button type="submit" disabled={save.isPending || isUploading}>{isUploading ? 'Subiendo video...' : save.isPending ? 'Guardando...' : 'Guardar cambios'}</Button>
+      <Button type="submit" disabled={busy}>{isUploading ? 'Subiendo video...' : isSaving ? 'Guardando...' : 'Guardar cambios'}</Button>
     </form></CardContent>
   </Card>;
 }
