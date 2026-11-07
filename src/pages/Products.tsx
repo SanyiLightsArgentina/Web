@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
 import { useCatalogPosition } from "@/hooks/use-catalog-position";
-import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
 import { selectProducts } from "@/lib/product-utils";
+import { catalogCriteria } from '@/lib/catalog-location';
 import { presentProduct } from "@/lib/product-presentation";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
@@ -24,11 +24,8 @@ const Products = () => {
       "Catálogo de equipos de iluminación profesional Sanyi: cabezales móviles LED, barras zoom, proyectores. Cotizá por WhatsApp.",
   });
   const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
-  const searchQuery = params.get('q') ?? '';
-  const selectedCategory = params.get('categoria') ?? 'Todos';
-  const showOnlyNew = params.get('nuevos') === '1';
-  const requestedPage = Math.max(1, Number(params.get('pagina')) || 1);
+  const criteria = catalogCriteria(params);
+  const { query: searchQuery, categoryName: selectedCategory, onlyNew: showOnlyNew, page: requestedPage } = criteria;
   const updateFilter = (key: string, value: string) => {
     setParams(previous => {
       const next = new URLSearchParams(previous);
@@ -43,15 +40,7 @@ const Products = () => {
   // Configuración de paginación
   const PRODUCTS_PER_PAGE = 20;
 
-  useEffect(() => {
-    if (location.state?.selectedCategory) {
-      const next = new URLSearchParams();
-      next.set('categoria', location.state.selectedCategory);
-      navigate({ pathname: '/productos', search: next.toString() }, { replace: true, state: null });
-    }
-  }, [location.state, navigate]);
-
-  const filteredProducts = selectProducts(products, { query: searchQuery, categoryName: selectedCategory === 'Todos' ? '' : selectedCategory, onlyNew: showOnlyNew }, categories);
+  const filteredProducts = selectProducts(products, criteria, categories);
   
   // Calcular paginación
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
@@ -78,7 +67,7 @@ const Products = () => {
     if (selectedCategory === category) {
       updateFilter('categoria', '');
     } else {
-      updateFilter('categoria', category === 'Todos' ? '' : category);
+      updateFilter('categoria', category);
     }
   };
 
@@ -126,11 +115,11 @@ const Products = () => {
             {/* Chips de categorías */}
             <div className="flex flex-wrap gap-2">
               <Badge
-                variant={selectedCategory === "Todos" ? "default" : "secondary"}
+                variant={!selectedCategory ? "default" : "secondary"}
                 className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 ${
-                  selectedCategory === "Todos" ? "bg-primary text-primary-foreground" : ""
+                  !selectedCategory ? "bg-primary text-primary-foreground" : ""
                 }`}
-                onClick={() => handleCategorySelect("Todos")}
+                onClick={() => handleCategorySelect('')}
               >
                 Todos
               </Badge>
@@ -156,7 +145,7 @@ const Products = () => {
               ) : isLoaded ? (
                 <>
                   {filteredProducts.length} productos encontrados
-                  {selectedCategory && selectedCategory !== "Todos" && (
+                  {selectedCategory && (
                     <span className="ml-2">
                       en <Badge variant="secondary" className="text-xs sm:text-sm">{selectedCategory}</Badge>
                     </span>
