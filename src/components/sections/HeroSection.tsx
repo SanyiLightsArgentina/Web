@@ -2,7 +2,7 @@ import { useSiteSettings } from '@/hooks/use-site-settings';
 import { youtubeId, type HeroSlide } from '@/lib/site-settings';
 import { Button } from "@/components/ui/button";
 import { ArrowRight} from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useCarousel } from '@/hooks/use-carousel';
 import { useNavigate } from "react-router-dom";
 import { useCatalog } from "@/hooks/use-catalog";
 import { findProductByModel } from "@/lib/catalog";
@@ -11,63 +11,9 @@ import { findProductByModel } from "@/lib/catalog";
 export const HeroSection = () => {
   const { settings } = useSiteSettings();
   const professionalVideos = settings.hero;
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const { index: activeIndex, goTo: goToImage, touchHandlers } = useCarousel(professionalVideos.length, 10_000);
   const navigate = useNavigate();
   const { products, isLoaded } = useCatalog();
-
-  const activeIndex = currentImageIndex % professionalVideos.length;
-
-  const goToImage = (index: number) => {
-    if (index === activeIndex) return;
-    setCurrentImageIndex(index);
-  };
-
-  const goToNextImage = () => {
-    setCurrentImageIndex((prevIndex) =>
-      (prevIndex + 1) % professionalVideos.length
-    );
-  };
-
-  const goToPrevImage = () => {
-    setCurrentImageIndex((prevIndex) =>
-      (prevIndex - 1 + professionalVideos.length) % professionalVideos.length
-    );
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex(index => (index + 1) % professionalVideos.length);
-    }, 10_000);
-
-    return () => clearInterval(interval);
-  }, [professionalVideos.length]);
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe) {
-      goToNextImage();
-    }
-    if (isRightSwipe) {
-      goToPrevImage();
-    }
-  };
 
   const handleProductClick = (productRoute: string) => {
     window.scrollTo(0, 0);
@@ -135,10 +81,7 @@ export const HeroSection = () => {
     <section className="relative h-screen w-full overflow-hidden">
       <div 
         className="absolute inset-0"
-        ref={carouselRef}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        {...touchHandlers}
       >
         <div className="absolute inset-0">
           {renderVideoContent(activeVideo)}
@@ -181,14 +124,14 @@ export const HeroSection = () => {
               )}
               
               <h1 
-                key={currentImageIndex} 
+                key={activeIndex} 
                 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 md:mb-6 leading-tight animate-in slide-in-from-bottom-8 duration-1500 ease-out"
               >
                 {activeVideo.title}
               </h1>
               
               <p
-                key={`subtitle-${currentImageIndex}`}
+                key={`subtitle-${activeIndex}`}
                 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4 sm:mb-6 md:mb-8 max-w-3xl mx-auto opacity-90 leading-relaxed animate-in slide-in-from-bottom-8 duration-1500 ease-out delay-300"
               >
                 {activeVideo.subtitle}

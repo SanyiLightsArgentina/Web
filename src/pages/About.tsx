@@ -6,6 +6,7 @@ import { Footer } from "@/components/sections/Footer";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { useSEO } from "@/hooks/useSEO";
+import { useCarousel } from '@/hooks/use-carousel';
 import mapImage from "@/assets/map.jpeg";
 import prof2Small from "@/assets/prof2-800.webp";
 import prof2Medium from "@/assets/prof2-1200.webp";
@@ -46,16 +47,9 @@ const professionalImages = [
 ];
 
 const About = () => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { index: currentImageIndex, goTo: goToImage, touchHandlers } = useCarousel(professionalImages.length, 5_000);
   const [loadedImages, setLoadedImages] = useState<number[]>([0]);
   const preloadedAllRef = useRef(false);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const carouselRef = useRef<HTMLDivElement>(null);
-
-  const ensureImageLoaded = (index: number) => {
-    setLoadedImages(previous => previous.includes(index) ? previous : [...previous, index]);
-  };
 
   const loadRemainingImages = () => {
     if (preloadedAllRef.current) return;
@@ -76,60 +70,8 @@ const About = () => {
   }, []);
 
   useEffect(() => {
-    const oneSecond = 1000;
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        prevIndex === professionalImages.length - 1 ? 0 : prevIndex + 1
-      );
-    }, oneSecond * 5);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
     setLoadedImages(previous => previous.includes(currentImageIndex) ? previous : [...previous, currentImageIndex]);
   }, [currentImageIndex]);
-
-  const nextImage = () => {
-    const nextIndex = currentImageIndex === professionalImages.length - 1 ? 0 : currentImageIndex + 1;
-    ensureImageLoaded(nextIndex);
-    setCurrentImageIndex(nextIndex);
-  };
-
-  const prevImage = () => {
-    const previousIndex = currentImageIndex === 0 ? professionalImages.length - 1 : currentImageIndex - 1;
-    ensureImageLoaded(previousIndex);
-    setCurrentImageIndex(previousIndex);
-  };
-
-  const goToImage = (index: number) => {
-    ensureImageLoaded(index);
-    setCurrentImageIndex(index);
-  };
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe) {
-      nextImage();
-    }
-    if (isRightSwipe) {
-      prevImage();
-    }
-  };
 
   
   return (
@@ -157,10 +99,7 @@ const About = () => {
             <div className="relative h-96 lg:h-[500px] overflow-hidden rounded-lg shadow-2xl">
               <div 
                 className="absolute inset-0"
-                ref={carouselRef}
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
+                {...touchHandlers}
               >
                 {professionalImages.map((image, index) => (
                   <div

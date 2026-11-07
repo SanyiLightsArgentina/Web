@@ -1,7 +1,7 @@
 import { productImageUrl } from '@/lib/product-images';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useCarousel } from '@/hooks/use-carousel';
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -9,23 +9,7 @@ interface ProductImageGalleryProps {
 }
 
 export const ProductImageGallery = ({ images, productDescription }: ProductImageGalleryProps) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const nextImage = () => {
-    if (images && images.length > 0) {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }
-  };
-
-  const prevImage = () => {
-    if (images && images.length > 0) {
-      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-    }
-  };
-
-  const goToImage = (index: number) => {
-    setCurrentImageIndex(index);
-  };
+  const { index: currentImageIndex, next: nextImage, previous: prevImage, goTo: goToImage } = useCarousel(images?.length ?? 0);
 
   if (!images || images.length === 0) {
     return null;
