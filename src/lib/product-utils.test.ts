@@ -45,6 +45,53 @@ describe('selectProducts', () => {
   })
 })
 
+describe('getFeaturedProducts', () => {
+  // fetchProducts returns the catalog newest first, so new products are grouped
+  // at the front rather than spread across the snapshot.
+  const catalog = Array.from({ length: 80 }, (_, index) => ({
+    model: `LED-${index}`, description: '', category_id: index % 4 + 1, new: index < 12,
+  }))
+
+  it('returns the first requested new products in catalog order, preserving identity', () => {
+    const snapshot = [...catalog]
+    const result = getFeaturedProducts(catalog, 3)
+    expect(models(result)).toEqual(['LED-0', 'LED-1', 'LED-2'])
+    result.forEach((product, index) => expect(product).toBe(catalog[index]))
+    expect(catalog).toEqual(snapshot)
+  })
+
+  it('stops inspecting products as soon as the requested count is reached', () => {
+    const input = [...catalog]
+    Object.defineProperty(input, 20, { get() { throw new Error('Unneeded product inspected') } })
+    expect(models(getFeaturedProducts(input, 3))).toEqual(['LED-0', 'LED-1', 'LED-2'])
+  })
+
+  it.each([0, 1, 3, 6, 100, -1, -3, 1.9, NaN, Infinity, -Infinity])(
+    'preserves filter/slice results for limit %s', count => {
+      expect(getFeaturedProducts(catalog, count)).toEqual(
+        catalog.filter(product => product.new === true).slice(0, count),
+      )
+    },
+  )
+
+  it('uses six new products by default and handles empty or fully old catalogs', () => {
+    expect(getFeaturedProducts(catalog)).toEqual(catalog.slice(0, 6))
+    expect(getFeaturedProducts([])).toEqual([])
+    expect(getFeaturedProducts(catalog.map(product => ({ ...product, new: false })))).toEqual([])
+  })
+
+  it('skips holes in sparse catalogs like Array#filter did', () => {
+    const sparse = [...catalog]
+    delete sparse[1]
+    delete sparse[4]
+    for (const count of [0, 1, 6, 8, -1, 1.9]) {
+      expect(getFeaturedProducts(sparse, count)).toEqual(
+        sparse.filter(product => product.new === true).slice(0, count),
+      )
+    }
+  })
+})
+
 describe('getProductsByCategoryId', () => {
   const catalog = Array.from({ length: 80 }, (_, index) => ({
     model: `LED-${index}`, description: '', category_id: index % 4 + 1, new: false,

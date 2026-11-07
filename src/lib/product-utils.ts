@@ -123,6 +123,23 @@ export const getFeaturedProducts = <T extends Product>(products: T[], count: num
     return [];
   }
 
+  // The catalog is ordered by created_at, so new products are grouped at the
+  // front; the search dialog only needs the first few. Stop reading as soon as
+  // the requested number is collected, and keep filter/slice semantics for
+  // unusual limits.
+  if (Number.isInteger(count) && count >= 0) {
+    const matches: T[] = [];
+    if (count === 0) return matches;
+    for (let index = 0; index < products.length; index += 1) {
+      if (!(index in products)) continue;
+      const product = products[index];
+      if (product.new !== true) continue;
+      matches.push(product);
+      if (matches.length === count) break;
+    }
+    return matches;
+  }
+
   return products.filter(product => product.new === true).slice(0, count);
 };
 
