@@ -12,11 +12,7 @@ import type { Category } from '@/lib/catalog';
 import { toast } from '@/hooks/use-toast';
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
 
-interface CategoryManagerProps {
-  onCategoryChange: (categories: Category[]) => void;
-}
-
-export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChange }) => {
+export const CategoryManager: React.FC = () => {
   const { categories } = useCatalog();
   const { addCategory, updateCategory, deleteCategory } = useCatalogWrites();
   const reorder = useSaveSiteSection();
@@ -25,7 +21,6 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
     [ids[index], ids[index + direction]] = [ids[index + direction], ids[index]];
     try {
       await reorder.mutateAsync({ key: 'category_order', value: ids });
-      onCategoryChange(categories);
     } catch { toast({ title: 'No se pudo guardar el orden de las categorías', variant: 'destructive' }); }
   };
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -40,7 +35,6 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
         await addCategory(newCategoryName.trim());
         setNewCategoryName('');
         setIsAddingCategory(false);
-        onCategoryChange(categories);
       } catch (error) {
         // Error ya manejado en el hook
       }
@@ -65,7 +59,6 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
       await updateCategory(categoryId, trimmedName);
       setEditingCategory(null);
       setEditingName('');
-      onCategoryChange(categories);
     } catch (error) {
       // Error ya manejado en el hook
     }
@@ -79,7 +72,6 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryChan
     if (deleteConfirmation) {
       try {
         await deleteCategory(deleteConfirmation.id, deleteConfirmation.name);
-        onCategoryChange(categories);
         setDeleteConfirmation(null);
       } catch (error) {
         // Error ya manejado en el hook

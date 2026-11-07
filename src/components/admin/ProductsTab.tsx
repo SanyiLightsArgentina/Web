@@ -1,34 +1,16 @@
-import React from 'react';
+import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Package, FolderOpen, Sparkles, X } from 'lucide-react';
-import { Product } from '@/data/products';
 import { ProductControls } from './ProductControls';
 import { ProductCard } from './ProductCard';
 import { ProductForm } from '@/components/ui/product-form';
 import { presentProduct } from '@/lib/product-presentation';
 import { selectProducts } from '@/lib/product-utils';
-import type { CatalogProduct, Category } from '@/lib/catalog';
+import { useProductAdmin } from '@/hooks/use-product-admin';
+import { ResponsiveDeleteModal } from '@/components/ui/responsive-delete-modal';
 
-interface ProductsTabProps {
-  products: CatalogProduct[];
-  categories: Category[];
-  loading: boolean;
-  error: string | null;
-  searchTerm: string;
-  selectedCategoryId: number | null;
-  isAddingProduct: boolean;
-  editingProduct: Product | null;
-  onSearchChange: (value: string) => void;
-  onCategoryChange: (categoryId: number | null) => void;
-  onAddProduct: () => void;
-  onEditProduct: (product: Product) => void;
-  onDeleteProduct: (product: Product) => void;
-  onSaveProduct: (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
-  onCancelForm: () => void;
-  onRetry: () => void;
-}
-
-export const ProductsTab: React.FC<ProductsTabProps> = ({
+export const ProductsTab = () => {
+  const {
   products,
   categories,
   loading,
@@ -44,8 +26,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   onDeleteProduct,
   onSaveProduct,
   onCancelForm,
-  onRetry
-}) => {
+  onRetry, isSaving, deleteProductConfirmation, cancelDeleteProduct, confirmDeleteProduct,
+  } = useProductAdmin();
+  const form = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isAddingProduct || editingProduct) form.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
+  }, [isAddingProduct, editingProduct]);
   const filteredProducts = selectProducts(products, { query: searchTerm, categoryId: selectedCategoryId });
 
   if (loading) {
@@ -81,13 +67,13 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
 
       {/* Product Form */}
       {(isAddingProduct || editingProduct) && (
-        <ProductForm
-          product={editingProduct}
+        <div ref={form}><ProductForm
+          product={editingProduct ?? undefined}
           categories={categories}
           onSubmit={onSaveProduct}
           onCancel={onCancelForm}
-          loading={loading}
-        />
+          loading={isSaving}
+        /></div>
       )}
 
       <section aria-label="Catálogo de productos" className="overflow-hidden rounded-2xl border border-border/80 bg-white">
@@ -131,6 +117,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
           </Button>
         </div>
       )}
+      {deleteProductConfirmation && <ResponsiveDeleteModal isOpen onClose={cancelDeleteProduct} onConfirm={confirmDeleteProduct} title="Confirmar eliminación" description="¿Estás seguro de que quieres eliminar el producto" itemName={deleteProductConfirmation.model} itemType="producto" confirmText="Eliminar Producto" loading={isSaving} />}
     </div>
   );
 };

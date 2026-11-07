@@ -1,21 +1,16 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Package, TrendingUp, Eye, Star, BarChart3, Users, ShoppingCart } from 'lucide-react';
-import type { CatalogProduct, Category } from '@/lib/catalog';
+import { useProductAdmin } from '@/hooks/use-product-admin';
 
-interface AdminStatsProps {
-  products: CatalogProduct[];
-  categories: Category[];
-  isSaving?: boolean;
-  lastSaved?: Date | null;
-}
-
-export const AdminStats: React.FC<AdminStatsProps> = ({ products, categories, isSaving, lastSaved }) => {
+export const AdminStats: React.FC = () => {
+  const { products, categories, isSaving, lastSaved } = useProductAdmin();
   const totalProducts = products.length;
   const newProducts = products.filter(p => p.new).length;
   const productsWithVideo = products.filter(p => p.videos && p.videos.length > 0).length;
   const productsWithSecondaryImage = products.filter(p => p.contents && p.contents.length > 1).length;
+  const productsWithMultipleImages = products.filter(p => (p.images?.length ?? 0) > 1).length;
 
   const categoryStats = categories.map(category => ({
     name: category.name,
@@ -73,7 +68,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({ products, categories, is
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{categories.length - 1}</div>
+            <div className="text-2xl font-bold">{categories.length}</div>
             <p className="text-xs text-muted-foreground">
               Activas
             </p>
@@ -238,6 +233,14 @@ export const AdminStats: React.FC<AdminStatsProps> = ({ products, categories, is
             </div>
           </div>
         </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>Estadísticas de Productos</CardTitle><CardDescription>Información sobre la estructura de productos</CardDescription></CardHeader>
+        <CardContent className="space-y-4"><div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center p-4 bg-blue-50 rounded-lg"><div className="text-2xl font-bold text-blue-600">{productsWithMultipleImages}</div><div className="text-sm text-blue-600">Productos con múltiples imágenes</div></div>
+          <div className="text-center p-4 bg-green-50 rounded-lg"><div className="text-2xl font-bold text-green-600">{productsWithVideo}</div><div className="text-sm text-green-600">Productos con videos</div></div>
+          <div className="text-center p-4 bg-purple-50 rounded-lg"><div className="text-2xl font-bold text-purple-600">{productsWithSecondaryImage}</div><div className="text-sm text-purple-600">Productos con múltiples contenidos</div></div>
+        </div></CardContent>
       </Card>
     </div>
   );
