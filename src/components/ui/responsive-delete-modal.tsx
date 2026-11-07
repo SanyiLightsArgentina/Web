@@ -1,6 +1,5 @@
 import React from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './alert-dialog';
-import { Button } from './button';
 
 interface ResponsiveDeleteModalProps {
   isOpen: boolean;
@@ -79,14 +78,14 @@ export const ResponsiveDeleteModal: React.FC<ResponsiveDeleteModalProps> = ({
   const warningColor = getWarningColor();
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog open={isOpen} onOpenChange={open => { if (!open && !loading) onClose(); }}>
       <AlertDialogContent className="max-w-md sm:max-w-lg">
         <AlertDialogHeader className="space-y-4">
           <AlertDialogTitle className={`flex items-center gap-3 text-${warningColor}-600`}>
             {getIcon()}
             {title}
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-left space-y-3">
+          <AlertDialogDescription asChild><div className="text-left flex flex-col gap-3">
             <p className="text-gray-700">
               {description}
               {itemName && (
@@ -127,14 +126,18 @@ export const ResponsiveDeleteModal: React.FC<ResponsiveDeleteModalProps> = ({
                 </div>
               </div>
             </div>
-          </AlertDialogDescription>
+          </div></AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>
             {cancelText}
           </AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onConfirm} 
+            onClick={event => {
+              // The workflow owns closing after success, including async confirmation.
+              event.preventDefault();
+              if (!loading) onConfirm();
+            }}
             disabled={loading}
             className={`bg-${warningColor}-600 hover:bg-${warningColor}-700 focus:ring-${warningColor}-500`}
           >

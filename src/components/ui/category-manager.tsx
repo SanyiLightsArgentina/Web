@@ -1,93 +1,21 @@
-import { useSaveSiteSection } from '@/hooks/use-site-settings';
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from './button';
 import { Input } from './input';
-import { Label } from './label';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
-import { Badge } from './badge';
 import { Plus, Edit, Trash2, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
-import { useCatalog } from '@/hooks/use-catalog';
-import { useCatalogWrites } from '@/hooks/use-catalog-writes';
-import type { Category } from '@/lib/catalog';
-import { toast } from '@/hooks/use-toast';
+import { useCategoryAdmin } from '@/hooks/use-category-admin';
 import { ResponsiveDeleteModal } from "./responsive-delete-modal";
 
 export const CategoryManager: React.FC = () => {
-  const { categories } = useCatalog();
-  const { addCategory, updateCategory, deleteCategory } = useCatalogWrites();
-  const reorder = useSaveSiteSection();
-  const moveCategory = async (index: number, direction: number) => {
-    const ids = categories.map(c => c.id);
-    [ids[index], ids[index + direction]] = [ids[index + direction], ids[index]];
-    try {
-      await reorder.mutateAsync({ key: 'category_order', value: ids });
-    } catch { toast({ title: 'No se pudo guardar el orden de las categorías', variant: 'destructive' }); }
-  };
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [isAddingCategory, setIsAddingCategory] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState<Category | null>(null);
+  const {
+    categories, isLoaded, error, retry, busy, editingCategory, editingName, setEditingName,
+    newCategoryName, setNewCategoryName, isAddingCategory, deleteConfirmation,
+    startAdding, cancelAdding, startEditing, cancelEditing, handleAddCategory,
+    handleEditCategory, handleDeleteCategory, cancelDeleteCategory, confirmDeleteCategory, moveCategory,
+  } = useCategoryAdmin();
 
-  const handleAddCategory = async () => {
-    if (newCategoryName.trim()) {
-      try {
-        await addCategory(newCategoryName.trim());
-        setNewCategoryName('');
-        setIsAddingCategory(false);
-      } catch (error) {
-        // Error ya manejado en el hook
-      }
-    }
-  };
-
-  const handleEditCategory = async (categoryId: Category['id'], newName: string) => {
-    const trimmedName = newName.trim();
-    const currentCategory = categories.find((category) => category.id === categoryId);
-
-    if (!currentCategory || !trimmedName) {
-      return;
-    }
-
-    if (trimmedName === currentCategory.name) {
-      setEditingCategory(null);
-      setEditingName('');
-      return;
-    }
-
-    try {
-      await updateCategory(categoryId, trimmedName);
-      setEditingCategory(null);
-      setEditingName('');
-    } catch (error) {
-      // Error ya manejado en el hook
-    }
-  };
-
-  const handleDeleteCategory = (categoryToDelete: Category) => {
-    setDeleteConfirmation(categoryToDelete);
-  };
-
-  const confirmDeleteCategory = async () => {
-    if (deleteConfirmation) {
-      try {
-        await deleteCategory(deleteConfirmation.id, deleteConfirmation.name);
-        setDeleteConfirmation(null);
-      } catch (error) {
-        // Error ya manejado en el hook
-      }
-    }
-  };
-
-  const startEditing = (category: Category) => {
-    setEditingCategory(category);
-    setEditingName(category.name);
-  };
-
-  const cancelEditing = () => {
-    setEditingCategory(null);
-    setEditingName('');
-  };
+  if (error) return <div role="alert">No se pudieron cargar las categorías. <Button onClick={retry}>Reintentar</Button></div>;
+  if (!isLoaded) return <p role="status">Cargando categorías...</p>;
 
   return (
     <Card>
@@ -95,7 +23,8 @@ export const CategoryManager: React.FC = () => {
         <div className="flex justify-between items-center">
           <CardTitle>Gestión de Categorías</CardTitle>
           <Button
-            onClick={() => setIsAddingCategory(true)}
+            onClick={startAdding}
+            disabled={busy}
             size="sm"
             className="h-8"
           >
@@ -105,28 +34,29 @@ export const CategoryManager: React.FC = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <fieldset disabled={busy} className="flex flex-col gap-4">
         {/* Agregar nueva categoría */}
         {isAddingCategory && (
           <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
             <Input
               placeholder="Nombre de la nueva categoría"
+              aria-label="Nombre de la nueva categoría"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               className="flex-1"
-              onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleAddCategory(); } }}
             />
             <Button
               onClick={handleAddCategory}
+              aria-label="Guardar nueva categoría"
               size="sm"
               className="h-8 px-3"
             >
               <Check className="h-4 w-4" />
             </Button>
             <Button
-              onClick={() => {
-                setIsAddingCategory(false);
-                setNewCategoryName('');
-              }}
+              onClick={cancelAdding}
+              aria-label="Cancelar nueva categoría"
               variant="outline"
               size="sm"
               className="h-8 px-3"
@@ -146,15 +76,16 @@ export const CategoryManager: React.FC = () => {
               {editingCategory?.id === category.id ? (
                 <div className="flex items-center space-x-2 flex-1">
                   <Input
+                    aria-label="Nombre de la categoría"
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
                     className="flex-1"
-                    onKeyDown={(e) => e.key === 'Enter' && handleEditCategory(category.id, editingName)}
-                    onBlur={() => handleEditCategory(category.id, editingName)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleEditCategory(); } }}
                     autoFocus
                   />
                   <Button
-                    onClick={() => handleEditCategory(category.id, editingName)}
+                    onClick={handleEditCategory}
+                    aria-label="Guardar categoría"
                     size="sm"
                     className="h-8 px-3"
                   >
@@ -162,6 +93,7 @@ export const CategoryManager: React.FC = () => {
                   </Button>
                   <Button
                     onClick={cancelEditing}
+                    aria-label="Cancelar edición"
                     variant="outline"
                     size="sm"
                     className="h-8 px-3"
@@ -173,10 +105,11 @@ export const CategoryManager: React.FC = () => {
                 <>
                   <span className="font-medium text-gray-900">{category.name}</span>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="icon" aria-label={`Subir ${category.name}`} disabled={index === 0 || reorder.isPending} onClick={() => moveCategory(index, -1)}><ArrowUp className="h-4 w-4" /></Button>
-                    <Button variant="outline" size="icon" aria-label={`Bajar ${category.name}`} disabled={index === categories.length - 1 || reorder.isPending} onClick={() => moveCategory(index, 1)}><ArrowDown className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon" aria-label={`Subir ${category.name}`} disabled={index === 0} onClick={() => moveCategory(index, -1)}><ArrowUp data-icon="inline-start" /></Button>
+                    <Button variant="outline" size="icon" aria-label={`Bajar ${category.name}`} disabled={index === categories.length - 1} onClick={() => moveCategory(index, 1)}><ArrowDown data-icon="inline-start" /></Button>
                     <Button
                       onClick={() => startEditing(category)}
+                      aria-label={`Editar ${category.name}`}
                       variant="outline"
                       size="sm"
                       className="h-8 w-8 p-0"
@@ -185,6 +118,7 @@ export const CategoryManager: React.FC = () => {
                     </Button>
                     <Button
                       onClick={() => handleDeleteCategory(category)}
+                      aria-label={`Eliminar ${category.name}`}
                       variant="outline"
                       size="sm"
                       className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -205,17 +139,19 @@ export const CategoryManager: React.FC = () => {
           </div>
         )}
 
+        </fieldset>
         {/* Modal de confirmación para eliminar categoría */}
         {deleteConfirmation && (
           <ResponsiveDeleteModal
             isOpen={!!deleteConfirmation}
-            onClose={() => setDeleteConfirmation(null)}
+            onClose={cancelDeleteCategory}
             onConfirm={confirmDeleteCategory}
             title="Confirmar eliminación"
             description="¿Estás seguro de que quieres eliminar la categoría"
             itemName={deleteConfirmation.name}
             itemType="categoría"
             confirmText="Eliminar Categoría"
+            loading={busy}
           />
         )}
       </CardContent>
