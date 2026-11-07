@@ -1,5 +1,6 @@
 import { useSiteSettings } from '@/hooks/use-site-settings';
-import { youtubeId, type HeroSlide } from '@/lib/site-settings';
+import { type HeroSlide } from '@/lib/site-settings';
+import { parseVideoSource } from '@/lib/video-source';
 import { Button } from "@/components/ui/button";
 import { ArrowRight} from "lucide-react";
 import { useCarousel } from '@/hooks/use-carousel';
@@ -32,43 +33,16 @@ export const HeroSection = () => {
     }
   };
 
-  const getYouTubeStartTime = (url: string) => {
-    // Extraer tiempo de inicio de la URL (ej: &t=9s, &t=1m30s, &t=90)
-    const timeMatch = url.match(/[?&]t=([^&]+)/);
-    if (!timeMatch) return 0;
-    
-    const timeStr = timeMatch[1];
-    
-    // Si termina en 's' (segundos)
-    if (timeStr.endsWith('s')) {
-      return parseInt(timeStr.slice(0, -1));
-    }
-    
-    // Si termina en 'm' (minutos)
-    if (timeStr.endsWith('m')) {
-      return parseInt(timeStr.slice(0, -1)) * 60;
-    }
-    
-    // Si termina en 'h' (horas)
-    if (timeStr.endsWith('h')) {
-      return parseInt(timeStr.slice(0, -1)) * 3600;
-    }
-    
-    // Si es solo un número (segundos)
-    return parseInt(timeStr) || 0;
-  };
-
   const activeVideo = professionalVideos[activeIndex];
 
   const renderVideoContent = (video: HeroSlide) => {
     if (video.type === 'image') return <img src={video.src} alt={video.title} className="w-full h-full object-cover" />;
-    const videoId = youtubeId(video.src);
-    const startTime = getYouTubeStartTime(video.src);
-    if (!videoId) return <video key={video.src} src={video.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />;
+    const source = parseVideoSource(video.src);
+    if (source.kind !== 'youtube') return <video key={video.src} src={video.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />;
     return (
       <iframe
         key={video.src}
-        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&start=${startTime}`}
+        src={source.heroEmbedUrl}
         title={video.title}
         className="w-full h-full object-cover"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

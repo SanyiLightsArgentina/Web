@@ -225,21 +225,6 @@ export function parseSiteSettings(rows: readonly SiteSettingsRow[] | null | unde
   return settings
 }
 
-export function youtubeId(value: string): string | null {
-  try {
-    const url = new URL(value);
-    const host = url.hostname.replace(/^www\./, '');
-    const id = host === 'youtu.be' ? url.pathname.slice(1) :
-      ['youtube.com', 'm.youtube.com', 'youtube-nocookie.com'].includes(host)
-        ? url.searchParams.get('v') || url.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/)?.[1] : null;
-    return id && /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
-  } catch { return null; }
-}
 export function isWebUrl(value: string): boolean {
   try { return ['https:', 'http:'].includes(new URL(value).protocol); } catch { return false; }
-}
-
-export function isDirectVideoUrl(value: string): boolean {
-  if (!isWebUrl(value)) return false;
-  try { return /\.(mp4|webm|m4v|mov)$/i.test(new URL(value).pathname); } catch { return false; }
 }

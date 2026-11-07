@@ -1,4 +1,4 @@
-import { Product } from "@/data/products";
+import { parseVideoSource } from '@/lib/video-source';
 
 interface ProductVideosProps {
   videos: string[];
@@ -6,16 +6,6 @@ interface ProductVideosProps {
 }
 
 export const ProductVideos = ({ videos, productModel }: ProductVideosProps) => {
-  const getYouTubeVideoId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  };
-
-  const isYouTubeVideo = (url: string) => {
-    return url.includes('youtube.com') || url.includes('youtu.be');
-  };
-
   if (!videos || videos.length === 0) {
     return null;
   }
@@ -37,8 +27,7 @@ export const ProductVideos = ({ videos, productModel }: ProductVideosProps) => {
           : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2'
       }`}>
             {videos.map((video, index) => {
-              const videoId = getYouTubeVideoId(video);
-              const isYouTube = isYouTubeVideo(video);
+               const source = parseVideoSource(video);
               
               return (
                 <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
@@ -49,9 +38,9 @@ export const ProductVideos = ({ videos, productModel }: ProductVideosProps) => {
                   </div>
                   <div className="p-3 sm:p-4 flex-1 flex flex-col">
                     <div className="relative aspect-video bg-gray-50 rounded-lg overflow-hidden shadow-sm border border-gray-200 flex-1">
-                      {isYouTube ? (
+                      {source.kind === 'youtube' ? (
                         <iframe
-                          src={`https://www.youtube.com/embed/${videoId}`}
+                          src={source.embedUrl}
                           title={`Video ${index + 1} de ${productModel}`}
                           className="w-full h-full"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -1,5 +1,5 @@
 import { useSiteSettings } from '@/hooks/use-site-settings';
-import { youtubeId } from '@/lib/site-settings';
+import { parseVideoSource } from '@/lib/video-source';
 import { Navigation } from "@/components/ui/navigation";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Play } from "lucide-react";
@@ -12,10 +12,6 @@ const Videos = () => {
     description:
       "Videos de demostración de equipos Sanyi: cabezales móviles LED, barras zoom, láser. Ver en acción antes de cotizar.",
   });
-
-  const getVideoThumbnail = (videoId: string): string => {
-    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-  };
 
   const { settings } = useSiteSettings();
   const videos = settings.videos.items;
@@ -32,12 +28,14 @@ const Videos = () => {
           </div>
      
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videos.map((video) => (
+            {videos.map((video) => {
+              const source = parseVideoSource(video.url);
+              return (
               <div key={video.id} className="bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                 <div className="relative aspect-video bg-muted">
-                  {youtubeId(video.url) ? <>
+                  {source.kind === 'youtube' ? <>
                     <img
-                      src={getVideoThumbnail(youtubeId(video.url)!)}
+                      src={source.thumbnailUrl}
                       alt={video.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -54,7 +52,7 @@ const Videos = () => {
                   </h3>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
 
           <div className="text-center mt-12">

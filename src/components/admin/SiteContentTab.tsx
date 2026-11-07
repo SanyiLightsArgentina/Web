@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useSiteSettings, useSaveSiteSection } from '@/hooks/use-site-settings';
-import { isWebUrl, youtubeId, isDirectVideoUrl, type SiteSettings } from '@/lib/site-settings';
+import { isWebUrl, type SiteSettings } from '@/lib/site-settings';
+import { parseVideoSource } from '@/lib/video-source';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
 
@@ -55,7 +56,7 @@ function ContentEditor({ section, initial }: { section: Section; initial: SiteSe
     if (save.isPending || isUploading) return;
     let error = '';
     if (section === 'hero' && (!draft.hero.length || draft.hero.some(s => !s.title.trim() || !isWebUrl(s.src) || !/^\/(?!\/)/.test(s.productRoute)))) error = 'Completá cada slide con título, URL de imagen o video y una ruta del sitio (por ejemplo /productos).';
-    if (section === 'videos' && (!isWebUrl(draft.videos.channelUrl) || draft.videos.items.some(v => !v.title.trim() || (!youtubeId(v.url) && !isDirectVideoUrl(v.url))))) error = 'Completá los títulos y usá enlaces de YouTube o URLs de archivos MP4/WebM para los videos.';
+    if (section === 'videos' && (!isWebUrl(draft.videos.channelUrl) || draft.videos.items.some(v => !v.title.trim() || parseVideoSource(v.url).kind === 'unsupported'))) error = 'Completá los títulos y usá enlaces de YouTube o URLs de archivos MP4/WebM para los videos.';
     if (section === 'contact' && (!/^\d{8,15}$/.test(draft.contact.phone) || !draft.contact.phoneLabel.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.contact.email) || !isWebUrl(draft.contact.instagram) || !isWebUrl(draft.contact.facebook))) error = 'Revisá el WhatsApp (código de país y número, solo dígitos), el teléfono visible, el email y las redes sociales.';
     if (error) { toast({ title: 'Revisá los datos', description: error, variant: 'destructive' }); return; }
     try {

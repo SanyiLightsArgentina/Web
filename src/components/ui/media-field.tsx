@@ -8,6 +8,7 @@ import { ResponsiveDeleteModal } from './responsive-delete-modal'
 import { toast } from '@/hooks/use-toast'
 import { validateMedia } from '@/lib/media'
 import type { MediaItem, ProductMedia } from '@/lib/product-media'
+import { parseVideoSource } from '@/lib/video-source'
 
 // Keep the existing field-specific visual design; behavior is shared.
 const fields = {
@@ -28,7 +29,8 @@ function ItemPreview({ item, field, onPreview }: { item: MediaItem; field: keyof
   const isImage = field === 'images' || (item.type === 'file' ? item.value.type.startsWith('image/') : /\.(png|jpg|jpeg|gif|webp|svg)(?:[?#]|$)/i.test(src))
   if (isImage) return <img src={src || undefined} alt="Vista previa" className="size-full object-cover cursor-pointer" onClick={() => onPreview(src)} />
   if (field === 'contents') return <FileText className="size-6 text-green-600" />
-  if (item.type === 'url' && /youtube\.com|youtu\.be|vimeo\.com/.test(src)) return <div className="text-center"><Play className="size-12 mx-auto mb-2" /><p className="text-sm font-medium">{src.includes('vimeo.com') ? 'Vimeo' : 'YouTube'} Video</p><p className="text-xs truncate">{src}</p></div>
+  const video = parseVideoSource(src)
+  if (item.type === 'url' && video.kind !== 'direct') return <div className="text-center"><Play className="size-12 mx-auto mb-2" /><p className="text-sm font-medium">{video.kind === 'youtube' ? 'YouTube Video' : 'URL de video'}</p><p className="text-xs truncate">{src}</p></div>
   return <video src={src || undefined} className="size-full object-cover" controls preload="metadata" muted={item.type === 'file'} />
 }
 
