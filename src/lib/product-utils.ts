@@ -128,7 +128,22 @@ export const getFeaturedProducts = <T extends Product>(products: T[], count: num
 
 export const getProductsByCategoryId = <T extends Product>(products: T[], categoryId: number, count: number = 3, excludeModel?: string): T[] => {
   if (!categoryId) return [];
-  
+
+  // Keep slice semantics for negative, fractional and non-finite limits.
+  if (Number.isInteger(count) && count >= 0) {
+    const matches: T[] = [];
+    if (count === 0) return matches;
+    for (let index = 0; index < products.length; index += 1) {
+      if (!(index in products)) continue;
+      const product = products[index];
+      if (product.category_id !== categoryId || product.model === excludeModel) continue;
+      matches.push(product);
+      // Related-product cards only need the first few matches in catalog order.
+      if (matches.length === count) break;
+    }
+    return matches;
+  }
+
   const categoryProducts = products.filter(product => 
     product.category_id === categoryId && product.model !== excludeModel
   );

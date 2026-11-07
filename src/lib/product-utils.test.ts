@@ -44,3 +44,45 @@ describe('selectProducts', () => {
     expect(models(getProductsByCategoryId(products, 1, 3, 'SPL-LED-800'))).toEqual(['ab'])
   })
 })
+
+describe('getProductsByCategoryId', () => {
+  const catalog = Array.from({ length: 80 }, (_, index) => ({
+    model: `LED-${index}`, description: '', category_id: index % 4 + 1, new: false,
+  }))
+
+  it('returns the first three eligible products by default, preserving identity and order', () => {
+    const snapshot = [...catalog]
+    const result = getProductsByCategoryId(catalog, 1, undefined, 'LED-0')
+    expect(models(result)).toEqual(['LED-4', 'LED-8', 'LED-12'])
+    result.forEach((product, index) => expect(product).toBe(catalog[(index + 1) * 4]))
+    expect(catalog).toEqual(snapshot)
+    expect(getProductsByCategoryId(catalog, 1)).not.toBe(getProductsByCategoryId(catalog, 1))
+  })
+
+  it('stops inspecting products as soon as the requested count is reached', () => {
+    const input = [...catalog]
+    Object.defineProperty(input, 9, { get() { throw new Error('Unneeded product inspected') } })
+    expect(models(getProductsByCategoryId(input, 1))).toEqual(['LED-0', 'LED-4', 'LED-8'])
+  })
+
+  it.each([0, 1, 3, 100, -1, -3, 1.9, NaN, Infinity, -Infinity])(
+    'preserves filter/slice results for limit %s', count => {
+      for (const category of [0, 1, 4, 99]) {
+        for (const exclude of [undefined, 'LED-0']) {
+          const expected = catalog.filter(p => p.category_id === category && p.model !== exclude).slice(0, count)
+          expect(getProductsByCategoryId(catalog, category, count, exclude)).toEqual(expected)
+        }
+      }
+    },
+  )
+
+  it('handles empty and sparse catalogs and excludes every duplicate of the current model', () => {
+    expect(getProductsByCategoryId([], 1)).toEqual([])
+    expect(getProductsByCategoryId(catalog, 0)).toEqual([])
+    const sparse = [...catalog]
+    delete sparse[0]
+    expect(getProductsByCategoryId(sparse, 1)).toEqual([catalog[4], catalog[8], catalog[12]])
+    expect(getProductsByCategoryId([catalog[0], catalog[0], catalog[4]], 1, 3, 'LED-0'))
+      .toEqual([catalog[4]])
+  })
+})
