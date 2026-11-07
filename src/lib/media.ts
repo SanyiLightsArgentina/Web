@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { resizeProductImage, type ImageSize } from './product-images'
 
 export type MediaTarget =
   | { kind: 'product-image'; model: string }
@@ -104,6 +105,62 @@ export function mediaDestination(
 export function contentTypeFor(file: File): string {
   if (file.name.toLowerCase().endsWith('.mp4')) return 'video/mp4'
   return file.type || 'application/octet-stream'
+}
+
+/** Progress belongs to this editor session, never to persisted or published media. */
+export function createMediaUploadSession(
+  store: MediaStore,
+  resize: (file: File, size: ImageSize) => Promise<Blob> = resizeProductImage,
+) {
+  const files = new WeakMap<File, Map<string, {
+    destination: MediaDestination
+    completed: Map<string, string>
+    pending?: Promise<string>
+  }>>()
+
+  return async (file: File, target: MediaTarget): Promise<string> => {
+    const problem = validateMedia(target, file)
+    if (problem) throw new Error(problem)
+    const identity = 'model' in target ? target.model : 'section' in target ? target.section : target.clientId
+    const key = `${target.kind}:${identity}`
+    let targets = files.get(file)
+    if (!targets) { targets = new Map(); files.set(file, targets) }
+    let progress = targets.get(key)
+    if (!progress) {
+      progress = { destination: mediaDestination(target, file), completed: new Map() }
+      targets.set(key, progress)
+    }
+    if (progress.pending) return progress.pending
+    const { destination, completed } = progress
+    const put = async (path: string, data: File) => {
+      const existing = completed.get(path)
+      if (existing) return existing
+      const url = await store.upload(destination.bucket, path, data, destination.cacheControl)
+      if (!url) throw new Error('No se pudo subir el archivo. Volvé a intentar.')
+      completed.set(path, url)
+      return url
+    }
+    const run = async () => {
+      if (target.kind !== 'product-image') return put(destination.path, file)
+      const detailPath = `${destination.path}/optimized-v1/detail.webp`
+      if (completed.has(detailPath)) return completed.get(detailPath)!
+      const sizes: ImageSize[] = ['thumb', 'card', 'detail']
+      // Decode before storing the original, so unsupported images leave no upload behind.
+      const variants = await Promise.all(sizes.map(size => resize(file, size)))
+      await put(destination.path, file)
+      let detailUrl = ''
+      for (const [index, size] of sizes.entries()) {
+        detailUrl = await put(`${destination.path}/optimized-v1/${size}.webp`, new File([variants[index]], `${size}.webp`, { type: 'image/webp' }))
+      }
+      return detailUrl
+    }
+    progress.pending = run()
+    try {
+      return await progress.pending
+    } finally {
+      progress.pending = undefined
+    }
+  }
 }
 
 export function createSupabaseMediaStore(client: SupabaseClient): MediaStore {

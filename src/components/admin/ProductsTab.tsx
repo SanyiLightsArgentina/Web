@@ -68,6 +68,7 @@ export const ProductsTab = () => {
       {/* Product Form */}
       {(isAddingProduct || editingProduct) && (
         <div ref={form}><ProductForm
+          key={editingProduct?.id ?? editingProduct?.model ?? 'new'}
           product={editingProduct ?? undefined}
           categories={categories}
           onSubmit={onSaveProduct}
