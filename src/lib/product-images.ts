@@ -4,8 +4,25 @@ const optimizedPaths = new Set(paths)
 const publicPath = '/storage/v1/object/public/product-images/'
 export type ImageSize = 'thumb' | 'card' | 'detail'
 
+// Catalog cards reuse the same sources across renders and navigation. Bound the
+// cache so browsing or editing many products cannot retain every URL forever.
+const imageUrlCache = new Map<string, string>()
+const MAX_CACHED_IMAGE_URLS = 256
+
 export function productImageUrl(source: string | undefined, size: ImageSize): string {
   if (!source) return ''
+  const key = `${size}:${source}`
+  const cached = imageUrlCache.get(key)
+  if (cached !== undefined) return cached
+  const result = resolveProductImageUrl(source, size)
+  if (imageUrlCache.size >= MAX_CACHED_IMAGE_URLS) {
+    imageUrlCache.delete(imageUrlCache.keys().next().value!)
+  }
+  imageUrlCache.set(key, result)
+  return result
+}
+
+function resolveProductImageUrl(source: string, size: ImageSize): string {
   try {
     const url = new URL(source)
     if (url.origin !== new URL(import.meta.env.VITE_PUBLIC_SUPABASE_URL).origin || !url.pathname.startsWith(publicPath)) return source
