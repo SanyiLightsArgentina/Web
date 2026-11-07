@@ -3,20 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './car
 import { Badge } from './badge';
 import { Package, TrendingUp, Eye, Star, BarChart3, Users, ShoppingCart } from 'lucide-react';
 import { useProductAdmin } from '@/hooks/use-product-admin';
+import { summarizeCatalog } from '@/lib/catalog-stats';
 
 export const AdminStats: React.FC = () => {
   const { products, categories, isSaving, lastSaved } = useProductAdmin();
-  const totalProducts = products.length;
-  const newProducts = products.filter(p => p.new).length;
-  const productsWithVideo = products.filter(p => p.videos && p.videos.length > 0).length;
-  const productsWithSecondaryImage = products.filter(p => p.contents && p.contents.length > 1).length;
-  const productsWithMultipleImages = products.filter(p => (p.images?.length ?? 0) > 1).length;
-
-  const categoryStats = categories.map(category => ({
-    name: category.name,
-    count: products.filter(p => p.category_id === category.id).length,
-    percentage: totalProducts > 0 ? (products.filter(p => p.category_id === category.id).length / totalProducts) * 100 : 0
-  }));
+  const {
+    totalProducts,
+    newProducts,
+    productsWithVideo,
+    productsWithSecondaryImage,
+    productsWithMultipleImages,
+    describedProducts,
+    productsWithPrimaryImage,
+    productsWithContent,
+    categoryStats,
+  } = summarizeCatalog(products, categories);
 
   const recentProducts = products.slice(0, 5);
 
@@ -190,19 +191,19 @@ export const AdminStats: React.FC = () => {
                 <div className="flex justify-between text-sm">
                   <span>Con descripción</span>
                   <span className="text-green-600 font-medium">
-                    {products.filter(p => p.description).length}/{totalProducts}
+                    {describedProducts}/{totalProducts}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Con imagen principal</span>
                   <span className="text-green-600 font-medium">
-                    {products.filter(p => p.images && p.images.length > 0).length}/{totalProducts}
+                    {productsWithPrimaryImage}/{totalProducts}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Con imagen de contenido</span>
                   <span className="text-green-600 font-medium">
-                    {products.filter(p => p.contents && p.contents.length > 0).length}/{totalProducts}
+                    {productsWithContent}/{totalProducts}
                   </span>
                 </div>
               </div>
