@@ -1,5 +1,6 @@
 import { Product } from "@/data/products";
 import type { Category } from "@/lib/catalog";
+import { isWebUrl } from '@/lib/site-settings';
 
 type NormalizedProductText = {
   model: string;
@@ -36,28 +37,35 @@ export const getProductByModel = (products: Product[], model: string): Product |
   return products.find(product => product.model === decoded);
 };
 
-export const filterProducts = <T extends Product>(
+export type ProductCriteria = {
+  query?: string;
+  categoryName?: string;
+  categoryId?: number | null;
+  onlyNew?: boolean;
+  withFiles?: boolean;
+};
+
+export const selectProducts = <T extends Product>(
   products: T[],
-  searchQuery: string = "",
-  selectedCategory: string = "",
-  showOnlyNew: boolean = false,
-  categories: Category[] = []
+  criteria: ProductCriteria = {},
+  categories: Category[] = [],
 ): T[] => {
   // Validar que products sea un array
   if (!Array.isArray(products)) {
-    console.warn('filterProducts: products no es un array, retornando array vacío');
     return [];
   }
 
-  const query = searchQuery.toLowerCase();
-  const hasCategoryFilter = selectedCategory !== "" && selectedCategory !== "Todos";
+  const { categoryName: selectedCategory = '', categoryId, onlyNew: showOnlyNew = false, withFiles = false } = criteria;
+  const query = (criteria.query ?? '').trim().toLowerCase();
+  const hasCategoryFilter = selectedCategory !== '' || categoryId != null;
+  const eligible = (product: T) => (!withFiles || (product.contents ?? []).some(isWebUrl));
 
   // The unfiltered catalog is the most common state; avoid walking it at all.
-  if (!query && !hasCategoryFilter && !showOnlyNew) return products.slice();
+  if (!query && !hasCategoryFilter && !showOnlyNew && !withFiles) return products.slice();
 
   // Resolve the category name once instead of scanning categories per product.
   const categoryIds = hasCategoryFilter
-    ? new Set(categories.filter(category => category.name === selectedCategory).map(category => category.id))
+    ? new Set(categoryId != null ? [categoryId] : categories.filter(category => category.name === selectedCategory).map(category => category.id))
     : null;
 
   const matches: T[] = [];
@@ -66,6 +74,7 @@ export const filterProducts = <T extends Product>(
   if (!query) {
     for (let index = 0; index < products.length; index += 1) {
       const product = products[index];
+      if (!eligible(product)) continue;
       if (showOnlyNew && !product.new) continue;
       if (categoryIds && !categoryIds.has(product.category_id)) continue;
       matches.push(product);
@@ -76,7 +85,7 @@ export const filterProducts = <T extends Product>(
   const texts = getSearchIndex(products).texts;
 
   // Search-only is the common case while the user types.
-  if (!showOnlyNew && !categoryIds) {
+  if (!showOnlyNew && !categoryIds && !withFiles) {
     for (let index = 0; index < products.length; index += 1) {
       const text = texts[index];
       const position = text.haystack.indexOf(query);
@@ -95,6 +104,7 @@ export const filterProducts = <T extends Product>(
 
   for (let index = 0; index < products.length; index += 1) {
     const product = products[index];
+    if (!eligible(product)) continue;
     if (showOnlyNew && !product.new) continue;
     if (categoryIds && !categoryIds.has(product.category_id)) continue;
 
@@ -121,14 +131,6 @@ export const getFeaturedProducts = <T extends Product>(products: T[], count: num
   return products.filter(product => product.new === true).slice(0, count);
 };
 
-export const searchProducts = <T extends Product>(products: T[], query: string): T[] => {
-  const searchTerm = query.toLowerCase();
-  return products.filter(product => 
-    product.model.toLowerCase().includes(searchTerm) ||
-    product.description.toLowerCase().includes(searchTerm)
-  );
-};
-
 export const getProductsByCategory = (products: Product[], category: string, count: number = 3, excludeModel?: string, categories: Category[] = []) => {
   if (!category || category === "Todos") return [];
   
@@ -139,9 +141,7 @@ export const getProductsByCategory = (products: Product[], category: string, cou
     product.category_id === categoryObj.id && product.model !== excludeModel
   );
   
-  // Mezclar aleatoriamente y tomar los primeros 'count' productos
-  const shuffled = categoryProducts.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  return categoryProducts.slice(0, count);
 };
 
 export const getProductsByCategoryId = <T extends Product>(products: T[], categoryId: number, count: number = 3, excludeModel?: string): T[] => {
@@ -151,7 +151,5 @@ export const getProductsByCategoryId = <T extends Product>(products: T[], catego
     product.category_id === categoryId && product.model !== excludeModel
   );
   
-  // Mezclar aleatoriamente y tomar los primeros 'count' productos
-  const shuffled = categoryProducts.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  return categoryProducts.slice(0, count);
 }; 

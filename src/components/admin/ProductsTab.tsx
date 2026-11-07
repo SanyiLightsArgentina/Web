@@ -6,6 +6,7 @@ import { ProductControls } from './ProductControls';
 import { ProductCard } from './ProductCard';
 import { ProductForm } from '@/components/ui/product-form';
 import { presentProduct } from '@/lib/product-presentation';
+import { selectProducts } from '@/lib/product-utils';
 import type { CatalogProduct, Category } from '@/lib/catalog';
 
 interface ProductsTabProps {
@@ -45,12 +46,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   onCancelForm,
   onRetry
 }) => {
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategoryId || product.category_id === selectedCategoryId;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = selectProducts(products, { query: searchTerm, categoryId: selectedCategoryId });
 
   if (loading) {
     return (

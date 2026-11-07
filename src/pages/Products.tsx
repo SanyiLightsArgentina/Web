@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import { useCatalogPosition } from "@/hooks/use-catalog-position";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
-import { filterProducts } from "@/lib/product-utils";
+import { selectProducts } from "@/lib/product-utils";
 import { presentProduct } from "@/lib/product-presentation";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
@@ -51,7 +51,7 @@ const Products = () => {
     }
   }, [location.state, navigate]);
 
-  const filteredProducts = filterProducts(products, searchQuery, selectedCategory, showOnlyNew, categories);
+  const filteredProducts = selectProducts(products, { query: searchQuery, categoryName: selectedCategory === 'Todos' ? '' : selectedCategory, onlyNew: showOnlyNew }, categories);
   
   // Calcular paginación
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);

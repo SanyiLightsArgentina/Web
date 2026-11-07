@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Search, X, Star, Eye } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { searchProducts, getFeaturedProducts } from "@/lib/product-utils";
+import { selectProducts, getFeaturedProducts } from "@/lib/product-utils";
 import { presentProduct } from "@/lib/product-presentation";
 import type { ProductPresentation } from "@/lib/product-summary";
 import { useQuoteList } from "@/hooks/use-quote-list";
@@ -21,7 +21,7 @@ export const SearchDialog = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { products, categories } = useCatalog();
   const featuredProducts = getFeaturedProducts(products, 8);
-  const searchResults = searchQuery.trim() ? searchProducts(products, searchQuery) : [];
+  const searchResults = searchQuery.trim() ? selectProducts(products, { query: searchQuery }) : [];
   const navigate = useNavigate();
   const { has, toggle } = useQuoteList();
 

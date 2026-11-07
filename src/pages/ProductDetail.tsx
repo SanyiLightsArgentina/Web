@@ -57,7 +57,7 @@ const ProductDetail = () => {
     );
   }
 
-  if (!isLoaded || !products || products.length === 0) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation isTransparent={false} />
@@ -66,7 +66,7 @@ const ProductDetail = () => {
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground text-lg">
-                {!isLoaded ? 'Cargando producto...' : 'Cargando productos...'}
+                Cargando producto...
               </p>
             </div>
           </div>

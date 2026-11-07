@@ -1,72 +1,46 @@
 import { describe, expect, it } from 'vitest'
-import {
-  filterProducts,
-  getFeaturedProducts,
-  getProductsByCategoryId,
-  searchProducts,
-} from './product-utils'
+import { selectProducts, getFeaturedProducts, getProductsByCategoryId } from './product-utils'
 
-const categories = [
-  { id: 1, name: 'Moving Head' },
-  { id: 2, name: 'Wash Light' },
-]
-
+const categories = [{ id: 1, name: 'Moving Head' }, { id: 2, name: 'Wash Light' }]
 const products = [
-  { model: 'SPL-LED-800', description: 'LED moving head', category_id: 1, new: true },
-  { model: 'SPL-COB-200', description: 'Wash light cob', category_id: 2, new: false },
+  { model: 'SPL-LED-800', description: 'LED moving head', category_id: 1, new: true, contents: ['https://example.com/manual.pdf'] },
+  { model: 'SPL-COB-200', description: 'Wash light cob', category_id: 2, new: false, contents: ['not-a-url'] },
   { model: 'ab', description: 'cd', category_id: 1, new: false },
   { model: 'LED-1', description: 'first', category_id: 2, new: true },
 ]
-
 const models = (result: Array<{ model: string }>) => result.map(product => product.model)
 
-describe('filterProducts', () => {
-  it('returns a copy in original order with no filters', () => {
-    const all = filterProducts(products, '', 'Todos', false, categories)
+describe('selectProducts', () => {
+  it('returns a copy in catalog order', () => {
+    const all = selectProducts(products)
     expect(models(all)).toEqual(models(products))
     expect(all).not.toBe(products)
   })
-
-  it('searches model and description case-insensitively', () => {
-    expect(models(filterProducts(products, 'LED', 'Todos', false, categories))).toEqual(['SPL-LED-800', 'LED-1'])
-    expect(models(filterProducts(products, 'wash', '', false, categories))).toEqual(['SPL-COB-200'])
+  it('searches both fields case-insensitively and trims the query', () => {
+    expect(models(selectProducts(products, { query: ' LED ' }))).toEqual(['SPL-LED-800', 'LED-1'])
+    expect(models(selectProducts(products, { query: 'wash' }))).toEqual(['SPL-COB-200'])
   })
-
-  it('resolves category names, including duplicates', () => {
-    expect(models(filterProducts(products, '', 'Moving Head', false, categories))).toEqual(['SPL-LED-800', 'ab'])
-    expect(models(filterProducts(products, '', 'Missing', false, categories))).toEqual([])
-    expect(models(filterProducts(
-      [
-        { model: 'one', description: '', category_id: 1, new: false },
-        { model: 'two', description: '', category_id: 2, new: false },
-      ],
-      '', 'Shared', false,
-      [{ id: 1, name: 'Shared' }, { id: 2, name: 'Shared' }],
-    ))).toEqual(['one', 'two'])
+  it('resolves category names and ids without treating names as sentinels', () => {
+    expect(models(selectProducts(products, { categoryName: 'Moving Head' }, categories))).toEqual(['SPL-LED-800', 'ab'])
+    expect(selectProducts(products, { categoryName: 'Missing' }, categories)).toEqual([])
+    expect(selectProducts(products, { categoryName: 'Todos' }, categories)).toEqual([])
+    expect(models(selectProducts(products, { categoryName: 'Shared' }, categories.map(c => ({ ...c, name: 'Shared' }))))).toEqual(models(products))
+    expect(models(selectProducts(products, { categoryId: 2 }))).toEqual(['SPL-COB-200', 'LED-1'])
   })
-
-  it('combines new-only and category filters', () => {
-    expect(models(filterProducts(products, '', 'Todos', true, categories))).toEqual(['SPL-LED-800', 'LED-1'])
-    expect(models(filterProducts(products, 'led', 'Wash Light', true, categories))).toEqual(['LED-1'])
+  it('combines search, category, new-only and downloadable file selection', () => {
+    expect(models(selectProducts(products, { query: 'led', categoryId: 1, onlyNew: true, withFiles: true }))).toEqual(['SPL-LED-800'])
+    expect(models(selectProducts(products, { withFiles: true }))).toEqual(['SPL-LED-800'])
+    expect(selectProducts(products, { query: 'cob', withFiles: true })).toEqual([])
   })
-
-  it('never matches across the model/description boundary', () => {
-    expect(models(filterProducts(products, 'bc', '', false, categories))).toEqual([])
-    expect(models(filterProducts(products, 'b\u0000c', '', false, categories))).toEqual([])
+  it('never matches across model/description fields', () => {
+    for (const query of ['bc', 'b\u0000c', 'ab cd']) expect(selectProducts(products, { query })).toEqual([])
   })
-})
-
-describe('catalog selectors', () => {
-  it('returns only new products up to the limit', () => {
+  it('returns new products up to the limit', () => {
     expect(models(getFeaturedProducts(products, 1))).toEqual(['SPL-LED-800'])
   })
-
-  it('searches without touching the filter rules', () => {
-    expect(models(searchProducts(products, 'first'))).toEqual(['LED-1'])
-  })
-
-  it('returns related products excluding the current model', () => {
-    const related = getProductsByCategoryId(products, 1, 3, 'SPL-LED-800')
-    expect(models(related)).toEqual(['ab'])
+  it('keeps related products stable and excludes the current model', () => {
+    expect(models(getProductsByCategoryId(products, 2, 2))).toEqual(['SPL-COB-200', 'LED-1'])
+    expect(models(getProductsByCategoryId(products, 2, 2))).toEqual(['SPL-COB-200', 'LED-1'])
+    expect(models(getProductsByCategoryId(products, 1, 3, 'SPL-LED-800'))).toEqual(['ab'])
   })
 })
