@@ -1,16 +1,18 @@
 import { toast } from '@/hooks/use-toast';
 import { queryClient } from './query-client';
-import { queryKeys } from './query-keys';
-import { fetchSiteSettings } from './site-settings-api';
+import { queryKeys, SITE_SETTINGS_STALE_TIME_MS } from './query-keys';
+import { supabase } from './supabase';
+import { createSupabaseCatalogStore } from './catalog-store';
 
 async function contact(message: string) {
   const popup = window.open('about:blank', '_blank');
   if (popup) popup.opener = null;
   try {
+    const read = createSupabaseCatalogStore(supabase);
     const { contact } = await queryClient.fetchQuery({
       queryKey: queryKeys.siteSettings,
-      queryFn: fetchSiteSettings,
-      staleTime: 60_000,
+      queryFn: () => read.loadSiteSettings(),
+      staleTime: SITE_SETTINGS_STALE_TIME_MS,
     });
     const url = `https://wa.me/${contact.phone}?text=${encodeURIComponent(message)}`;
     if (popup) popup.location.href = url;
