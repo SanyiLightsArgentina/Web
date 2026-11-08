@@ -1,5 +1,7 @@
 import type { Product } from '@/data/products'
 
+export const UNCATEGORIZED_LABEL = 'Sin categoría'
+
 export interface Category {
   id: number
   name: string
@@ -37,16 +39,8 @@ export function joinCatalog(
   const nameById = new Map(categories.map(category => [category.id, category.name]))
   return products.map(product => ({
     ...product,
-    category_name: nameById.get(product.category_id) ?? 'Sin categoría',
+    category_name: nameById.get(product.category_id) ?? UNCATEGORIZED_LABEL,
   }))
-}
-
-export function categoryLabel(
-  categories: readonly Category[],
-  categoryId: number | undefined
-): string {
-  if (!categoryId) return 'Sin categoría'
-  return categories.find(category => category.id === categoryId)?.name ?? 'Sin categoría'
 }
 
 export function findProductByModel(

@@ -2,18 +2,19 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Package, TrendingUp, Eye, Star, BarChart3, Users, ShoppingCart } from 'lucide-react';
-import { useProductAdmin } from '@/hooks/use-product-admin';
+import { useCatalog } from '@/hooks/use-catalog';
 import { useAdminWrite } from '@/hooks/use-admin-write';
+import { productFacts } from '@/lib/product-facts';
 import { summarizeCatalog } from '@/lib/catalog-stats';
 
 export const AdminStats: React.FC = () => {
-  const { products, categories } = useProductAdmin();
+  const { products, categories } = useCatalog();
   const { isSaving, lastSaved } = useAdminWrite();
   const {
     totalProducts,
     newProducts,
     productsWithVideo,
-    productsWithSecondaryImage,
+    productsWithMultipleContents,
     productsWithMultipleImages,
     describedProducts,
     productsWithPrimaryImage,
@@ -144,7 +145,9 @@ export const AdminStats: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentProducts.map((product, index) => (
+            {recentProducts.map((product, index) => {
+              const facts = productFacts(product)
+              return (
               <div key={product.model} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center text-sm font-medium">
@@ -153,29 +156,30 @@ export const AdminStats: React.FC = () => {
                   <div>
                     <p className="font-medium text-gray-900">{product.model}</p>
                     <p className="text-sm text-gray-600">
-                      {product.category_name}
+                      {facts.categoryLabel}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  {product.new && (
+                  {facts.isNew && (
                     <Badge variant="secondary" className="text-xs">
                       Nuevo
                     </Badge>
                   )}
-                  {product.videos && product.videos.length > 0 && (
+                  {facts.hasVideo && (
                     <Badge variant="outline" className="text-xs">
                       Video
                     </Badge>
                   )}
-                  {product.contents && product.contents.length > 1 && (
+                  {facts.hasMultipleContents && (
                     <Badge variant="outline" className="text-xs">
-                      +1 Img
+                      +1 contenido
                     </Badge>
                   )}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         </CardContent>
       </Card>
@@ -221,9 +225,9 @@ export const AdminStats: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Con imagen secundaria</span>
+                  <span>Con más de un contenido</span>
                   <span className="text-blue-600 font-medium">
-                    {productsWithSecondaryImage}/{totalProducts}
+                    {productsWithMultipleContents}/{totalProducts}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -242,7 +246,7 @@ export const AdminStats: React.FC = () => {
         <CardContent className="space-y-4"><div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center p-4 bg-blue-50 rounded-lg"><div className="text-2xl font-bold text-blue-600">{productsWithMultipleImages}</div><div className="text-sm text-blue-600">Productos con múltiples imágenes</div></div>
           <div className="text-center p-4 bg-green-50 rounded-lg"><div className="text-2xl font-bold text-green-600">{productsWithVideo}</div><div className="text-sm text-green-600">Productos con videos</div></div>
-          <div className="text-center p-4 bg-purple-50 rounded-lg"><div className="text-2xl font-bold text-purple-600">{productsWithSecondaryImage}</div><div className="text-sm text-purple-600">Productos con múltiples contenidos</div></div>
+          <div className="text-center p-4 bg-purple-50 rounded-lg"><div className="text-2xl font-bold text-purple-600">{productsWithMultipleContents}</div><div className="text-sm text-purple-600">Productos con más de un contenido</div></div>
         </div></CardContent>
       </Card>
     </div>

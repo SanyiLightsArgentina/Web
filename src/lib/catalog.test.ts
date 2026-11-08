@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { categoryLabel, findProductByModel, joinCatalog, orderCategories } from './catalog'
+import { findProductByModel, joinCatalog, orderCategories } from './catalog'
 
 const categories = [
   { id: 1, name: 'Wash Light' },
@@ -34,8 +34,6 @@ describe('joinCatalog', () => {
   it('resolves the label with a safe fallback', () => {
     expect(joined[0].category_name).toBe('Moving Head')
     expect(joined[1].category_name).toBe('Sin categoría')
-    expect(categoryLabel(categories, 3)).toBe('Laser')
-    expect(categoryLabel(categories, undefined)).toBe('Sin categoría')
   })
 
   it('decodes route segments and keeps malformed ones intact', () => {

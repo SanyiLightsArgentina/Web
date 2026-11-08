@@ -5,14 +5,14 @@ import { ProductControls } from './ProductControls';
 import { ProductCard } from './ProductCard';
 import { ProductForm } from '@/components/ui/product-form';
 import { presentProduct } from '@/lib/product-presentation';
-import { selectProducts } from '@/lib/product-utils';
 import { useProductAdmin } from '@/hooks/use-product-admin';
 import { ResponsiveDeleteModal } from '@/components/ui/responsive-delete-modal';
 
 export const ProductsTab = () => {
   const {
-  products,
   categories,
+  summary,
+  visibleProducts,
   loading,
   error,
   searchTerm,
@@ -32,7 +32,6 @@ export const ProductsTab = () => {
   useEffect(() => {
     if (isAddingProduct || editingProduct) form.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
   }, [isAddingProduct, editingProduct]);
-  const filteredProducts = selectProducts(products, { query: searchTerm, categoryId: selectedCategoryId });
 
   if (loading) {
     return (
@@ -53,7 +52,7 @@ export const ProductsTab = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-3 sm:gap-4">
-        {[{ label: 'Productos', value: products.length, icon: Package }, { label: 'Categorías', value: categories.length, icon: FolderOpen }, { label: 'Novedades', value: products.filter(product => product.new).length, icon: Sparkles }].map(stat => <div key={stat.label} className="rounded-2xl border border-border/80 bg-white px-4 py-4 sm:px-5"><div className="flex items-center justify-between gap-2 mb-3"><span className="text-xs sm:text-sm text-muted-foreground">{stat.label}</span><stat.icon className="hidden sm:block h-4 w-4 text-muted-foreground/60" /></div><p className="text-2xl sm:text-3xl font-semibold tracking-tight">{stat.value}</p></div>)}
+        {[{ label: 'Productos', value: summary.totalProducts, icon: Package }, { label: 'Categorías', value: summary.categoryStats.length, icon: FolderOpen }, { label: 'Novedades', value: summary.newProducts, icon: Sparkles }].map(stat => <div key={stat.label} className="rounded-2xl border border-border/80 bg-white px-4 py-4 sm:px-5"><div className="flex items-center justify-between gap-2 mb-3"><span className="text-xs sm:text-sm text-muted-foreground">{stat.label}</span><stat.icon className="hidden sm:block h-4 w-4 text-muted-foreground/60" /></div><p className="text-2xl sm:text-3xl font-semibold tracking-tight">{stat.value}</p></div>)}
       </div>
       {/* Controls */}
       <ProductControls
@@ -79,17 +78,17 @@ export const ProductsTab = () => {
 
       <section aria-label="Catálogo de productos" className="overflow-hidden rounded-2xl border border-border/80 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-4 border-b border-border/70">
-          <div className="flex items-center gap-2.5"><h2 className="text-sm font-semibold">Catálogo de productos</h2><span className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{filteredProducts.length}</span></div>
-          {searchTerm || selectedCategoryId ? <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => { onSearchChange(''); onCategoryChange(null); }}><X className="h-3 w-3 mr-1" />Limpiar filtros</Button> : <span className="text-xs text-muted-foreground">{products.length} equipos en tu catálogo</span>}
+          <div className="flex items-center gap-2.5"><h2 className="text-sm font-semibold">Catálogo de productos</h2><span className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{visibleProducts.length}</span></div>
+          {searchTerm || selectedCategoryId ? <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => { onSearchChange(''); onCategoryChange(null); }}><X className="h-3 w-3 mr-1" />Limpiar filtros</Button> : <span className="text-xs text-muted-foreground">{summary.totalProducts} equipos en tu catálogo</span>}
         </div>
         <div aria-hidden="true" className="hidden md:grid grid-cols-[minmax(0,1fr)_140px_100px] xl:grid-cols-[minmax(0,1fr)_140px_160px_100px] gap-5 px-5 py-3 bg-muted/25 border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"><span>Producto</span><span>Categoría</span><span className="hidden xl:block">Archivos</span><span className="text-right">Acciones</span></div>
         <div className="divide-y divide-border/60">
-          {filteredProducts.map(product => <ProductCard key={product.id || product.model} presentation={presentProduct(product, categories)} onEdit={() => onEditProduct(product)} onDelete={() => onDeleteProduct(product)} />)}
+          {visibleProducts.map(product => <ProductCard key={product.id || product.model} presentation={presentProduct(product, categories)} onEdit={() => onEditProduct(product)} onDelete={() => onDeleteProduct(product)} />)}
         </div>
-        {filteredProducts.length > 0 && <div className="border-t border-border/70 px-5 py-3 text-xs text-muted-foreground">Mostrando {filteredProducts.length} de {products.length} productos</div>}
+        {visibleProducts.length > 0 && <div className="border-t border-border/70 px-5 py-3 text-xs text-muted-foreground">Mostrando {visibleProducts.length} de {summary.totalProducts} productos</div>}
       </section>
 
-      {filteredProducts.length === 0 && !loading && (
+      {visibleProducts.length === 0 && !loading && (
         <div className="text-center py-12">
           <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -100,13 +99,6 @@ export const ProductsTab = () => {
               ? 'Intenta ajustar los filtros de búsqueda'
               : 'No hay productos en el catálogo'}
           </p>
-        </div>
-      )}
-
-      {loading && (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-500">Cargando productos...</p>
         </div>
       )}
 

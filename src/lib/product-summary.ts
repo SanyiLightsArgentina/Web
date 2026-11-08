@@ -1,4 +1,5 @@
 import type { CatalogProduct, Category } from '@/lib/catalog'
+import { productFacts } from '@/lib/product-facts'
 
 export interface ProductImages {
   cardImage: string
@@ -27,22 +28,17 @@ export function buildProductPresentation(
   images: ProductImages,
   categories: readonly Category[] = []
 ): ProductPresentation {
+  const facts = productFacts(product, categories)
   return {
     id: product.id,
     model: product.model,
     description: product.description,
     categoryId: product.category_id,
-    categoryLabel: product.category_name
-      || categories.find(category => category.id === product.category_id)?.name
-      || 'Sin categoría',
+    categoryLabel: facts.categoryLabel,
     cardImage: images.cardImage,
     thumbImage: images.thumbImage,
-    isNew: product.new,
-    counts: {
-      images: product.images?.length ?? 0,
-      contents: product.contents?.length ?? 0,
-      videos: product.videos?.length ?? 0,
-    },
+    isNew: facts.isNew,
+    counts: { images: facts.imageCount, contents: facts.contentCount, videos: facts.videoCount },
     href: `/producto/${encodeURIComponent(product.model)}`,
   }
 }

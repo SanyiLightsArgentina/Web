@@ -1,8 +1,10 @@
-import { createContext, useContext, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Product } from '@/data/products'
 import { useCatalog } from './use-catalog'
 import { useCatalogWrites } from './use-catalog-writes'
 import { toast } from './use-toast'
+import { selectProducts } from '@/lib/product-utils'
+import { summarizeCatalog } from '@/lib/catalog-stats'
 
 function useProductAdminState() {
   const catalog = useCatalog()
@@ -14,9 +16,17 @@ function useProductAdminState() {
   const [deleteProductConfirmation, onDeleteProduct] = useState<Product | null>(null)
   const deleteInProgress = useRef(false)
   const onCancelForm = () => { setEditingProduct(null); setIsAddingProduct(false) }
+  const visibleProducts = useMemo(
+    () => selectProducts(catalog.products, { query: searchTerm, categoryId: selectedCategoryId }),
+    [catalog.products, searchTerm, selectedCategoryId]
+  )
+  const summary = useMemo(
+    () => summarizeCatalog(catalog.products, catalog.categories),
+    [catalog.products, catalog.categories]
+  )
 
   return {
-    products: catalog.products, categories: catalog.categories, loading: !catalog.isLoaded,
+    categories: catalog.categories, summary, visibleProducts, loading: !catalog.isLoaded,
     error: catalog.error?.message ?? null, onRetry: catalog.refetch,
     isSaving: writes.isSaving, lastSaved: writes.lastSaved,
     editingProduct, isAddingProduct, searchTerm, selectedCategoryId,
@@ -40,7 +50,7 @@ function useProductAdminState() {
         await writes.deleteProduct(deleteProductConfirmation.id, deleteProductConfirmation.model)
         onDeleteProduct(null)
       } catch {
-        // The write module reports failure; keep confirmation available for retry.
+        // The write session reports failure; keep confirmation available for retry.
       } finally {
         deleteInProgress.current = false
       }
