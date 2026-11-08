@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { QuoteListProvider } from '@/hooks/use-quote-list'
 import { buildProductPresentation } from '@/lib/product-summary'
 import { ProductCard } from './product-card'
@@ -55,5 +55,19 @@ describe('ProductCard', () => {
 
     await user.click(screen.getByRole('button', { name: 'Quitar' }))
     expect(screen.getByRole('button', { name: 'Cotizar' })).toBeInTheDocument()
+  })
+
+  it('notifies the surface when navigation starts', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    render(
+      <MemoryRouter>
+        <QuoteListProvider>
+          <ProductCard product={presentation} onNavigate={onNavigate} />
+        </QuoteListProvider>
+      </MemoryRouter>,
+    )
+    await user.click(screen.getByRole('heading', { name: 'SPL LED 800' }))
+    expect(onNavigate).toHaveBeenCalledOnce()
   })
 })

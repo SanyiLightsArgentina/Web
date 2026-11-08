@@ -7,13 +7,14 @@ import { useQuoteList } from "@/hooks/use-quote-list";
 import type { ProductPresentation } from "@/lib/product-summary";
 import { productNavigation } from '@/lib/catalog-location';
 
-export const ProductCard = ({ product }: { product: ProductPresentation }) => {
+export const ProductCard = ({ product, onNavigate }: { product: ProductPresentation; onNavigate?: () => void }) => {
   const location = useLocation();
   const { has, toggle } = useQuoteList();
 
   return (
     <Link
       {...productNavigation(location, product.href)}
+      onClick={onNavigate}
       className="block group h-full"
     >
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer h-full flex flex-col">

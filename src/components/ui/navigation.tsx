@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { SearchDialog } from './search-dialog';
 import { NavigationLinks } from './navigation-links';
 import { useCatalog } from '@/hooks/use-catalog';
+import { findProductByModel } from '@/lib/catalog';
 import logo from '/src/assets/logo.png';
 import { useQuoteList } from '@/hooks/use-quote-list';
 import { openWhatsAppForModels } from '@/lib/contact';
@@ -37,7 +38,7 @@ export const Navigation = (_props: NavigationProps) => {
             <SheetHeader className="flex-shrink-0"><SheetTitle className="text-left">Lista de cotización</SheetTitle></SheetHeader>
             <div className="flex-1 overflow-y-auto py-4 space-y-3">
               {items.map(model => {
-                const product = products.find(p => p.model === model);
+                const product = findProductByModel(products, model);
                 return <div key={model} className="flex items-center gap-3 p-3 rounded-md border bg-background">
                   <img src={productImageUrl(product?.images?.[0], 'thumb')} alt={product?.description || model} className="w-16 h-16 rounded object-contain bg-muted" onError={event => { event.currentTarget.style.visibility = 'hidden' }} />
                   <div className="flex-1 min-w-0"><div className="font-medium truncate">{product?.model || model}</div><div className="text-sm text-muted-foreground line-clamp-2">{product?.description || 'Producto'}</div></div>
