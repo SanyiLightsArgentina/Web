@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useCatalogPosition } from "@/hooks/use-catalog-position";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { Footer } from "@/components/sections/Footer";
-import { selectProducts } from "@/lib/product-utils";
-import { catalogCriteria } from '@/lib/catalog-location';
+import { applyCatalogQuery, paginate, parseCatalogQuery, updateCatalogQuery, type CatalogQueryPatch } from '@/lib/catalog-query';
 import { presentProduct } from "@/lib/product-presentation";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
@@ -24,51 +23,28 @@ const Products = () => {
       "Catálogo de equipos de iluminación profesional Sanyi: cabezales móviles LED, barras zoom, proyectores. Cotizá por WhatsApp.",
   });
   const [params, setParams] = useSearchParams();
-  const criteria = catalogCriteria(params);
-  const { query: searchQuery, categoryName: selectedCategory, onlyNew: showOnlyNew, page: requestedPage } = criteria;
-  const updateFilter = (key: string, value: string) => {
-    setParams(previous => {
-      const next = new URLSearchParams(previous);
-      if (value) next.set(key, value); else next.delete(key);
-      next.delete('pagina');
-      return next;
-    }, { replace: true });
+  const criteria = parseCatalogQuery(params);
+  const { text: searchQuery, categoryName: selectedCategory, onlyNew: showOnlyNew, page: requestedPage } = criteria;
+  const changeQuery = (patch: CatalogQueryPatch) => {
+    setParams(previous => updateCatalogQuery(previous, patch), { replace: true });
   };
 
   const { products, categories, isLoaded, error, refetch } = useCatalog();
-  
-  // Configuración de paginación
-  const PRODUCTS_PER_PAGE = 20;
-
-  const filteredProducts = selectProducts(products, criteria, categories);
-  
-  // Calcular paginación
-  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-  const currentPage = Math.min(Math.floor(requestedPage), Math.max(1, totalPages));
+  const filteredProducts = applyCatalogQuery(products, criteria, categories);
+  const page = paginate(filteredProducts, requestedPage);
   useCatalogPosition(location.pathname + location.search, isLoaded);
-  const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-  const endIndex = startIndex + PRODUCTS_PER_PAGE;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
-  
-  const goToPage = (page: number) => {
-    setParams(previous => {
-      const next = new URLSearchParams(previous);
-      next.set('pagina', String(page));
-      return next;
-    });
+
+  const goToPage = (next: number) => {
+    setParams(previous => updateCatalogQuery(previous, { pagina: next }));
   };
 
   const goToFirstPage = () => goToPage(1);
-  const goToLastPage = () => goToPage(totalPages);
-  const goToNextPage = () => goToPage(currentPage + 1);
-  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToLastPage = () => goToPage(page.totalPages);
+  const goToNextPage = () => goToPage(page.page + 1);
+  const goToPreviousPage = () => goToPage(page.page - 1);
 
   const handleCategorySelect = (category: string) => {
-    if (selectedCategory === category) {
-      updateFilter('categoria', '');
-    } else {
-      updateFilter('categoria', category);
-    }
+    changeQuery({ categoria: selectedCategory === category ? '' : category });
   };
 
   return (
@@ -89,7 +65,7 @@ const Products = () => {
               <Input
                 placeholder="Buscar productos..."
                 value={searchQuery}
-                onChange={(e) => updateFilter('q', e.target.value)}
+                onChange={(e) => changeQuery({ q: e.target.value })}
                 className="w-full sm:max-w-md bg-white focus:border-red-600 focus:ring-red-500 shadow-lg h-10 sm:h-12 text-sm sm:text-base"
               />
             </div>
@@ -99,7 +75,7 @@ const Products = () => {
               <Switch
                 id="new-products"
                 checked={showOnlyNew}
-                onCheckedChange={checked => updateFilter('nuevos', checked ? '1' : '')}
+                onCheckedChange={checked => changeQuery({ nuevos: checked })}
                 className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-gray-300"
               />
               <Label htmlFor="new-products" className="text-sm font-medium text-gray-700 cursor-pointer">
@@ -144,7 +120,7 @@ const Products = () => {
                 <span className="text-red-600">No se pudo cargar el catálogo.</span>
               ) : isLoaded ? (
                 <>
-                  {filteredProducts.length} productos encontrados
+                  {page.total} productos encontrados
                   {selectedCategory && (
                     <span className="ml-2">
                       en <Badge variant="secondary" className="text-xs sm:text-sm">{selectedCategory}</Badge>
@@ -155,10 +131,10 @@ const Products = () => {
                       <Badge variant="secondary" className="text-xs sm:text-sm">Solo nuevos</Badge>
                     </span>
                   )}
-                  {totalPages > 1 && (
+                  {page.totalPages > 1 && (
                     <span className="ml-2">
                       <Badge variant="outline" className="text-xs sm:text-sm">
-                        Página {currentPage} de {totalPages}
+                        Página {page.page} de {page.totalPages}
                       </Badge>
                     </span>
                   )}
@@ -186,14 +162,14 @@ const Products = () => {
           ) : (
             <>
               <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {currentProducts.map((product) => (
+                {page.items.map((product) => (
                   <div key={product.model} className="w-full">
                     <ProductCard product={presentProduct(product, categories)} />
                   </div>
                 ))}
               </div>
 
-              {filteredProducts.length === 0 && (
+              {page.total === 0 && (
                 <div className="text-center py-8 sm:py-12">
                   <p className="text-muted-foreground text-base sm:text-lg">
                     No se encontraron productos que coincidan con tu búsqueda.
@@ -202,10 +178,10 @@ const Products = () => {
               )}
 
               {/* Controles de paginación */}
-              {totalPages > 1 && (
+              {page.totalPages > 1 && (
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="text-sm text-muted-foreground">
-                    Mostrando {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} de {filteredProducts.length} productos
+                    Mostrando {page.start + 1}-{page.end} de {page.total} productos
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -213,7 +189,7 @@ const Products = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToFirstPage}
-                      disabled={currentPage === 1}
+                      disabled={page.page === 1}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronsLeft className="h-4 w-4" />
@@ -223,7 +199,7 @@ const Products = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToPreviousPage}
-                      disabled={currentPage === 1}
+                      disabled={page.page === 1}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -231,22 +207,22 @@ const Products = () => {
                     
                     {/* Números de página */}
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      {Array.from({ length: Math.min(5, page.totalPages) }, (_, i) => {
                         let pageNumber;
-                        if (totalPages <= 5) {
+                        if (page.totalPages <= 5) {
                           pageNumber = i + 1;
-                        } else if (currentPage <= 3) {
+                        } else if (page.page <= 3) {
                           pageNumber = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNumber = totalPages - 4 + i;
+                        } else if (page.page >= page.totalPages - 2) {
+                          pageNumber = page.totalPages - 4 + i;
                         } else {
-                          pageNumber = currentPage - 2 + i;
+                          pageNumber = page.page - 2 + i;
                         }
                         
                         return (
                           <Button
                             key={pageNumber}
-                            variant={currentPage === pageNumber ? "default" : "outline"}
+                            variant={page.page === pageNumber ? "default" : "outline"}
                             size="sm"
                             onClick={() => goToPage(pageNumber)}
                             className="h-8 w-8 p-0 text-xs"
@@ -261,7 +237,7 @@ const Products = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToNextPage}
-                      disabled={currentPage === totalPages}
+                      disabled={page.page === page.totalPages}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -271,7 +247,7 @@ const Products = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToLastPage}
-                      disabled={currentPage === totalPages}
+                      disabled={page.page === page.totalPages}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronsRight className="h-4 w-4" />

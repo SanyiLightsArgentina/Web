@@ -3,7 +3,7 @@ import type { Product } from '@/data/products'
 import { useCatalog } from './use-catalog'
 import { useCatalogWrites } from './use-catalog-writes'
 import { toast } from './use-toast'
-import { selectProducts } from '@/lib/product-utils'
+import { applyCatalogQuery } from '@/lib/catalog-query'
 import { summarizeCatalog } from '@/lib/catalog-stats'
 
 function useProductAdminState() {
@@ -17,7 +17,7 @@ function useProductAdminState() {
   const deleteInProgress = useRef(false)
   const onCancelForm = () => { setEditingProduct(null); setIsAddingProduct(false) }
   const visibleProducts = useMemo(
-    () => selectProducts(catalog.products, { query: searchTerm, categoryId: selectedCategoryId }),
+    () => applyCatalogQuery(catalog.products, { text: searchTerm, categoryId: selectedCategoryId }),
     [catalog.products, searchTerm, selectedCategoryId]
   )
   const summary = useMemo(

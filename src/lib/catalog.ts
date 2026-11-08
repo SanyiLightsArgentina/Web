@@ -53,5 +53,6 @@ export function findProductByModel(
   } catch {
     // Keep the raw segment when it is not valid percent-encoding.
   }
-  return products.find(product => product.model === decoded)
+  // Router params arrive decoded; Hero routes arrive encoded. Accept either.
+  return products.find(product => product.model === model || product.model === decoded)
 }

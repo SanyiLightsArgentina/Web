@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCatalog } from '@/hooks/use-catalog';
 import { useSEO } from '@/hooks/useSEO';
+import { applyCatalogQuery } from '@/lib/catalog-query';
 import { presentProduct } from '@/lib/product-presentation';
 import { isWebUrl } from '@/lib/site-settings';
 import { consoleProfiles, resourceLabel } from '@/lib/support-resources';
 import { openWhatsApp } from '@/lib/contact';
-import { selectProducts } from '@/lib/product-utils';
 
 export default function Support() {
   useSEO({ title: 'Soporte y centro de descargas', description: 'Descargá manuales, documentación técnica y perfiles para consolas de iluminación Sanyi Lights.' });
@@ -22,9 +22,9 @@ export default function Support() {
   const [onlyNew, setOnlyNew] = useState(false);
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const withFiles = selectProducts(products, { withFiles: true });
-  const availableCategories = categories.filter(c => withFiles.some(p => p.category_id === c.id));
-  const filtered = selectProducts(withFiles, { query: search, categoryId: category === 'all' ? null : Number(category), onlyNew })
+  const downloadable = applyCatalogQuery(products, { withFiles: true }, categories);
+  const availableCategories = categories.filter(c => downloadable.some(p => p.category_id === c.id));
+  const filtered = applyCatalogQuery(downloadable, { text: search, categoryId: category === 'all' ? null : Number(category), onlyNew }, categories)
     .map(product => ({ ...presentProduct(product, categories), files: (product.contents ?? []).filter(isWebUrl) }))
     ;
   const reset = () => { setSearch(''); setCategory('all'); setOnlyNew(false); };

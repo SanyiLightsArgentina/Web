@@ -7,6 +7,7 @@ import { useCarousel } from '@/hooks/use-carousel';
 import { useNavigate } from "react-router-dom";
 import { useCatalog } from "@/hooks/use-catalog";
 import { findProductByModel } from "@/lib/catalog";
+import { modelFromRoute, productRoute as routeForModel } from "@/lib/catalog-query";
 
 
 export const HeroSection = () => {
@@ -16,21 +17,15 @@ export const HeroSection = () => {
   const navigate = useNavigate();
   const { products, isLoaded } = useCatalog();
 
-  const handleProductClick = (productRoute: string) => {
+  const handleProductClick = (route: string) => {
     window.scrollTo(0, 0);
-    const model = productRoute.replace('/producto/', '');
-    const decodedModel = decodeURIComponent(model);
-    
-    if (isLoaded && products.length > 0) {
-      const product = findProductByModel(products, decodedModel);
-      if (product) {
-        navigate(productRoute);
-      } else {
-        navigate('/productos');
-      }
-    } else {
-      navigate(productRoute);
+    const model = modelFromRoute(route);
+    if (!model) { navigate(route); return; }
+    if (isLoaded && products.length > 0 && !findProductByModel(products, model)) {
+      navigate('/productos');
+      return;
     }
+    navigate(routeForModel(model));
   };
 
   const activeVideo = professionalVideos[activeIndex];
