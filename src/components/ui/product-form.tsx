@@ -8,7 +8,6 @@ import type { Product } from '@/data/products'
 import type { Category } from '@/lib/catalog'
 import { toast } from '@/hooks/use-toast'
 import { useMediaUpload } from '@/hooks/use-media-upload'
-import { CatalogWriteError } from '@/lib/catalog-writes'
 import { productMedia, productMediaFields, resolveProductMedia } from '@/lib/product-media'
 import { MediaField } from './media-field'
 
@@ -56,11 +55,17 @@ export function ProductForm({ product, categories, onSubmit, onCancel, loading =
     submitInProgress.current = true
     setIsSubmitting(true)
     try {
-      const resolved = await resolveProductMedia(media, formData.model, upload)
-      await onSubmit({ ...formData, id: product?.id, ...resolved })
-    } catch (error) {
-      if (!(error instanceof CatalogWriteError)) {
-        toast({ title: 'No se pudo guardar', description: error instanceof Error ? error.message : 'Error al guardar el producto', variant: 'destructive' })
+      let resolved: Awaited<ReturnType<typeof resolveProductMedia>>
+      try {
+        resolved = await resolveProductMedia(media, formData.model, upload)
+      } catch (error) {
+        toast({ title: 'No se pudo subir el archivo', description: error instanceof Error ? error.message : 'Volvé a intentar.', variant: 'destructive' })
+        return
+      }
+      try {
+        await onSubmit({ ...formData, id: product?.id, ...resolved })
+      } catch {
+        // The admin write session reports catalog save failures; keep the form open.
       }
     } finally {
       submitInProgress.current = false

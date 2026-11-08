@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CatalogWriteStore, ProductDraft } from '@/lib/catalog-writes'
 import { CatalogWriteError } from '@/lib/catalog-writes'
+import { AdminWriteProvider } from './use-admin-write'
 import { useCatalogWrites } from './use-catalog-writes'
 
 const draft: ProductDraft = {
@@ -30,7 +31,7 @@ function fakeStore(overrides: Partial<CatalogWriteStore> = {}): CatalogWriteStor
 
 function wrapper(client: QueryClient) {
   return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    <QueryClientProvider client={client}><AdminWriteProvider>{children}</AdminWriteProvider></QueryClientProvider>
   )
 }
 
@@ -47,7 +48,7 @@ describe('useCatalogWrites', () => {
 
     expect(store.insertProduct).toHaveBeenCalledWith(draft)
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['products'] })
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['categories'] })
+    expect(invalidate).toHaveBeenCalledTimes(1)
     expect(result.current.lastSaved).toBeInstanceOf(Date)
     expect(result.current.isSaving).toBe(false)
   })

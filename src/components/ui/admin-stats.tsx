@@ -3,10 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './car
 import { Badge } from './badge';
 import { Package, TrendingUp, Eye, Star, BarChart3, Users, ShoppingCart } from 'lucide-react';
 import { useProductAdmin } from '@/hooks/use-product-admin';
+import { useAdminWrite } from '@/hooks/use-admin-write';
 import { summarizeCatalog } from '@/lib/catalog-stats';
 
 export const AdminStats: React.FC = () => {
-  const { products, categories, isSaving, lastSaved } = useProductAdmin();
+  const { products, categories } = useProductAdmin();
+  const { isSaving, lastSaved } = useAdminWrite();
   const {
     totalProducts,
     newProducts,

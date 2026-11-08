@@ -8,6 +8,7 @@ import { CategoryManager } from '@/components/ui/category-manager';
 import { AdminStats } from '@/components/ui/admin-stats';
 import { useSEO } from '@/hooks/useSEO';
 import { ProductAdminProvider } from '@/hooks/use-product-admin';
+import { AdminWriteProvider } from '@/hooks/use-admin-write';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { LoginForm } from '@/components/admin/LoginForm';
 import { AdminHeader } from '@/components/admin/AdminHeader';
@@ -18,7 +19,7 @@ export default function AdminRoute() {
   const session = useAdminSession();
   if (session.status === 'loading') return <div role="status" className="min-h-screen grid place-items-center">Cargando sesión...</div>;
   if (session.status === 'signed-out') return <LoginForm onAuthenticate={session.login} loading={session.isLoggingIn} />;
-  return <ProductAdminProvider><AdminWorkspace onLogout={session.logout} /></ProductAdminProvider>;
+  return <AdminWriteProvider><ProductAdminProvider><AdminWorkspace onLogout={session.logout} /></ProductAdminProvider></AdminWriteProvider>;
 }
 
 function AdminWorkspace({ onLogout }: { onLogout: () => Promise<void> }) {

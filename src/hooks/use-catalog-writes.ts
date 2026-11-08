@@ -1,9 +1,7 @@
-import { useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useToast } from '@/hooks/use-toast'
-import { queryKeys } from '@/lib/query-keys'
 import type { Product } from '@/data/products'
+import { useAdminWrite } from '@/hooks/use-admin-write'
 import {
   createSupabaseCatalogWrites,
   type CatalogWriteStore,
@@ -12,67 +10,33 @@ import {
 
 export type { CatalogWriteStore }
 
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : 'Error desconocido'
-}
-
 /**
- * One write interface for the catalog. It owns the store call, cache
- * invalidation, the saving state and the single user-facing notification.
+ * Catalog writes read as domain operations. Busy, feedback and invalidation
+ * belong to the shared admin write session.
  */
 export function useCatalogWrites(store?: CatalogWriteStore) {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { run, isSaving, lastSaved } = useAdminWrite()
   const supabaseStore = useMemo(() => createSupabaseCatalogWrites(supabase), [])
   const writes = store ?? supabaseStore
-  const [isSaving, setIsSaving] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
-
-  const invalidateCatalog = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.products }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.categories }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.siteSettings }),
-    ])
-  }
-
-  const run = async <T,>(action: () => Promise<T>, successMessage: string): Promise<T> => {
-    setIsSaving(true)
-    try {
-      const result = await action()
-      await invalidateCatalog()
-      setLastSaved(new Date())
-      toast({ title: successMessage })
-      return result
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'No se pudo guardar',
-        description: messageOf(error),
-      })
-      throw error
-    } finally {
-      setIsSaving(false)
-    }
-  }
 
   return {
     isSaving,
     lastSaved,
     addProduct: (product: ProductDraft) =>
-      run(() => writes.insertProduct(product), `Producto "${product.model}" agregado`),
+      run('product', `Producto "${product.model}" agregado`, () => writes.insertProduct(product)),
     updateProduct: (id: number, updates: Partial<Product>, model?: string) =>
       run(
-        () => writes.updateProduct(id, updates),
-        `Producto "${model ?? id}" actualizado`
+        'product',
+        `Producto "${model ?? id}" actualizado`,
+        () => writes.updateProduct(id, updates)
       ),
     deleteProduct: (id: number, model?: string) =>
-      run(() => writes.deleteProduct(id), `Producto "${model ?? id}" eliminado`),
+      run('product', `Producto "${model ?? id}" eliminado`, () => writes.deleteProduct(id)),
     addCategory: (name: string) =>
-      run(() => writes.insertCategory(name), `Categoría "${name}" agregada`),
+      run('category', `Categoría "${name}" agregada`, () => writes.insertCategory(name)),
     updateCategory: (id: number, name: string) =>
-      run(() => writes.updateCategory(id, name), `Categoría "${name}" actualizada`),
+      run('category', `Categoría "${name}" actualizada`, () => writes.updateCategory(id, name)),
     deleteCategory: (id: number, name?: string) =>
-      run(() => writes.deleteCategory(id), `Categoría "${name ?? id}" eliminada`),
+      run('category', `Categoría "${name ?? id}" eliminada`, () => writes.deleteCategory(id)),
   }
 }

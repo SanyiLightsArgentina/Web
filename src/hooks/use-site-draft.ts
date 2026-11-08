@@ -24,9 +24,8 @@ export function useSiteDraft(initial: SiteSettings, section: keyof SiteSettings,
     try {
       await save.mutateAsync(update)
       setDraft(previous => ({ ...previous, [update.key]: update.value }))
-      toast(section === 'clients' ? { title: 'Clientes guardados', description: 'La sección del inicio ya muestra los cambios.' } : { title: 'Cambios guardados', description: 'El sitio ya muestra la nueva configuración.' })
-    } catch (error) {
-      toast({ title: 'Error al guardar', description: error instanceof Error ? error.message : 'Volvé a intentar.', variant: 'destructive' })
+    } catch {
+      // The admin write session reports the failure; the draft stays editable.
     } finally {
       submitting.current = false
     }

@@ -3,7 +3,6 @@ import type { Category } from '@/lib/catalog'
 import { useCatalog } from './use-catalog'
 import { useCatalogWrites } from './use-catalog-writes'
 import { useSaveSiteSection } from './use-site-settings'
-import { toast } from './use-toast'
 
 /** Category intent, pending work and retry lifetime stay behind one interface. */
 export function useCategoryAdmin() {
@@ -18,7 +17,7 @@ export function useCategoryAdmin() {
   const [busy, setBusy] = useState(false)
   const inFlight = useRef(false)
 
-  const run = async (action: () => Promise<unknown>, complete: () => void, failed?: () => void) => {
+  const run = async (action: () => Promise<unknown>, complete: () => void) => {
     if (inFlight.current) return
     inFlight.current = true
     setBusy(true)
@@ -26,8 +25,7 @@ export function useCategoryAdmin() {
       await action()
       complete()
     } catch {
-      // Catalog writes report their own failures; retain the draft/confirmation.
-      failed?.()
+      // The admin write session reports the failure; retain the draft/confirmation.
     } finally {
       inFlight.current = false
       setBusy(false)
@@ -90,9 +88,7 @@ export function useCategoryAdmin() {
       if (index < 0 || index >= catalog.categories.length || to < 0 || to >= catalog.categories.length) return
       const ids = catalog.categories.map(category => category.id)
       ;[ids[index], ids[to]] = [ids[to], ids[index]]
-      await run(() => reorder.mutateAsync({ key: 'category_order', value: ids }), () => {}, () => {
-        toast({ title: 'No se pudo guardar el orden de las categorías', variant: 'destructive' })
-      })
+      await run(() => reorder.mutateAsync({ key: 'category_order', value: ids }), () => {})
     },
   }
 }
