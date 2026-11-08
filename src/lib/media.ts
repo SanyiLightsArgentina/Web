@@ -107,6 +107,46 @@ export function contentTypeFor(file: File): string {
   return file.type || 'application/octet-stream'
 }
 
+const OPTIMIZED_SIZES: ImageSize[] = ['thumb', 'card', 'detail']
+const PUBLIC_OBJECT_MARKER = '/storage/v1/object/public/'
+
+/**
+ * The storage objects behind one public media URL. Product images also own
+ * their optimized variants, including the original an optimized URL came from.
+ */
+export function mediaObjectPaths(url: string): { bucket: string; path: string }[] {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return []
+  }
+  const markerAt = parsed.pathname.indexOf(PUBLIC_OBJECT_MARKER)
+  if (markerAt === -1) return []
+  let publicPath: string
+  try {
+    publicPath = decodeURIComponent(parsed.pathname.slice(markerAt + PUBLIC_OBJECT_MARKER.length))
+  } catch {
+    return []
+  }
+  const [bucket, ...segments] = publicPath.split('/')
+  if (!bucket || segments.length === 0) return []
+  const path = segments.join('/')
+
+  const optimized = path.match(/^(.*)\/optimized-v1\/(?:thumb|card|detail)\.webp$/)
+  const original = optimized?.[1] ?? (bucket === 'product-images' && path.startsWith('products/') ? path : null)
+  if (!original) return [{ bucket, path }]
+
+  return [
+    { bucket, path: original },
+    ...OPTIMIZED_SIZES.map(size => ({ bucket, path: `${original}/optimized-v1/${size}.webp` })),
+  ]
+}
+
+export async function removeMediaByUrl(store: MediaStore, url: string): Promise<void> {
+  await Promise.all(mediaObjectPaths(url).map(({ bucket, path }) => store.remove(bucket, path)))
+}
+
 /** Progress belongs to this editor session, never to persisted or published media. */
 export function createMediaUploadSession(
   store: MediaStore,

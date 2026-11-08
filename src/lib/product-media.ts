@@ -30,3 +30,26 @@ export async function resolveProductMedia(
   }
   return result
 }
+
+/** Every stored URL in a Product media draft, in field order. */
+export function productMediaUrls(media: ProductMedia): string[] {
+  return productMediaFields.flatMap(field =>
+    media[field].flatMap(item => item.type === 'url' ? [item.value] : [])
+  )
+}
+
+/** URLs that were stored before the edit and are no longer part of it. */
+export function removedProductMediaUrls(previous: ProductMedia, next: ProductMedia): string[] {
+  const kept = new Set(productMediaUrls(next))
+  return productMediaUrls(previous).filter(url => !kept.has(url))
+}
+
+/** URLs still referenced by any other Product, so cleanup never breaks them. */
+export function mediaUrlsUsedBy(products: readonly Product[], excludeId?: number): Set<string> {
+  const urls = new Set<string>()
+  for (const product of products) {
+    if (product.id === excludeId) continue
+    productMediaUrls(productMedia(product)).forEach(url => urls.add(url))
+  }
+  return urls
+}

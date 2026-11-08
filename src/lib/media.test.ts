@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   contentTypeFor,
   mediaDestination,
+  mediaObjectPaths,
+  removeMediaByUrl,
   sanitizePathSegment,
   validateMedia,
 } from './media'
@@ -56,5 +58,40 @@ describe('media validation', () => {
     expect(validateMedia({ kind: 'product-video', model: 'A' }, fakeFile('x.txt', 'text/plain', 10))).toMatch(/video/)
     expect(validateMedia({ kind: 'product-content', model: 'A' }, fakeFile('x.pdf', 'application/pdf', 0))).toMatch(/vacío/)
     expect(validateMedia({ kind: 'site-video', section: 'videos' }, video)).toBeNull()
+  })
+})
+
+describe('media removal', () => {
+  const publicUrl = (bucket: string, path: string) => `https://project.supabase.co/storage/v1/object/public/${bucket}/${path}`
+
+  it('resolves the original Product image and every optimized variant', () => {
+    const original = publicUrl('product-images', 'products/A/id_shot.png')
+    const detail = publicUrl('product-images', 'products/A/id_shot.png/optimized-v1/detail.webp')
+    const expected = [
+      { bucket: 'product-images', path: 'products/A/id_shot.png' },
+      { bucket: 'product-images', path: 'products/A/id_shot.png/optimized-v1/thumb.webp' },
+      { bucket: 'product-images', path: 'products/A/id_shot.png/optimized-v1/card.webp' },
+      { bucket: 'product-images', path: 'products/A/id_shot.png/optimized-v1/detail.webp' },
+    ]
+    expect(mediaObjectPaths(original)).toEqual(expected)
+    expect(mediaObjectPaths(detail)).toEqual(expected)
+  })
+
+  it('leaves non-image and foreign URLs alone', () => {
+    expect(mediaObjectPaths(publicUrl('product-images', 'clients/1/logo.png'))).toEqual([
+      { bucket: 'product-images', path: 'clients/1/logo.png' },
+    ])
+    expect(mediaObjectPaths(publicUrl('product-videos', 'products/A/videos/id.mp4'))).toEqual([
+      { bucket: 'product-videos', path: 'products/A/videos/id.mp4' },
+    ])
+    expect(mediaObjectPaths('https://example.com/photo.png')).toEqual([])
+    expect(mediaObjectPaths('not a url')).toEqual([])
+  })
+
+  it('removes every object behind a URL through the store seam', async () => {
+    const remove = vi.fn(async () => undefined)
+    await removeMediaByUrl({ upload: vi.fn(), remove }, publicUrl('product-images', 'products/A/id_shot.png'))
+    expect(remove).toHaveBeenCalledTimes(4)
+    expect(remove).toHaveBeenCalledWith('product-images', 'products/A/id_shot.png/optimized-v1/detail.webp')
   })
 })
