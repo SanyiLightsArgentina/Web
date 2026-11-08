@@ -66,18 +66,18 @@ export const ProductCard = ({ product, onNavigate }: { product: ProductPresentat
                 </Button>
               </div>
 
-              <div className="hidden sm:grid grid-cols-2 gap-2">
+              <div className="hidden sm:flex flex-wrap gap-2">
                 <Button
                   size="sm"
-                  className="w-full bg-gray-100 text-gray-700 hover:bg-red-500 hover:text-white transition-all duration-300 text-xs px-2 py-2"
+                  className="min-w-0 flex-1 basis-24 gap-1 bg-gray-100 text-gray-700 hover:bg-red-500 hover:text-white transition-all duration-300 text-xs px-2 py-2"
                 >
-                  <Eye className="h-3 w-3 mr-1" />
+                  <Eye className="h-3 w-3" />
                   Detalles
                 </Button>
                 <Button
                   size="sm"
                   variant={has(product.model) ? "secondary" : "default"}
-                  className="w-full text-xs px-2 py-2"
+                  className="min-w-0 flex-1 basis-24 text-xs px-2 py-2"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
