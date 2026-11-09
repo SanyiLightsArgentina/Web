@@ -29,7 +29,7 @@ export type SiteSectionUpdate = {
 export function prepareSiteSection(update: SiteSectionUpdate): SiteSectionUpdate {
   switch (update.key) {
     case 'hero':
-      if (!update.value.length || update.value.some(s => !s.title.trim() || !isWebUrl(s.src) || !/^\/(?!\/)/.test(s.productRoute))) {
+      if (!update.value.length || update.value.some(s => !s.title.trim() || !isWebUrl(s.src) || !/^\/[^/]/.test(s.productRoute))) {
         throw new Error('Completá cada slide con título, URL de imagen o video y una ruta del sitio (por ejemplo /productos).')
       }
       break
@@ -186,15 +186,17 @@ function parseHero(value: unknown): HeroSlide[] {
 
 function parseVideos(value: unknown): SiteSettings['videos'] {
   if (!isRecord(value)) return clone(defaultSettings.videos)
-  const items = Array.isArray(value.items)
-    ? value.items.flatMap((item): SiteVideo[] => {
+  const storedItems = value.items
+  const items = Array.isArray(storedItems)
+    ? storedItems.flatMap((item): SiteVideo[] => {
         if (!isRecord(item) || typeof item.id !== 'string' || typeof item.title !== 'string' || typeof item.url !== 'string') return []
         return [{ id: item.id, title: item.title, url: item.url }]
       })
-    : clone(defaultSettings.videos.items)
+    : []
 
   return {
-    items: items.length > 0 ? items : clone(defaultSettings.videos.items),
+    items: items.length > 0 || (Array.isArray(storedItems) && storedItems.length === 0)
+      ? items : clone(defaultSettings.videos.items),
     channelUrl: asString(value.channelUrl, defaultSettings.videos.channelUrl),
   }
 }

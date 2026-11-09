@@ -1,7 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { prepareSiteSection, type SiteSectionUpdate, type SiteSettings } from '@/lib/site-settings'
+import type { SiteSectionUpdate, SiteSettings } from '@/lib/site-settings'
 import { useSaveSiteSection } from './use-site-settings'
-import { toast } from './use-toast'
 
 /** The editor owns draft lifetime; refetching never overwrites unsaved changes. */
 export function useSiteDraft(initial: SiteSettings, section: keyof SiteSettings, uploading: boolean) {
@@ -12,17 +11,10 @@ export function useSiteDraft(initial: SiteSettings, section: keyof SiteSettings,
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (busy || submitting.current) return
-    let update: SiteSectionUpdate
-    try {
-      // The key indexes the matching field of the same settings tree.
-      update = prepareSiteSection({ key: section, value: draft[section] } as SiteSectionUpdate)
-    } catch (error) {
-      toast({ title: 'Revisá los datos', description: (error as Error).message, variant: 'destructive' })
-      return
-    }
     submitting.current = true
     try {
-      await save.mutateAsync(update)
+      // The key indexes the matching field of the same settings tree.
+      const update = await save.mutateAsync({ key: section, value: draft[section] } as SiteSectionUpdate)
       setDraft(previous => ({ ...previous, [update.key]: update.value }))
     } catch {
       // The admin write session reports the failure; the draft stays editable.

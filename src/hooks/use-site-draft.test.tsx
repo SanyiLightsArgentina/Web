@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { FormEvent } from 'react'
-import { defaultSettings } from '@/lib/site-settings'
+import { defaultSettings, type SiteSectionUpdate } from '@/lib/site-settings'
 import { useSiteDraft } from './use-site-draft'
 
 const save = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }))
@@ -10,19 +10,18 @@ const event = { preventDefault: () => {} } as FormEvent
 beforeEach(() => vi.resetAllMocks())
 
 describe('site draft', () => {
-  it('normalizes clients and saves just the chosen section', async () => {
+  it('saves just the chosen section and adopts the normalized result', async () => {
+    const saved: SiteSectionUpdate = { key: 'clients', value: [{ id: '1', company: 'Company', logo: '', link: '' }] }
+    save.mutateAsync.mockResolvedValueOnce(saved)
     const { result } = renderHook(() => useSiteDraft(defaultSettings, 'clients', false))
     act(() => result.current.setDraft(d => ({ ...d, clients: [{ id: '1', company: ' Company ', logo: '', link: '' }] })))
     await act(async () => { await result.current.submit(event) })
-    expect(save.mutateAsync).toHaveBeenCalledWith({ key: 'clients', value: [{ id: '1', company: 'Company', logo: '', link: '' }] })
+    expect(save.mutateAsync).toHaveBeenCalledWith({ key: 'clients', value: [{ id: '1', company: ' Company ', logo: '', link: '' }] })
     expect(result.current.draft.clients[0].company).toBe('Company')
     expect(defaultSettings.clients).toEqual([])
   })
-  it('blocks invalid input and preserves the draft on save failure', async () => {
+  it('preserves the draft on save failure', async () => {
     const { result } = renderHook(() => useSiteDraft(defaultSettings, 'contact', false))
-    act(() => result.current.setDraft(d => ({ ...d, contact: { ...d.contact, phone: 'bad' } })))
-    await act(async () => { await result.current.submit(event) })
-    expect(save.mutateAsync).not.toHaveBeenCalled()
     act(() => result.current.setDraft(d => ({ ...d, contact: { ...d.contact, phone: '123456789' } })))
     save.mutateAsync.mockRejectedValueOnce(new Error('offline'))
     await act(async () => { await result.current.submit(event) })

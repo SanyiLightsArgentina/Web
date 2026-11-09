@@ -16,11 +16,11 @@ function Field({ label, value, onChange, type = 'text', placeholder }: {
 }) {
   return <Label className="grid gap-2">{label}<Input type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} /></Label>;
 }
-function ListActions({ index, length, move, remove }: { index: number; length: number; move: (to: number) => void; remove: () => void }) {
+function ListActions({ index, length, move, remove, canRemove = true }: { index: number; length: number; move: (to: number) => void; remove: () => void; canRemove?: boolean }) {
   return <div className="flex gap-2">
     <Button type="button" variant="outline" size="icon" aria-label="Subir" disabled={index === 0} onClick={() => move(index - 1)}><ArrowUp className="h-4 w-4" /></Button>
     <Button type="button" variant="outline" size="icon" aria-label="Bajar" disabled={index === length - 1} onClick={() => move(index + 1)}><ArrowDown className="h-4 w-4" /></Button>
-    <Button type="button" variant="outline" size="icon" aria-label="Eliminar" disabled={length === 1} onClick={remove}><Trash2 className="h-4 w-4" /></Button>
+    <Button type="button" variant="outline" size="icon" aria-label="Eliminar" disabled={!canRemove} onClick={remove}><Trash2 className="h-4 w-4" /></Button>
   </div>;
 }
 
@@ -60,7 +60,7 @@ function ContentEditor({ section, initial }: { section: Section; initial: SiteSe
         {section === 'hero' && <>
           <p className="text-sm text-muted-foreground">Elegí fotos, enlaces de YouTube o videos con URL directa (MP4/WebM). Las diapositivas rotan en el orden indicado.</p>
           {draft.hero.map((slide, index) => <div key={index} className="border rounded-lg p-4 space-y-4">
-            <div className="flex items-center justify-between"><h3 className="font-medium">Diapositiva {index + 1}</h3><ListActions index={index} length={draft.hero.length} move={to => setDraft(d => ({ ...d, hero: moved(d.hero, index, to) }))} remove={() => setDraft(d => ({ ...d, hero: d.hero.filter((_, i) => i !== index) }))} /></div>
+            <div className="flex items-center justify-between"><h3 className="font-medium">Diapositiva {index + 1}</h3><ListActions index={index} length={draft.hero.length} canRemove={draft.hero.length > 1} move={to => setDraft(d => ({ ...d, hero: moved(d.hero, index, to) }))} remove={() => setDraft(d => ({ ...d, hero: d.hero.filter((_, i) => i !== index) }))} /></div>
             <Label className="grid gap-2">Tipo de contenido<select value={slide.type} onChange={e => setHero(index, { type: e.target.value as 'image' | 'video' })} className="h-10 rounded-md border bg-background px-3"><option value="video">Video</option><option value="image">Foto</option></select></Label>
             <Field label={slide.type === 'image' ? 'URL de la foto' : 'URL del video'} type="url" value={slide.src} onChange={src => setHero(index, { src })} />
             {slide.type === 'video' && <Label className="grid gap-2">Subir video MP4 / WebM<Input type="file" accept="video/mp4,video/webm,.mp4,.webm" onChange={event => { void uploadVideo(event.target.files?.[0], src => setHero(index, { src })); event.target.value = ''; }} /></Label>}

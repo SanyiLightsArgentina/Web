@@ -1,11 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Product } from '@/data/products'
 import type { Category } from '@/lib/catalog'
-import {
-  parseSiteSettings,
-  type SiteSettings,
-  type SiteSettingsRow,
-} from '@/lib/site-settings'
+import type { SiteSettings } from '@/lib/site-settings'
+import { createSiteSectionStore } from './site-section-store'
 
 /** Everything the public site reads, behind one adapter seam. */
 export interface CatalogReadStore {
@@ -36,12 +33,6 @@ export function createSupabaseCatalogStore(client: SupabaseClient): CatalogReadS
       return data ?? []
     },
 
-    async loadSiteSettings() {
-      const { data, error } = await client.from('site_settings').select('key, value')
-      // Preserve the current public content while the additive schema is rolled out.
-      if (error?.code === 'PGRST205') return parseSiteSettings(null)
-      if (error) throw new Error('No se pudo cargar la configuración del sitio')
-      return parseSiteSettings((data ?? []) as SiteSettingsRow[])
-    },
+    loadSiteSettings: createSiteSectionStore(client).load,
   }
 }

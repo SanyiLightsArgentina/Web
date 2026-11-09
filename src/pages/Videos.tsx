@@ -27,6 +27,7 @@ const Videos = () => {
             <h1 className="text-4xl font-bold mb-4">Videos</h1>            
           </div>
      
+          {videos.length === 0 && <p className="text-muted-foreground">Todavía no hay videos publicados.</p>}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {videos.map((video) => {
               const source = parseVideoSource(video.url);
