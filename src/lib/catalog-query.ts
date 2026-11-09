@@ -15,7 +15,6 @@ export interface CatalogFilter {
   categoryName?: string
   categoryId?: number | null
   onlyNew?: boolean
-  withFiles?: boolean
 }
 
 export type CatalogQueryPatch = Partial<{
@@ -73,7 +72,6 @@ export function applyCatalogQuery<T extends Product>(
     categoryName: filter.categoryName,
     categoryId: filter.categoryId,
     onlyNew: filter.onlyNew,
-    withFiles: filter.withFiles,
   }, categories)
 }
 

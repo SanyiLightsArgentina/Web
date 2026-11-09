@@ -7,16 +7,3 @@ export const consoleProfiles = [
   { name: 'ChamSys', format: 'HED', url: 'https://drive.google.com/drive/folders/1FFXKjAWJVAxBl640ySKFCm8908rrXq4y' },
   { name: 'Martin', format: 'EXE', url: 'https://drive.google.com/drive/folders/1w4IXZv4C6ciit77N07eGi-h-fP66Feoj' },
 ];
-
-export function resourceLabel(url: string, index: number): { name: string; format: string } {
-  try {
-    const path = new URL(url).pathname;
-    const filename = decodeURIComponent(path.split('/').pop() || '');
-    const extension = filename.split('.').pop()?.toLowerCase() || '';
-    const isImage = ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(extension);
-    return {
-      name: extension === 'pdf' ? 'Manual / documento técnico' : isImage ? 'Ficha de especificaciones' : `Archivo ${index + 1}`,
-      format: extension.length <= 5 ? extension.toUpperCase() : 'ARCHIVO',
-    };
-  } catch { return { name: `Archivo ${index + 1}`, format: 'ARCHIVO' }; }
-}

@@ -10,8 +10,8 @@ import { useCatalog } from '@/hooks/use-catalog';
 import { useSEO } from '@/hooks/useSEO';
 import { applyCatalogQuery } from '@/lib/catalog-query';
 import { presentProduct } from '@/lib/product-presentation';
-import { isWebUrl } from '@/lib/site-settings';
-import { consoleProfiles, resourceLabel } from '@/lib/support-resources';
+import { productDownloads } from '@/lib/product-downloads';
+import { consoleProfiles } from '@/lib/support-resources';
 import { openWhatsApp } from '@/lib/contact';
 
 export default function Support() {
@@ -23,14 +23,16 @@ export default function Support() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   // Keep the downloadable snapshot stable so searches reuse its text index.
-  const downloadable = useMemo(() => applyCatalogQuery(products, { withFiles: true }), [products]);
+  const { downloadable, downloadsByProduct } = useMemo(() => {
+    const downloadsByProduct = new Map(products.map(product => [product, productDownloads(product.contents)]));
+    return { downloadable: products.filter(product => downloadsByProduct.get(product)?.length), downloadsByProduct };
+  }, [products]);
   const availableCategories = useMemo(
     () => categories.filter(c => downloadable.some(p => p.category_id === c.id)),
     [categories, downloadable],
   );
   const filtered = applyCatalogQuery(downloadable, { text: search, categoryId: category === 'all' ? null : Number(category), onlyNew }, categories)
-    .map(product => ({ ...presentProduct(product, categories), files: (product.contents ?? []).filter(isWebUrl) }))
-    ;
+    .map(product => ({ ...presentProduct(product, categories), files: downloadsByProduct.get(product)! }));
   const reset = () => { setSearch(''); setCategory('all'); setOnlyNew(false); };
 
   return <div className="min-h-screen bg-background">
@@ -67,9 +69,9 @@ export default function Support() {
                 <img src={product.thumbImage} alt={product.model} loading="lazy" className="w-20 h-20 object-contain shrink-0" />
                 <div className="min-w-0"><div className="flex flex-wrap gap-2 items-center mb-1"><h3 className="font-bold break-words">{product.model}</h3>{product.isNew && <Badge className="bg-green-600">Nuevo</Badge>}</div><p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p></div>
               </div>
-              <ul className="p-5 space-y-3 flex-1">{product.files.map((url, index) => {
-                const resource = resourceLabel(url, index);
-                return <li key={`${url}-${index}`}><a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 p-3 hover:bg-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" aria-label={`Abrir ${resource.name} ${index + 1} de ${product.model}`}><div className="flex gap-3 items-center"><FileText className="w-5 h-5 text-primary shrink-0" /><div><span className="block text-sm font-medium">{resource.name}{product.files.length > 1 ? ` ${index + 1}` : ''}</span><span className="text-xs text-muted-foreground">{resource.format} · Abrir / descargar</span></div></div><Download className="w-4 h-4 shrink-0" /></a></li>;
+              <ul className="p-5 space-y-3 flex-1">{product.files.map(({ href: url, kind, format }, index) => {
+                const name = kind === 'pdf' ? 'Manual / documento técnico' : kind === 'image' ? 'Ficha de especificaciones' : 'Archivo';
+                return <li key={`${url}-${index}`}><a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 p-3 hover:bg-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" aria-label={`Abrir ${name} ${index + 1} de ${product.model}`}><div className="flex gap-3 items-center"><FileText className="w-5 h-5 text-primary shrink-0" /><div><span className="block text-sm font-medium">{name}{product.files.length > 1 ? ` ${index + 1}` : ''}</span><span className="text-xs text-muted-foreground">{format} · Abrir / descargar</span></div></div><Download className="w-4 h-4 shrink-0" /></a></li>;
               })}</ul>
               <Link className="text-sm font-medium text-primary px-5 pb-5 inline-flex items-center gap-1" to={product.href}>Ver equipo<ArrowUpRight className="h-4 w-4" /></Link>
             </article>)}

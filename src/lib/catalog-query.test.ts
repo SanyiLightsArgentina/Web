@@ -30,11 +30,10 @@ describe('updateCatalogQuery', () => {
 })
 
 describe('applyCatalogQuery', () => {
-  it('filters by text, category name or id, and downloadable files', () => {
+  it('filters by text, category name or id, and new-only status', () => {
     expect(applyCatalogQuery(products, { text: 'led' }).map(product => product.model)).toEqual(['A', 'C'])
     expect(applyCatalogQuery(products, { categoryName: 'Laser' }, categories).map(product => product.model)).toEqual(['B'])
     expect(applyCatalogQuery(products, { categoryId: 1, onlyNew: true }).map(product => product.model)).toEqual(['A'])
-    expect(applyCatalogQuery(products, { withFiles: true }).map(product => product.model)).toEqual(['A'])
   })
 })
 

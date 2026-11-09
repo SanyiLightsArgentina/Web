@@ -1,6 +1,5 @@
 import { Product } from "@/data/products";
 import type { Category } from "@/lib/catalog";
-import { isWebUrl } from '@/lib/site-settings';
 
 type NormalizedProductText = {
   model: string;
@@ -37,7 +36,6 @@ export type ProductCriteria = {
   categoryName?: string;
   categoryId?: number | null;
   onlyNew?: boolean;
-  withFiles?: boolean;
 };
 
 export const selectProducts = <T extends Product>(
@@ -50,13 +48,12 @@ export const selectProducts = <T extends Product>(
     return [];
   }
 
-  const { categoryName: selectedCategory = '', categoryId, onlyNew: showOnlyNew = false, withFiles = false } = criteria;
+  const { categoryName: selectedCategory = '', categoryId, onlyNew: showOnlyNew = false } = criteria;
   const query = (criteria.query ?? '').trim().toLowerCase();
   const hasCategoryFilter = selectedCategory !== '' || categoryId != null;
-  const eligible = (product: T) => (!withFiles || (product.contents ?? []).some(isWebUrl));
 
   // The unfiltered catalog is the most common state; avoid walking it at all.
-  if (!query && !hasCategoryFilter && !showOnlyNew && !withFiles) return products.slice();
+  if (!query && !hasCategoryFilter && !showOnlyNew) return products.slice();
 
   // Resolve the category name once instead of scanning categories per product.
   const categoryIds = hasCategoryFilter
@@ -69,7 +66,6 @@ export const selectProducts = <T extends Product>(
   if (!query) {
     for (let index = 0; index < products.length; index += 1) {
       const product = products[index];
-      if (!eligible(product)) continue;
       if (showOnlyNew && !product.new) continue;
       if (categoryIds && !categoryIds.has(product.category_id)) continue;
       matches.push(product);
@@ -80,7 +76,7 @@ export const selectProducts = <T extends Product>(
   const texts = getSearchIndex(products).texts;
 
   // Search-only is the common case while the user types.
-  if (!showOnlyNew && !categoryIds && !withFiles) {
+  if (!showOnlyNew && !categoryIds) {
     for (let index = 0; index < products.length; index += 1) {
       const text = texts[index];
       const position = text.haystack.indexOf(query);
@@ -99,7 +95,6 @@ export const selectProducts = <T extends Product>(
 
   for (let index = 0; index < products.length; index += 1) {
     const product = products[index];
-    if (!eligible(product)) continue;
     if (showOnlyNew && !product.new) continue;
     if (categoryIds && !categoryIds.has(product.category_id)) continue;
 

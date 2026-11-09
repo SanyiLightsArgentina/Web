@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { expect, it, vi } from 'vitest'
 import type { CatalogProduct, Category } from '@/lib/catalog'
 import Support from './Support'
+import { ProductSpecifications } from '@/components/product/ProductSpecifications'
 
 const catalog = vi.hoisted(() => ({
   products: [] as CatalogProduct[],
@@ -27,7 +28,8 @@ it('refreshes searchable downloads and category buttons when the catalog changes
     contents: ['old-file', manual],
   }
   catalog.categories = [{ id: 1, name: 'Wash' }, { id: 2, name: 'Beam' }]
-  catalog.products = [product]
+  // Older rows can have NULL in the database even though the local type is optional.
+  catalog.products = [product, { ...product, model: 'Legacy Lamp', contents: null as unknown as undefined }]
 
   const page = () => (
     <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -59,4 +61,35 @@ it('refreshes searchable downloads and category buttons when the catalog changes
   expect(screen.queryByRole('heading', { name: 'LED Wash 800' })).not.toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Abrir Ficha de especificaciones 1 de LED Wash 900' }))
     .toHaveAttribute('href', spec)
+})
+
+
+it('shows the same published files and formats in support and Product specifications', () => {
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  const pdf = 'https://example.com/files/manual%2EPDF?token=abc#page=2'
+  const image = 'https://example.com/spec.webp#full'
+  const other = 'https://example.com/fixture.zip'
+  const contents = [pdf, '/legacy.pdf', image, 'javascript:alert(1)', other]
+  catalog.products = [{
+    model: 'Lamp', description: 'Light', category_id: 1, category_name: 'Wash', new: false, contents,
+  }]
+  catalog.categories = [{ id: 1, name: 'Wash' }]
+
+  render(
+    <MemoryRouter>
+      <section aria-label="Soporte"><Support /></section>
+      <section aria-label="Especificaciones"><ProductSpecifications contents={contents} /></section>
+    </MemoryRouter>,
+  )
+
+  for (const name of ['Soporte', 'Especificaciones']) {
+    const panel = within(screen.getByRole('region', { name }))
+    const links = panel.getAllByRole('link').map(link => link.getAttribute('href'))
+    expect(links).toEqual(expect.arrayContaining([pdf, image, other]))
+    expect(links).not.toContain('/legacy.pdf')
+    expect(links).not.toContain('javascript:alert(1)')
+    for (const format of ['PDF', 'WEBP', 'ZIP']) {
+      expect(panel.getByText(new RegExp('^' + format))).toBeInTheDocument()
+    }
+  }
 })

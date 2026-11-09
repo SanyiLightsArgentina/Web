@@ -27,10 +27,8 @@ describe('selectProducts', () => {
     expect(models(selectProducts(products, { categoryName: 'Shared' }, categories.map(c => ({ ...c, name: 'Shared' }))))).toEqual(models(products))
     expect(models(selectProducts(products, { categoryId: 2 }))).toEqual(['SPL-COB-200', 'LED-1'])
   })
-  it('combines search, category, new-only and downloadable file selection', () => {
-    expect(models(selectProducts(products, { query: 'led', categoryId: 1, onlyNew: true, withFiles: true }))).toEqual(['SPL-LED-800'])
-    expect(models(selectProducts(products, { withFiles: true }))).toEqual(['SPL-LED-800'])
-    expect(selectProducts(products, { query: 'cob', withFiles: true })).toEqual([])
+  it('combines search, category and new-only selection', () => {
+    expect(models(selectProducts(products, { query: 'led', categoryId: 1, onlyNew: true }))).toEqual(['SPL-LED-800'])
   })
   it('never matches across model/description fields', () => {
     for (const query of ['bc', 'b\u0000c', 'ab cd']) expect(selectProducts(products, { query })).toEqual([])

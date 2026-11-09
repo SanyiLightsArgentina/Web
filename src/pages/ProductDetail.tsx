@@ -115,7 +115,6 @@ const ProductDetail = () => {
               />
               <ProductSpecifications 
                 contents={product.contents || []} 
-                productDescription={product.description} 
               />
             </div>
 
