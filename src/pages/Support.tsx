@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Download, FileText, Search, SlidersHorizontal, ArrowUpRight, MessageCircle, X } from 'lucide-react';
 import { Navigation } from '@/components/ui/navigation';
@@ -22,8 +22,12 @@ export default function Support() {
   const [onlyNew, setOnlyNew] = useState(false);
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const downloadable = applyCatalogQuery(products, { withFiles: true }, categories);
-  const availableCategories = categories.filter(c => downloadable.some(p => p.category_id === c.id));
+  // Keep the downloadable snapshot stable so searches reuse its text index.
+  const downloadable = useMemo(() => applyCatalogQuery(products, { withFiles: true }), [products]);
+  const availableCategories = useMemo(
+    () => categories.filter(c => downloadable.some(p => p.category_id === c.id)),
+    [categories, downloadable],
+  );
   const filtered = applyCatalogQuery(downloadable, { text: search, categoryId: category === 'all' ? null : Number(category), onlyNew }, categories)
     .map(product => ({ ...presentProduct(product, categories), files: (product.contents ?? []).filter(isWebUrl) }))
     ;
