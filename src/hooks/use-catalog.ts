@@ -10,6 +10,7 @@ export interface Catalog {
   products: CatalogProduct[]
   categories: Category[]
   isLoaded: boolean
+  categoryOrderReady: boolean
   error: Error | null
   refetch: () => void
 }
@@ -53,6 +54,8 @@ export function useCatalog(store?: CatalogReadStore): Catalog {
     products,
     categories,
     isLoaded: !productsQuery.isLoading && !categoriesQuery.isLoading,
+    categoryOrderReady: categoriesQuery.isSuccess && categoriesQuery.fetchStatus === 'idle'
+      && settingsQuery.isSuccess && settingsQuery.fetchStatus === 'idle',
     error: (productsQuery.error ?? categoriesQuery.error ?? settingsQuery.error) as Error | null,
     refetch: () => {
       void productsQuery.refetch()

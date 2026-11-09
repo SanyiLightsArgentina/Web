@@ -7,7 +7,7 @@ const { writes, reorder } = vi.hoisted(() => ({
   reorder: { mutateAsync: vi.fn() },
 }))
 const categories = [{ id: 1, name: 'Lights' }, { id: 2, name: 'Effects' }]
-vi.mock('./use-catalog', () => ({ useCatalog: () => ({ categories, isLoaded: true, error: null, refetch: vi.fn() }) }))
+vi.mock('./use-catalog', () => ({ useCatalog: () => ({ categories, isLoaded: true, categoryOrderReady: true, error: null, refetch: vi.fn() }) }))
 vi.mock('./use-catalog-writes', () => ({ useCatalogWrites: () => writes }))
 vi.mock('./use-site-settings', () => ({ useSaveSiteSection: () => reorder }))
 beforeEach(() => vi.resetAllMocks())
@@ -22,7 +22,7 @@ it('guards duplicate deletion, cancellation and competing ordering synchronously
     pending = result.current.confirmDeleteCategory()
     void result.current.confirmDeleteCategory()
     result.current.cancelDeleteCategory()
-    void result.current.moveCategory(1, -1)
+    void result.current.moveCategory(2, -1)
     result.current.startAdding()
   })
   expect(writes.deleteCategory).toHaveBeenCalledOnce()
@@ -32,7 +32,7 @@ it('guards duplicate deletion, cancellation and competing ordering synchronously
   await act(async () => { finish(); await pending })
   expect(result.current.deleteConfirmation).toBeNull()
   expect(result.current.busy).toBe(false)
-  await act(async () => { await result.current.moveCategory(1, -1) })
+  await act(async () => { await result.current.moveCategory(2, -1) })
   expect(reorder.mutateAsync).toHaveBeenCalledExactlyOnceWith({ key: 'category_order', value: [2, 1] })
 })
 

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CategoryManager } from './category-manager'
 
 const { catalog, writes, reorder } = vi.hoisted(() => ({
-  catalog: { categories: [{ id: 1, name: 'Lights' }, { id: 2, name: 'Effects' }], isLoaded: true, error: null as Error | null, refetch: vi.fn() },
+  catalog: { categories: [{ id: 1, name: 'Lights' }, { id: 2, name: 'Effects' }], isLoaded: true, categoryOrderReady: true, error: null as Error | null, refetch: vi.fn() },
   writes: { addCategory: vi.fn(), updateCategory: vi.fn(), deleteCategory: vi.fn() },
   reorder: { mutateAsync: vi.fn() },
 }))
@@ -16,6 +16,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   catalog.categories = [{ id: 1, name: 'Lights' }, { id: 2, name: 'Effects' }]
   catalog.isLoaded = true
+  catalog.categoryOrderReady = true
   catalog.error = null
 })
 
@@ -84,4 +85,24 @@ describe('Category administration', () => {
     rerender(<CategoryManager />)
     expect(screen.getByText('No hay categorías definidas')).toBeInTheDocument()
   })
+})
+
+it('moves a Category only after the saved order is ready', async () => {
+  const user = userEvent.setup()
+  const [lights, effects] = catalog.categories
+  const spots = { id: 3, name: 'Spots' }
+  catalog.categories = [effects, lights, spots]
+  catalog.categoryOrderReady = false
+  const { rerender } = render(<CategoryManager />)
+
+  const move = screen.getByRole('button', { name: 'Subir Lights' })
+  expect(move).toBeDisabled()
+  await user.click(move)
+  expect(reorder.mutateAsync).not.toHaveBeenCalled()
+
+  catalog.categories = [spots, effects, lights]
+  catalog.categoryOrderReady = true
+  rerender(<CategoryManager />)
+  await user.click(move)
+  expect(reorder.mutateAsync).toHaveBeenCalledExactlyOnceWith({ key: 'category_order', value: [3, 1, 2] })
 })

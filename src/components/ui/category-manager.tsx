@@ -8,7 +8,7 @@ import { ResponsiveDeleteModal } from "./responsive-delete-modal";
 
 export const CategoryManager: React.FC = () => {
   const {
-    categories, isLoaded, error, retry, busy, editingCategory, editingName, setEditingName,
+    categories, isLoaded, error, retry, busy, canReorder, editingCategory, editingName, setEditingName,
     newCategoryName, setNewCategoryName, isAddingCategory, deleteConfirmation,
     startAdding, cancelAdding, startEditing, cancelEditing, handleAddCategory,
     handleEditCategory, handleDeleteCategory, cancelDeleteCategory, confirmDeleteCategory, moveCategory,
@@ -105,8 +105,8 @@ export const CategoryManager: React.FC = () => {
                 <>
                   <span className="font-medium text-gray-900">{category.name}</span>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="icon" aria-label={`Subir ${category.name}`} disabled={index === 0} onClick={() => moveCategory(index, -1)}><ArrowUp data-icon="inline-start" /></Button>
-                    <Button variant="outline" size="icon" aria-label={`Bajar ${category.name}`} disabled={index === categories.length - 1} onClick={() => moveCategory(index, 1)}><ArrowDown data-icon="inline-start" /></Button>
+                    <Button variant="outline" size="icon" aria-label={`Subir ${category.name}`} disabled={!canReorder || index === 0} onClick={() => moveCategory(category.id, -1)}><ArrowUp data-icon="inline-start" /></Button>
+                    <Button variant="outline" size="icon" aria-label={`Bajar ${category.name}`} disabled={!canReorder || index === categories.length - 1} onClick={() => moveCategory(category.id, 1)}><ArrowDown data-icon="inline-start" /></Button>
                     <Button
                       onClick={() => startEditing(category)}
                       aria-label={`Editar ${category.name}`}

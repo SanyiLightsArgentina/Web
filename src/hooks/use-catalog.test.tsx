@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CatalogReadStore } from '@/lib/catalog-store'
-import { parseSiteSettings } from '@/lib/site-settings'
+import { parseSiteSettings, type SiteSettings } from '@/lib/site-settings'
 import { useCatalog } from './use-catalog'
 
 const products = [
@@ -32,7 +32,7 @@ describe('useCatalog', () => {
     const read = store()
     const { result } = renderHook(() => useCatalog(read), { wrapper: wrapper() })
 
-    await waitFor(() => expect(result.current.isLoaded).toBe(true))
+    await waitFor(() => expect(result.current.categoryOrderReady).toBe(true))
 
     expect(result.current.categories.map(category => category.id)).toEqual([2, 1])
     expect(result.current.products.find(product => product.model === 'A')?.category_name).toBe('Heads')
@@ -45,4 +45,18 @@ describe('useCatalog', () => {
 
     await waitFor(() => expect(result.current.error?.message).toBe('settings offline'))
   })
+})
+
+it('exposes the catalog before the saved Category order is ready', async () => {
+  let resolveOrder!: (settings: SiteSettings) => void
+  const read = store({ loadSiteSettings: () => new Promise(resolve => { resolveOrder = resolve }) })
+  const { result } = renderHook(() => useCatalog(read), { wrapper: wrapper() })
+
+  await waitFor(() => expect(result.current.isLoaded).toBe(true))
+  expect(result.current.categoryOrderReady).toBe(false)
+  expect(result.current.categories.map(category => category.id)).toEqual([2, 1])
+
+  resolveOrder(parseSiteSettings([{ key: 'category_order', value: [1, 2] }]))
+  await waitFor(() => expect(result.current.categoryOrderReady).toBe(true))
+  expect(result.current.categories.map(category => category.id)).toEqual([1, 2])
 })

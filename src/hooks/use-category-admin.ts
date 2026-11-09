@@ -38,7 +38,7 @@ export function useCategoryAdmin() {
   }
   return {
     categories: catalog.categories, isLoaded: catalog.isLoaded, error: catalog.error, retry: catalog.refetch,
-    busy, editingCategory, editingName, setEditingName, newCategoryName, setNewCategoryName,
+    busy, canReorder: catalog.categoryOrderReady, editingCategory, editingName, setEditingName, newCategoryName, setNewCategoryName,
     isAddingCategory, deleteConfirmation,
     startAdding: () => {
       if (inFlight.current) return
@@ -83,7 +83,9 @@ export function useCategoryAdmin() {
       if (!deleteConfirmation) return
       await run(() => writes.deleteCategory(deleteConfirmation.id, deleteConfirmation.name), () => setDeleteConfirmation(null))
     },
-    moveCategory: async (index: number, direction: number) => {
+    moveCategory: async (categoryId: number, direction: -1 | 1) => {
+      if (!catalog.categoryOrderReady) return
+      const index = catalog.categories.findIndex(category => category.id === categoryId)
       const to = index + direction
       if (index < 0 || index >= catalog.categories.length || to < 0 || to >= catalog.categories.length) return
       const ids = catalog.categories.map(category => category.id)
