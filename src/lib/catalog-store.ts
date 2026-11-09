@@ -11,7 +11,9 @@ export interface CatalogReadStore {
   loadSiteSettings(): Promise<SiteSettings>
 }
 
-export function createSupabaseCatalogStore(client: SupabaseClient): CatalogReadStore {
+type ProductMediaRow = Pick<Product, 'images' | 'contents' | 'videos'>
+
+export function createSupabaseCatalogStore(client: SupabaseClient) {
   return {
     async loadProducts() {
       const { data, error } = await client
@@ -34,5 +36,15 @@ export function createSupabaseCatalogStore(client: SupabaseClient): CatalogReadS
     },
 
     loadSiteSettings: createSiteSectionStore(client).load,
-  }
+
+    async loadProductMedia(): Promise<ProductMediaRow[]> {
+      const { data, count, error } = await client.from('products')
+        .select('images, contents, videos', { count: 'exact' })
+      // Cleanup needs a complete reference set, even when the catalog read is capped.
+      if (error || !data || data.length !== count) {
+        throw new Error('No se pudieron verificar los archivos en uso')
+      }
+      return data
+    },
+  } satisfies CatalogReadStore & { loadProductMedia(): Promise<ProductMediaRow[]> }
 }

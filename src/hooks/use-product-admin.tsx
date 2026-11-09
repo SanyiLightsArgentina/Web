@@ -2,23 +2,55 @@ import { createContext, useContext, useMemo, useRef, useState, type ReactNode } 
 import type { Product } from '@/data/products'
 import { useCatalog } from './use-catalog'
 import { useCatalogWrites } from './use-catalog-writes'
-import { useMediaUpload } from './use-media-upload'
 import { toast } from './use-toast'
 import { applyCatalogQuery } from '@/lib/catalog-query'
+import { createSupabaseCatalogStore } from '@/lib/catalog-store'
 import { summarizeCatalog } from '@/lib/catalog-stats'
-import { mediaUrlsUsedBy, productMedia, productMediaUrls, removedProductMediaUrls } from '@/lib/product-media'
+import { createSupabaseMediaStore } from '@/lib/media'
+import {
+  createProductMediaPublishing, ProductMediaUploadError, publishedProductMedia,
+  type ProductDetailsDraft, type ProductMedia,
+} from '@/lib/product-media'
+import { supabase } from '@/lib/supabase'
 
 function useProductAdminState() {
   const catalog = useCatalog()
   const writes = useCatalogWrites()
-  const { removeByUrl } = useMediaUpload()
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [isAddingProduct, setIsAddingProduct] = useState(false)
+  const publishing = useMemo(() => {
+    const read = createSupabaseCatalogStore(supabase)
+    return createProductMediaPublishing(
+      createSupabaseMediaStore(supabase),
+      new URL(import.meta.env.VITE_PUBLIC_SUPABASE_URL).origin,
+      async () => {
+        const [products, settings] = await Promise.all([read.loadProductMedia(), read.loadSiteSettings()])
+        return [
+          ...products.flatMap(publishedProductMedia),
+          ...settings.hero.map(slide => slide.src),
+          ...settings.videos.items.map(video => video.url),
+          ...settings.clients.map(client => client.logo),
+        ]
+      },
+    )
+  }, [])
+  type Editor = { product?: Product; session: ReturnType<typeof publishing.start> }
+  const [editor, setEditor] = useState<Editor | null>(null)
+  const [isPublishing, setIsPublishing] = useState(false)
+  const publishInProgress = useRef(false)
   const [searchTerm, onSearchChange] = useState('')
   const [selectedCategoryId, onCategoryChange] = useState<number | null>(null)
   const [deleteProductConfirmation, onDeleteProduct] = useState<Product | null>(null)
   const deleteInProgress = useRef(false)
-  const onCancelForm = () => { setEditingProduct(null); setIsAddingProduct(false) }
+
+  const openEditor = (product?: Product) => {
+    if (publishInProgress.current || deleteInProgress.current || (editor && editor.product === product)) return
+    void editor?.session.discard()
+    setEditor({ product, session: publishing.start(product) })
+  }
+  const onCancelForm = () => {
+    if (publishInProgress.current) return
+    setEditor(null)
+    void editor?.session.discard()
+  }
   const visibleProducts = useMemo(
     () => applyCatalogQuery(catalog.products, { text: searchTerm, categoryId: selectedCategoryId }),
     [catalog.products, searchTerm, selectedCategoryId]
@@ -31,43 +63,44 @@ function useProductAdminState() {
   return {
     categories: catalog.categories, summary, visibleProducts, loading: !catalog.isLoaded,
     error: catalog.error?.message ?? null, onRetry: catalog.refetch,
-    isSaving: writes.isSaving, lastSaved: writes.lastSaved,
-    editingProduct, isAddingProduct, searchTerm, selectedCategoryId,
+    isSaving: writes.isSaving || isPublishing, lastSaved: writes.lastSaved,
+    editingProduct: editor?.product ?? null, isAddingProduct: editor !== null && !editor.product,
+    searchTerm, selectedCategoryId,
     onSearchChange, onCategoryChange, onCancelForm, onDeleteProduct, deleteProductConfirmation,
-    onAddProduct: () => { setEditingProduct(null); setIsAddingProduct(true) },
-    onEditProduct: (product: Product) => { setIsAddingProduct(false); setEditingProduct(product) },
-    onSaveProduct: async (draft: Omit<Product, 'created_at' | 'updated_at'>) => {
-      const previous = editingProduct ? productMedia(editingProduct) : null
-      const editingId = editingProduct?.id
-      if (editingId) await writes.updateProduct(editingId, draft, draft.model)
-      else await writes.addProduct(draft)
-      if (previous) {
-        const usedElsewhere = mediaUrlsUsedBy(catalog.products, editingId)
-        const next = {
-          images: (draft.images ?? []).map(value => ({ type: 'url' as const, value })),
-          contents: (draft.contents ?? []).map(value => ({ type: 'url' as const, value })),
-          videos: (draft.videos ?? []).map(value => ({ type: 'url' as const, value })),
+    onAddProduct: () => openEditor(),
+    onEditProduct: openEditor,
+    onSaveProduct: async (details: ProductDetailsDraft, media: ProductMedia) => {
+      if (!editor || publishInProgress.current || deleteInProgress.current) return
+      publishInProgress.current = true
+      setIsPublishing(true)
+      try {
+        const editingId = editor.product?.id
+        await editor.session.publish(details, media, draft => editingId
+          ? writes.updateProduct(editingId, draft, draft.model)
+          : writes.addProduct(draft))
+        setEditor(null)
+      } catch (error) {
+        if (error instanceof ProductMediaUploadError) {
+          toast({ title: 'No se pudo subir el archivo', description: error.message, variant: 'destructive' })
         }
-        const removed = removedProductMediaUrls(previous, next).filter(url => !usedElsewhere.has(url))
-        // Cleanup is best effort: the row was saved and must not be rolled back.
-        await Promise.allSettled(removed.map(url => removeByUrl(url)))
+        throw error
+      } finally {
+        publishInProgress.current = false
+        setIsPublishing(false)
       }
-      onCancelForm()
     },
     cancelDeleteProduct: () => { if (!deleteInProgress.current) onDeleteProduct(null) },
     confirmDeleteProduct: async () => {
-      if (!deleteProductConfirmation || deleteInProgress.current) return
-      if (!deleteProductConfirmation.id) {
+      if (!deleteProductConfirmation || deleteInProgress.current || publishInProgress.current) return
+      const deleted = deleteProductConfirmation
+      const id = deleted.id
+      if (!id) {
         toast({ title: 'Error', description: 'No se puede eliminar el producto: ID no encontrado', variant: 'destructive' })
         return
       }
       deleteInProgress.current = true
       try {
-        const deleted = deleteProductConfirmation
-        await writes.deleteProduct(deleted.id, deleted.model)
-        const usedElsewhere = mediaUrlsUsedBy(catalog.products, deleted.id)
-        const removed = productMediaUrls(productMedia(deleted)).filter(url => !usedElsewhere.has(url))
-        await Promise.allSettled(removed.map(url => removeByUrl(url)))
+        await publishing.remove(deleted, () => writes.deleteProduct(id, deleted.model))
         onDeleteProduct(null)
       } catch {
         // The write session reports failure; keep confirmation available for retry.

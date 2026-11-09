@@ -3,14 +3,13 @@ import { supabase } from '@/lib/supabase'
 import {
   createMediaUploadSession,
   createSupabaseMediaStore,
-  removeMediaByUrl,
   type MediaStore,
   type MediaTarget,
 } from '@/lib/media'
 
 /**
  * One upload interface for every file the site stores. Callers name what the
- * file belongs to; bucket, path, validation, resizing and removal stay here.
+ * file belongs to; bucket, path, validation and resizing stay here.
  */
 export function useMediaUpload(store?: MediaStore) {
   const supabaseStore = useMemo(() => createSupabaseMediaStore(supabase), [])
@@ -30,6 +29,5 @@ export function useMediaUpload(store?: MediaStore) {
   return {
     isUploading: pending > 0,
     upload,
-    removeByUrl: (url: string) => removeMediaByUrl(media, url),
   }
 }

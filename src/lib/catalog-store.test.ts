@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createSupabaseCatalogStore } from './catalog-store'
 import { parseSiteSettings } from './site-settings'
 
-type Response = { data?: unknown[] | null; error?: { message: string; code?: string } | null }
+type Response = { data?: unknown[] | null; count?: number; error?: { message: string; code?: string } | null }
 
 function fakeClient(responses: Record<string, Response>): SupabaseClient {
   return {
@@ -57,4 +57,14 @@ describe('Supabase catalog read store', () => {
     }))
     await expect(store.loadSiteSettings()).rejects.toThrow('No se pudo cargar la configuración del sitio')
   })
+})
+
+
+it('rejects incomplete Product media references before cleanup', async () => {
+  const data = [{ images: ['https://example.com/light.jpg'] }]
+  const complete = createSupabaseCatalogStore(fakeClient({ products: { data, count: 1 } }))
+  await expect(complete.loadProductMedia()).resolves.toEqual(data)
+
+  const capped = createSupabaseCatalogStore(fakeClient({ products: { data, count: 2 } }))
+  await expect(capped.loadProductMedia()).rejects.toThrow('verificar los archivos')
 })

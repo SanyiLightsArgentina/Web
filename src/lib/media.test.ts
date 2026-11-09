@@ -1,9 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   contentTypeFor,
   mediaDestination,
   mediaObjectPaths,
-  removeMediaByUrl,
   sanitizePathSegment,
   validateMedia,
 } from './media'
@@ -86,12 +85,5 @@ describe('media removal', () => {
     ])
     expect(mediaObjectPaths('https://example.com/photo.png')).toEqual([])
     expect(mediaObjectPaths('not a url')).toEqual([])
-  })
-
-  it('removes every object behind a URL through the store seam', async () => {
-    const remove = vi.fn(async () => undefined)
-    await removeMediaByUrl({ upload: vi.fn(), remove }, publicUrl('product-images', 'products/A/id_shot.png'))
-    expect(remove).toHaveBeenCalledTimes(4)
-    expect(remove).toHaveBeenCalledWith('product-images', 'products/A/id_shot.png/optimized-v1/detail.webp')
   })
 })

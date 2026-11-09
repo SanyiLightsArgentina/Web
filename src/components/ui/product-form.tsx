@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from './button'
 import { Input } from './input'
 import { Label } from './label'
@@ -7,14 +7,13 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import type { Product } from '@/data/products'
 import type { Category } from '@/lib/catalog'
 import { toast } from '@/hooks/use-toast'
-import { useMediaUpload } from '@/hooks/use-media-upload'
-import { productMedia, productMediaFields, resolveProductMedia } from '@/lib/product-media'
+import { productMedia, productMediaFields, type ProductDetailsDraft, type ProductMedia } from '@/lib/product-media'
 import { MediaField } from './media-field'
 
 interface ProductFormProps {
   product?: Product
   categories: Category[]
-  onSubmit: (product: Omit<Product, 'created_at' | 'updated_at'> & { id?: number }) => Promise<void>
+  onSubmit: (details: ProductDetailsDraft, media: ProductMedia) => Promise<void>
   onCancel: () => void
   loading?: boolean
 }
@@ -28,9 +27,6 @@ function productDetails(product?: Product) {
 }
 
 export function ProductForm({ product, categories, onSubmit, onCancel, loading = false }: ProductFormProps) {
-  const submitInProgress = useRef(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { upload, isUploading } = useMediaUpload()
   const [formData, setFormData] = useState(() => productDetails(product))
   const [media, setMedia] = useState(() => productMedia(product))
 
@@ -47,33 +43,19 @@ export function ProductForm({ product, categories, onSubmit, onCancel, loading =
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
-    if (submitInProgress.current) return
+    if (loading) return
     if (!formData.model.trim() || !formData.description.trim() || !formData.category_id) {
       toast({ title: 'No se pudo guardar', description: 'Completá el modelo, la descripción y la categoría.', variant: 'destructive' })
       return
     }
-    submitInProgress.current = true
-    setIsSubmitting(true)
     try {
-      let resolved: Awaited<ReturnType<typeof resolveProductMedia>>
-      try {
-        resolved = await resolveProductMedia(media, formData.model, upload)
-      } catch (error) {
-        toast({ title: 'No se pudo subir el archivo', description: error instanceof Error ? error.message : 'Volvé a intentar.', variant: 'destructive' })
-        return
-      }
-      try {
-        await onSubmit({ ...formData, id: product?.id, ...resolved })
-      } catch {
-        // The admin write session reports catalog save failures; keep the form open.
-      }
-    } finally {
-      submitInProgress.current = false
-      setIsSubmitting(false)
+      await onSubmit({ ...formData, id: product?.id }, media)
+    } catch {
+      // The publishing module reports the failure and retains progress for retry.
     }
   }
 
-  const busy = loading || isUploading || isSubmitting
+  const busy = loading
   return <div className="bg-white rounded-lg border p-6 max-w-4xl mx-auto product-form-container">
     <div className="mb-6"><h3 className="text-lg font-semibold text-gray-900">{product ? 'Editar Producto' : 'Agregar Nuevo Producto'}</h3></div>
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">

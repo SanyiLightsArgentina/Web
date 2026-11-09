@@ -14,6 +14,10 @@ export interface MediaDestination {
   cacheControl: string
 }
 
+export type MediaObject = Pick<MediaDestination, 'bucket' | 'path'>
+
+export const mediaObjectKey = ({ bucket, path }: MediaObject): string => `${bucket}/${path}`
+
 export interface MediaStore {
   upload(bucket: string, path: string, file: File, cacheControl: string): Promise<string>
   remove(bucket: string, path: string): Promise<void>
@@ -114,7 +118,7 @@ const PUBLIC_OBJECT_MARKER = '/storage/v1/object/public/'
  * The storage objects behind one public media URL. Product images also own
  * their optimized variants, including the original an optimized URL came from.
  */
-export function mediaObjectPaths(url: string): { bucket: string; path: string }[] {
+export function mediaObjectPaths(url: string): MediaObject[] {
   let parsed: URL
   try {
     parsed = new URL(url)
@@ -143,14 +147,11 @@ export function mediaObjectPaths(url: string): { bucket: string; path: string }[
   ]
 }
 
-export async function removeMediaByUrl(store: MediaStore, url: string): Promise<void> {
-  await Promise.all(mediaObjectPaths(url).map(({ bucket, path }) => store.remove(bucket, path)))
-}
-
 /** Progress belongs to this editor session, never to persisted or published media. */
 export function createMediaUploadSession(
   store: MediaStore,
   resize: (file: File, size: ImageSize) => Promise<Blob> = resizeProductImage,
+  onAttempt?: (object: MediaObject) => void,
 ) {
   const files = new WeakMap<File, Map<string, {
     destination: MediaDestination
@@ -175,6 +176,7 @@ export function createMediaUploadSession(
     const put = async (path: string, data: File) => {
       const existing = completed.get(path)
       if (existing) return existing
+      onAttempt?.({ bucket: destination.bucket, path })
       const url = await store.upload(destination.bucket, path, data, destination.cacheControl)
       if (!url) throw new Error('No se pudo subir el archivo. Volvé a intentar.')
       completed.set(path, url)
