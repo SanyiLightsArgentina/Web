@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CatalogReadStore } from '@/lib/catalog-store'
 import { parseSiteSettings, type SiteSettings } from '@/lib/site-settings'
+import { backendWrapper } from '@/test/backend'
 import { useCatalog } from './use-catalog'
 
 const products = [
@@ -20,17 +21,17 @@ function store(overrides: Partial<CatalogReadStore> = {}): CatalogReadStore {
   }
 }
 
-function wrapper() {
+function wrapper(read: CatalogReadStore) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return ({ children }: { children: ReactNode }) => (
+  return backendWrapper({ catalog: read }, ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  )
+  ))
 }
 
 describe('useCatalog', () => {
   it('joins Products and applies the Category order through the injected store', async () => {
     const read = store()
-    const { result } = renderHook(() => useCatalog(read), { wrapper: wrapper() })
+    const { result } = renderHook(() => useCatalog(), { wrapper: wrapper(read) })
 
     await waitFor(() => expect(result.current.categoryOrderReady).toBe(true))
 
@@ -41,7 +42,7 @@ describe('useCatalog', () => {
 
   it('surfaces a site settings failure instead of hiding it behind defaults', async () => {
     const read = store({ loadSiteSettings: vi.fn(async () => { throw new Error('settings offline') }) })
-    const { result } = renderHook(() => useCatalog(read), { wrapper: wrapper() })
+    const { result } = renderHook(() => useCatalog(), { wrapper: wrapper(read) })
 
     await waitFor(() => expect(result.current.error?.message).toBe('settings offline'))
   })
@@ -50,7 +51,7 @@ describe('useCatalog', () => {
 it('exposes the catalog before the saved Category order is ready', async () => {
   let resolveOrder!: (settings: SiteSettings) => void
   const read = store({ loadSiteSettings: () => new Promise(resolve => { resolveOrder = resolve }) })
-  const { result } = renderHook(() => useCatalog(read), { wrapper: wrapper() })
+  const { result } = renderHook(() => useCatalog(), { wrapper: wrapper(read) })
 
   await waitFor(() => expect(result.current.isLoaded).toBe(true))
   expect(result.current.categoryOrderReady).toBe(false)

@@ -2,28 +2,19 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { ProductAdminProvider, useProductAdmin } from '@/hooks/use-product-admin'
 import { CatalogWriteError } from '@/lib/catalog-writes'
-import { defaultSettings } from '@/lib/site-settings'
+import { createMediaPublication } from '@/lib/media-publication'
+import { BackendProvider } from '@/hooks/use-backend'
+import { testBackend } from '@/test/backend'
 import { ProductForm } from './product-form'
 
 const { store, writes } = vi.hoisted(() => ({
   store: { upload: vi.fn(), remove: vi.fn() },
   writes: { addProduct: vi.fn(), isSaving: false, lastSaved: null },
 }))
-vi.mock('@/lib/media', async importOriginal => ({
-  ...await importOriginal<typeof import('@/lib/media')>(),
-  createSupabaseMediaStore: () => store,
-}))
 vi.mock('@/hooks/use-catalog', () => ({
   useCatalog: () => ({ products: [], categories: [{ id: 1, name: 'Lights' }], isLoaded: true }),
 }))
 vi.mock('@/hooks/use-catalog-writes', () => ({ useCatalogWrites: () => writes }))
-vi.mock('@/lib/catalog-store', () => ({
-  createSupabaseCatalogStore: () => ({
-    loadProductMedia: async () => [],
-    loadSiteSettings: async () => defaultSettings,
-    loadReferencedMediaUrls: async () => [],
-  }),
-}))
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -45,7 +36,9 @@ function Editor() {
 }
 
 async function submitProductWithFile() {
-  render(<ProductAdminProvider><Editor /></ProductAdminProvider>)
+  const origin = new URL(import.meta.env.VITE_PUBLIC_SUPABASE_URL).origin
+  const backend = testBackend({ media: createMediaPublication(store, origin, async () => []) })
+  render(<BackendProvider backend={backend}><ProductAdminProvider><Editor /></ProductAdminProvider></BackendProvider>)
   fireEvent.click(screen.getByRole('button', { name: 'Agregar' }))
   fireEvent.change(screen.getByLabelText('Modelo *'), { target: { value: 'Lamp' } })
   fireEvent.change(screen.getByLabelText('Descripción *'), { target: { value: 'Light' } })

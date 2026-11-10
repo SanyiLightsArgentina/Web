@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { CatalogWriteStore, ProductDraft } from '@/lib/catalog-writes'
 import { CatalogWriteError } from '@/lib/catalog-writes'
 import { AdminWriteProvider } from './use-admin-write'
+import { backendWrapper } from '@/test/backend'
 import { useCatalogWrites } from './use-catalog-writes'
 
 const draft: ProductDraft = {
@@ -29,10 +30,10 @@ function fakeStore(overrides: Partial<CatalogWriteStore> = {}): CatalogWriteStor
   }
 }
 
-function wrapper(client: QueryClient) {
-  return ({ children }: { children: ReactNode }) => (
+function wrapper(client: QueryClient, writes: CatalogWriteStore) {
+  return backendWrapper({ writes }, ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}><AdminWriteProvider>{children}</AdminWriteProvider></QueryClientProvider>
-  )
+  ))
 }
 
 describe('useCatalogWrites', () => {
@@ -40,7 +41,7 @@ describe('useCatalogWrites', () => {
     const store = fakeStore()
     const client = new QueryClient()
     const invalidate = vi.spyOn(client, 'invalidateQueries')
-    const { result } = renderHook(() => useCatalogWrites(store), { wrapper: wrapper(client) })
+    const { result } = renderHook(() => useCatalogWrites(), { wrapper: wrapper(client, store) })
 
     await act(async () => {
       await result.current.addProduct(draft)
@@ -60,7 +61,7 @@ describe('useCatalogWrites', () => {
       }),
     })
     const client = new QueryClient()
-    const { result } = renderHook(() => useCatalogWrites(store), { wrapper: wrapper(client) })
+    const { result } = renderHook(() => useCatalogWrites(), { wrapper: wrapper(client, store) })
 
     await act(async () => {
       await expect(result.current.deleteProduct(9, 'SPL-LED-800')).rejects.toThrow(

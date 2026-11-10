@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
-import { createSupabaseCatalogStore, type CatalogReadStore } from '@/lib/catalog-store'
+import { useBackend } from '@/hooks/use-backend'
 import { queryKeys, SUPABASE_GC_TIME_MS, SUPABASE_STALE_TIME_MS } from '@/lib/query-keys'
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { joinCatalog, orderCategories, type CatalogProduct, type Category } from '@/lib/catalog'
@@ -18,12 +17,11 @@ export interface Catalog {
 /**
  * The single read interface for the catalog. Screens get products already
  * joined to their category and categories already in the admin-defined order.
- * The store is injectable so tests cross the same seam as production.
+ * It reads through the Backend in scope, so tests cross the same seam as production.
  */
-export function useCatalog(store?: CatalogReadStore): Catalog {
-  const supabaseStore = useMemo(() => createSupabaseCatalogStore(supabase), [])
-  const read = store ?? supabaseStore
-  const settingsQuery = useSiteSettings(read)
+export function useCatalog(): Catalog {
+  const read = useBackend().catalog
+  const settingsQuery = useSiteSettings()
   const { settings } = settingsQuery
 
   const productsQuery = useQuery({
