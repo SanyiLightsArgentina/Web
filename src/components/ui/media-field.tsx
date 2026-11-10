@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from './dialog'
 import { ResponsiveDeleteModal } from './responsive-delete-modal'
 import { toast } from '@/hooks/use-toast'
 import { validateMedia } from '@/lib/media'
+import { productImageUrl } from '@/lib/product-images'
 import type { MediaItem, ProductMedia } from '@/lib/product-media'
 import { parseVideoSource } from '@/lib/video-source'
 
@@ -27,7 +28,8 @@ function ItemPreview({ item, field, onPreview }: { item: MediaItem; field: keyof
   }, [item])
   const src = item.type === 'url' ? item.value : objectUrl
   const isImage = field === 'images' || (item.type === 'file' ? item.value.type.startsWith('image/') : /\.(png|jpg|jpeg|gif|webp|svg)(?:[?#]|$)/i.test(src))
-  if (isImage) return <img src={src || undefined} alt="Vista previa" className="size-full object-cover cursor-pointer" onClick={() => onPreview(src)} />
+  // Published product images are served from their optimized variants; the uploaded original may be archived.
+  if (isImage) return <img src={(item.type === 'url' && field === 'images' ? productImageUrl(src, 'card') : src) || undefined} alt="Vista previa" className="size-full object-cover cursor-pointer" onClick={() => onPreview(item.type === 'url' && field === 'images' ? productImageUrl(src, 'detail') : src)} />
   if (field === 'contents') return <FileText className="size-6 text-green-600" />
   const video = parseVideoSource(src)
   if (item.type === 'url' && video.kind !== 'direct') return <div className="text-center"><Play className="size-12 mx-auto mb-2" /><p className="text-sm font-medium">{video.kind === 'youtube' ? 'YouTube Video' : 'URL de video'}</p><p className="text-xs truncate">{src}</p></div>
