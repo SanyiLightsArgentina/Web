@@ -9,9 +9,9 @@ interface ProductImageGalleryProps {
 }
 
 export const ProductImageGallery = ({ images, productDescription }: ProductImageGalleryProps) => {
-  const { index: currentImageIndex, next: nextImage, previous: prevImage, goTo: goToImage } = useCarousel(images?.length ?? 0);
+  const { index: currentImageIndex, next: nextImage, previous: prevImage, goTo: goToImage } = useCarousel(images.length);
 
-  if (!images || images.length === 0) {
+  if (images.length === 0) {
     return null;
   }
 
@@ -26,13 +26,6 @@ export const ProductImageGallery = ({ images, productDescription }: ProductImage
               src={productImageUrl(images[currentImageIndex], 'detail')}
               alt={`${productDescription} - Imagen ${currentImageIndex + 1}`}
               className="w-full h-[250px] sm:h-[280px] object-contain mx-auto"
-              style={{
-                imageRendering: 'crisp-edges',
-                border: 'none',
-                outline: 'none',
-                boxShadow: 'none',
-                filter: 'none'
-              }}
             />
           </div>
           
@@ -43,6 +36,7 @@ export const ProductImageGallery = ({ images, productDescription }: ProductImage
                 variant="outline"
                 size="sm"
                 onClick={prevImage}
+                aria-label="Imagen anterior"
                 className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/95 hover:bg-white shadow-lg border-gray-200 h-8 w-8 p-0"
               >
                 <ChevronLeft className="h-3 w-3" />
@@ -51,6 +45,7 @@ export const ProductImageGallery = ({ images, productDescription }: ProductImage
                 variant="outline"
                 size="sm"
                 onClick={nextImage}
+                aria-label="Imagen siguiente"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/95 hover:bg-white shadow-lg border-gray-200 h-8 w-8 p-0"
               >
                 <ChevronRight className="h-3 w-3" />
@@ -67,7 +62,10 @@ export const ProductImageGallery = ({ images, productDescription }: ProductImage
               {images.map((image, index) => (
                 <button
                   key={index}
+                  type="button"
                   onClick={() => goToImage(index)}
+                  aria-label={`Ver imagen ${index + 1}`}
+                  aria-current={index === currentImageIndex}
                   className={`flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
                     index === currentImageIndex 
                       ? 'border-blue-500 ring-2 ring-blue-200 shadow-md' 

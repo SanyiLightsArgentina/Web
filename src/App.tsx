@@ -31,7 +31,7 @@ function PageLoader() {
 // Componente condicional para el botón de WhatsApp
 const WhatsAppButton = () => {
   const location = useLocation();
-  const isAdminPage = location.pathname === '/admin';
+  const isAdminPage = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   
   if (isAdminPage) {
     return null; // No mostrar el botón en la página de admin

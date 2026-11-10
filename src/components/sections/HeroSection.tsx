@@ -2,7 +2,7 @@ import { useSiteSettings } from '@/hooks/use-site-settings';
 import { type HeroSlide } from '@/lib/site-settings';
 import { parseVideoSource } from '@/lib/video-source';
 import { Button } from "@/components/ui/button";
-import { ArrowRight} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useCarousel } from '@/hooks/use-carousel';
 import { useNavigate } from "react-router-dom";
 import { useCatalog } from "@/hooks/use-catalog";
@@ -66,6 +66,8 @@ export const HeroSection = () => {
             variant="ghost"
             size="icon"
             onClick={() => goToImage(index)}
+            aria-label={`Ver diapositiva ${index + 1}`}
+            aria-current={index === activeIndex}
             className={`w-8 h-8 rounded-full p-0 transition-all duration-700 font-bold text-sm relative overflow-hidden group ${
               index === activeIndex
                 ? 'bg-gradient-to-br from-white via-white to-gray-100 text-black scale-125 shadow-2xl shadow-white/50 border-2 border-white/60 hover:scale-110'

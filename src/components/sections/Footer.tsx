@@ -10,7 +10,7 @@ import {
   Instagram, 
 } from "lucide-react";
 
-import logo from "/src/assets/logo.png";
+import logo from "@/assets/logo.png";
 
 export const Footer = () => {
   const { settings: { contact } } = useSiteSettings();
@@ -28,18 +28,6 @@ export const Footer = () => {
                 alt="Sanyi Lights Argentina" 
                 className="w-6 h-6 md:w-8 md:h-8 object-contain"
                 loading="lazy"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `
-                      <div class="w-6 h-6 md:w-8 md:h-8 bg-red-600 rounded-full flex items-center justify-center">
-                        <span class="text-white text-xs font-bold">SL</span>
-                      </div>
-                    `;
-                  }
-                }}
               />
               <div>
                 <h3 className="text-sm md:text-lg lg:text-xl font-bold">Sanyi Lights</h3>
@@ -51,21 +39,15 @@ export const Footer = () => {
               Más de 23 años de experiencia en el mercado.
             </p>
             <div className="flex space-x-3 md:space-x-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-gray-400 hover:text-white h-8 w-8 md:h-10 md:w-10"
-                onClick={() => window.open(contact.facebook, '_blank')}
-              >
-                <Facebook className="h-4 w-4 md:h-5 md:w-5" />
+              <Button asChild variant="ghost" size="icon" className="text-gray-400 hover:text-white h-8 w-8 md:h-10 md:w-10">
+                <a href={contact.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook de Sanyi Lights">
+                  <Facebook className="h-4 w-4 md:h-5 md:w-5" />
+                </a>
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-gray-400 hover:text-white h-8 w-8 md:h-10 md:w-10"
-                onClick={() => window.open(contact.instagram, '_blank')}
-              >
-                <Instagram className="h-4 w-4 md:h-5 md:w-5" />
+              <Button asChild variant="ghost" size="icon" className="text-gray-400 hover:text-white h-8 w-8 md:h-10 md:w-10">
+                <a href={contact.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram de Sanyi Lights">
+                  <Instagram className="h-4 w-4 md:h-5 md:w-5" />
+                </a>
               </Button>
             </div>
           </div>

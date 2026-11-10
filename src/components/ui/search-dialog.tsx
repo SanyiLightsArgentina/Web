@@ -20,7 +20,8 @@ export const SearchDialog = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { products, categories } = useCatalog();
   const featuredProducts = getFeaturedProducts(products, 8);
-  const searchResults = searchQuery.trim() ? applyCatalogQuery(products, { text: searchQuery }) : [];
+  const hasQuery = searchQuery.trim() !== "";
+  const searchResults = hasQuery ? applyCatalogQuery(products, { text: searchQuery }) : [];
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
@@ -50,7 +51,8 @@ export const SearchDialog = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre, categoría o descripción..."
+              placeholder="Buscar por modelo o descripción..."
+              aria-label="Buscar productos"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 sm:pl-12 h-10 sm:h-12 text-sm sm:text-base"
@@ -61,6 +63,7 @@ export const SearchDialog = () => {
                 size="icon"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8"
                 onClick={() => setSearchQuery("")}
+                aria-label="Limpiar búsqueda"
               >
                 <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
@@ -68,7 +71,7 @@ export const SearchDialog = () => {
           </div>
 
           {/* Mostrar productos destacados cuando no hay búsqueda */}
-          {!searchQuery && (
+          {!hasQuery && (
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center gap-2 text-primary">
                 <Star className="h-5 w-5" />
@@ -85,7 +88,7 @@ export const SearchDialog = () => {
           )}
 
           {/* Mostrar resultados de búsqueda */}
-          {searchQuery && (
+          {hasQuery && (
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
                 <p className="text-sm sm:text-base text-muted-foreground">
