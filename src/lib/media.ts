@@ -185,18 +185,22 @@ export function createMediaUploadSession(
     }
     const run = async () => {
       if (target.kind !== 'product-image') return put(destination.path, file)
-      const detailPath = `${destination.path}/optimized-v1/detail.webp`
-      if (completed.has(detailPath)) return completed.get(detailPath)!
+      // Variants upload together, so detail can finish while another failed:
+      // only skip the work once every variant is stored.
+      const paths = OPTIMIZED_SIZES.map(size => `${destination.path}/optimized-v1/${size}.webp`)
+      if (paths.every(path => completed.has(path))) return completed.get(paths[OPTIMIZED_SIZES.indexOf('detail')])!
       // Only the optimized variants are stored: the catalog never serves the
       // uploaded original, and keeping it would multiply Storage use ~20x.
       // The original path remains the key the variants hang off.
       // Decode before uploading, so unsupported images leave no upload behind.
       const variants = await Promise.all(OPTIMIZED_SIZES.map(size => resize(file, size)))
-      let detailUrl = ''
-      for (const [index, size] of OPTIMIZED_SIZES.entries()) {
-        detailUrl = await put(`${destination.path}/optimized-v1/${size}.webp`, new File([variants[index]], `${size}.webp`, { type: 'image/webp' }))
-      }
-      return detailUrl
+      // Upload the variants together; settle all of them before reporting a
+      // failure so no attempt is still in flight when the editor cleans up.
+      const uploads = await Promise.allSettled(OPTIMIZED_SIZES.map((size, index) =>
+        put(paths[index], new File([variants[index]], `${size}.webp`, { type: 'image/webp' }))))
+      const failed = uploads.find(result => result.status === 'rejected')
+      if (failed) throw failed.reason
+      return (uploads[OPTIMIZED_SIZES.indexOf('detail')] as PromiseFulfilledResult<string>).value
     }
     progress.pending = run()
     try {

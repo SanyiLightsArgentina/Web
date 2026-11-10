@@ -20,6 +20,48 @@ describe('product media', () => {
     expect(draft.videos[0].value).toBe(file)
     await expect(resolveProductMedia(draft, 'Lamp', vi.fn().mockResolvedValue(''))).rejects.toThrow('No se pudo subir')
   })
+
+  it('uploads a bounded number of files at once and keeps draft order', async () => {
+    const draft = productMedia()
+    draft.images = [{ type: 'url', value: 'existing' }, ...['a', 'b', 'c'].map(name => ({ type: 'file' as const, value: new File([name], `${name}.png`, { type: 'image/png' }) }))]
+    draft.contents = [{ type: 'file', value: new File(['pdf'], 'd.pdf') }]
+    let active = 0
+    let peak = 0
+    const delays: Record<string, number> = { 'a.png': 15, 'b.png': 1, 'c.png': 5, 'd.pdf': 1 }
+    const upload = vi.fn(async (file: File) => {
+      peak = Math.max(peak, ++active)
+      await new Promise(resolve => setTimeout(resolve, delays[file.name]))
+      active -= 1
+      return `uploaded-${file.name}`
+    })
+    expect(await resolveProductMedia(draft, 'Lamp', upload)).toEqual({
+      images: ['existing', 'uploaded-a.png', 'uploaded-b.png', 'uploaded-c.png'], contents: ['uploaded-d.pdf'], videos: [],
+    })
+    expect(peak).toBe(2)
+  })
+
+  it('stops starting uploads after a failure and reports the earliest failure in draft order', async () => {
+    const draft = productMedia()
+    draft.images = ['a', 'b', 'c', 'd'].map(name => ({ type: 'file' as const, value: new File([name], `${name}.png`, { type: 'image/png' }) }))
+    const settled: string[] = []
+    const upload = vi.fn(async (file: File) => {
+      // b fails first; a is still in flight and fails later.
+      await new Promise(resolve => setTimeout(resolve, file.name === 'a.png' ? 10 : 1))
+      settled.push(file.name)
+      throw new Error(`failed ${file.name}`)
+    })
+    await expect(resolveProductMedia(draft, 'Lamp', upload)).rejects.toThrow('failed a.png')
+    expect(upload.mock.calls.map(([file]) => file.name)).toEqual(['a.png', 'b.png'])
+    expect(settled).toEqual(['b.png', 'a.png'])
+  })
+
+  it('rejects an empty published URL before uploading anything', async () => {
+    const draft = productMedia()
+    draft.images = [{ type: 'file', value: new File(['image'], 'lamp.png', { type: 'image/png' }) }, { type: 'url', value: '' }]
+    const upload = vi.fn().mockResolvedValue('uploaded')
+    await expect(resolveProductMedia(draft, 'Lamp', upload)).rejects.toThrow('No se pudo subir')
+    expect(upload).not.toHaveBeenCalled()
+  })
 })
 
 const origin = 'https://project.supabase.co'
