@@ -10,7 +10,7 @@ import { useRef } from "react";
 
 export const FeaturedProducts = () => {
   const { isMobile } = useIsMobile();
-  const { products, categories, isLoaded, error } = useCatalog();
+  const { products, isLoaded, error } = useCatalog();
   const featuredProducts = getFeaturedProducts(products, products.length);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -62,7 +62,7 @@ export const FeaturedProducts = () => {
                       className="animate-fade-in w-full"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <ProductCard product={presentProduct(product, categories)} />
+                      <ProductCard product={presentProduct(product)} />
                     </div>
                   ))}
                 </div>
@@ -91,7 +91,7 @@ export const FeaturedProducts = () => {
                       className="animate-fade-in flex-shrink-0 w-80"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <ProductCard product={presentProduct(product, categories)} />
+                      <ProductCard product={presentProduct(product)} />
                     </div>
                   ))}
                 </div>

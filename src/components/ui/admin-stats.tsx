@@ -4,8 +4,8 @@ import { Badge } from './badge';
 import { Package, TrendingUp, Eye, Star, BarChart3, Users, ShoppingCart } from 'lucide-react';
 import { useCatalog } from '@/hooks/use-catalog';
 import { useAdminWrite } from '@/hooks/use-admin-write';
-import { productFacts } from '@/lib/product-facts';
 import { summarizeCatalog } from '@/lib/catalog-stats';
+import { presentProduct } from '@/lib/product-presentation';
 
 export const AdminStats: React.FC = () => {
   const { products, categories } = useCatalog();
@@ -146,7 +146,7 @@ export const AdminStats: React.FC = () => {
         <CardContent>
           <div className="space-y-3">
             {recentProducts.map((product, index) => {
-              const facts = productFacts(product)
+              const { categoryLabel, isNew, counts } = presentProduct(product)
               return (
               <div key={product.model} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
@@ -156,22 +156,22 @@ export const AdminStats: React.FC = () => {
                   <div>
                     <p className="font-medium text-gray-900">{product.model}</p>
                     <p className="text-sm text-gray-600">
-                      {facts.categoryLabel}
+                      {categoryLabel}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  {facts.isNew && (
+                  {isNew && (
                     <Badge variant="secondary" className="text-xs">
                       Nuevo
                     </Badge>
                   )}
-                  {facts.hasVideo && (
+                  {counts.videos > 0 && (
                     <Badge variant="outline" className="text-xs">
                       Video
                     </Badge>
                   )}
-                  {facts.hasMultipleContents && (
+                  {counts.contents > 1 && (
                     <Badge variant="outline" className="text-xs">
                       +1 contenido
                     </Badge>

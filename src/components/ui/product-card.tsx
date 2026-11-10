@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuoteList } from "@/hooks/use-quote-list";
-import type { ProductPresentation } from "@/lib/product-summary";
+import type { ProductPresentation } from "@/lib/product-presentation";
 import { productNavigation } from '@/lib/catalog-location';
 
 export const ProductCard = ({ product, onNavigate }: { product: ProductPresentation; onNavigate?: () => void }) => {

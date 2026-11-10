@@ -32,7 +32,7 @@ export default function Support() {
     [categories, downloadable],
   );
   const filtered = applyCatalogQuery(downloadable, { text: search, categoryId: category === 'all' ? null : Number(category), onlyNew }, categories)
-    .map(product => ({ ...presentProduct(product, categories), files: downloadsByProduct.get(product)! }));
+    .map(product => ({ ...presentProduct(product), files: downloadsByProduct.get(product)! }));
   const reset = () => { setSearch(''); setCategory('all'); setOnlyNew(false); };
 
   return <div className="min-h-screen bg-background">

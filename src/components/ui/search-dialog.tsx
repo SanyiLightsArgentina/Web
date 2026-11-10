@@ -18,7 +18,7 @@ import { useCatalog } from "@/hooks/use-catalog";
 export const SearchDialog = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { products, categories } = useCatalog();
+  const { products } = useCatalog();
   const featuredProducts = getFeaturedProducts(products, 8);
   const hasQuery = searchQuery.trim() !== "";
   const searchResults = hasQuery ? applyCatalogQuery(products, { text: searchQuery }) : [];
@@ -80,7 +80,7 @@ export const SearchDialog = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {featuredProducts.map((product) => (
                   <div key={product.model} className="w-full">
-                    <ProductCard product={presentProduct(product, categories)} onNavigate={() => setOpen(false)} />
+                    <ProductCard product={presentProduct(product)} onNavigate={() => setOpen(false)} />
                   </div>
                 ))}
               </div>
@@ -100,7 +100,7 @@ export const SearchDialog = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {searchResults.map((product) => (
                     <div key={product.model} className="w-full">
-                      <ProductCard product={presentProduct(product, categories)} onNavigate={() => setOpen(false)} />
+                      <ProductCard product={presentProduct(product)} onNavigate={() => setOpen(false)} />
                     </div>
                   ))}
                 </div>
