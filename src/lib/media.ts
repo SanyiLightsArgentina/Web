@@ -1,6 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { DIRECT_VIDEO_FILE } from './video-source'
-import { resizeProductImage, type ImageSize } from './product-images'
+import {
+  IMAGE_SIZES,
+  PRODUCT_IMAGE_BUCKET,
+  STATIC_IMAGE_REQUIRED,
+  isStaticImage,
+  originalOfVariant,
+  resizeProductImage,
+  variantPath,
+  type ImageSize,
+} from './product-images'
 
 export type MediaTarget =
   | { kind: 'product-image'; model: string }
@@ -53,10 +62,7 @@ export function validateMedia(target: MediaTarget, file: File): string | null {
     return null
   }
   if (target.kind === 'product-image') {
-    if (!file.type.startsWith('image/') || file.type === 'image/gif') {
-      return 'Seleccioná una imagen estática JPG, PNG o WebP.'
-    }
-    return null
+    return isStaticImage(file) ? null : STATIC_IMAGE_REQUIRED
   }
   if (target.kind === 'product-video' || target.kind === 'site-video') {
     if (!file.type.startsWith('video/') && !DIRECT_VIDEO_FILE.test(file.name)) {
@@ -75,7 +81,7 @@ export function mediaDestination(
   switch (target.kind) {
     case 'product-image':
       return {
-        bucket: 'product-images',
+        bucket: PRODUCT_IMAGE_BUCKET,
         path: `products/${sanitizePathSegment(target.model)}/${id}_${fileName}`,
         cacheControl: '31536000',
       }
@@ -99,7 +105,7 @@ export function mediaDestination(
       }
     case 'client-logo':
       return {
-        bucket: 'product-images',
+        bucket: PRODUCT_IMAGE_BUCKET,
         path: `clients/${sanitizePathSegment(target.clientId)}/${id}.${logoExtension(file)}`,
         cacheControl: '3600',
       }
@@ -111,7 +117,6 @@ export function contentTypeFor(file: File): string {
   return file.type || 'application/octet-stream'
 }
 
-const OPTIMIZED_SIZES: ImageSize[] = ['thumb', 'card', 'detail']
 const PUBLIC_OBJECT_MARKER = '/storage/v1/object/public/'
 
 /**
@@ -138,13 +143,12 @@ export function mediaObjectPaths(url: string): MediaObject[] {
   if (!bucket || segments.length === 0) return []
   const path = segments.join('/')
 
-  const optimized = path.match(/^(.*)\/optimized-v1\/(?:thumb|card|detail)\.webp$/)
-  const original = optimized?.[1] ?? (bucket === 'product-images' && path.startsWith('products/') ? path : null)
+  const original = originalOfVariant(path) ?? (bucket === PRODUCT_IMAGE_BUCKET && path.startsWith('products/') ? path : null)
   if (!original) return [{ bucket, path }]
 
   return [
     { bucket, path: original },
-    ...OPTIMIZED_SIZES.map(size => ({ bucket, path: `${original}/optimized-v1/${size}.webp` })),
+    ...IMAGE_SIZES.map(size => ({ bucket, path: variantPath(original, size) })),
   ]
 }
 
@@ -185,18 +189,22 @@ export function createMediaUploadSession(
     }
     const run = async () => {
       if (target.kind !== 'product-image') return put(destination.path, file)
-      const detailPath = `${destination.path}/optimized-v1/detail.webp`
-      if (completed.has(detailPath)) return completed.get(detailPath)!
+      // Variants upload together, so detail can finish while another failed:
+      // only skip the work once every variant is stored.
+      const paths = IMAGE_SIZES.map(size => variantPath(destination.path, size))
+      if (paths.every(path => completed.has(path))) return completed.get(paths[IMAGE_SIZES.indexOf('detail')])!
       // Only the optimized variants are stored: the catalog never serves the
       // uploaded original, and keeping it would multiply Storage use ~20x.
       // The original path remains the key the variants hang off.
       // Decode before uploading, so unsupported images leave no upload behind.
-      const variants = await Promise.all(OPTIMIZED_SIZES.map(size => resize(file, size)))
-      let detailUrl = ''
-      for (const [index, size] of OPTIMIZED_SIZES.entries()) {
-        detailUrl = await put(`${destination.path}/optimized-v1/${size}.webp`, new File([variants[index]], `${size}.webp`, { type: 'image/webp' }))
-      }
-      return detailUrl
+      const variants = await Promise.all(IMAGE_SIZES.map(size => resize(file, size)))
+      // Upload the variants together; settle all of them before reporting a
+      // failure so no attempt is still in flight when the editor cleans up.
+      const uploads = await Promise.allSettled(IMAGE_SIZES.map((size, index) =>
+        put(paths[index], new File([variants[index]], `${size}.webp`, { type: 'image/webp' }))))
+      const failed = uploads.find(result => result.status === 'rejected')
+      if (failed) throw failed.reason
+      return (uploads[IMAGE_SIZES.indexOf('detail')] as PromiseFulfilledResult<string>).value
     }
     progress.pending = run()
     try {

@@ -8,7 +8,7 @@ import { getProductsByCategoryId } from "@/lib/product-utils";
 import { findProductByModel } from "@/lib/catalog";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
-import { productImageUrl } from "@/lib/product-images";
+import { primaryProductImage } from "@/lib/product-images";
 import {
   ProductHeader,
   ProductTechnicalDescription,
@@ -38,7 +38,7 @@ const ProductDetail = () => {
   useSEO({
     title: product?.model ?? "Producto",
     description: product ? description : "Producto no encontrado.",
-    image: productImageUrl(product?.images?.[0], 'detail') || undefined,
+    image: primaryProductImage(product, 'detail') || undefined,
     noIndex: !product,
   });
 
