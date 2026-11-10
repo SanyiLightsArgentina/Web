@@ -45,7 +45,7 @@ describe('productImageUrl', () => {
       parse.mockClear()
       expect(productImageUrl(first, 'card')).toBe(expected)
       expect(parse).not.toHaveBeenCalled()
-      for (let index = 0; index < 256; index++) productImageUrl(`${root}unknown-${index}.png`, 'card')
+      for (let index = 0; index < 1024; index++) productImageUrl(`${root}unknown-${index}.png`, 'card')
       parse.mockClear()
       expect(productImageUrl(first, 'card')).toBe(expected)
       expect(parse).toHaveBeenCalled()

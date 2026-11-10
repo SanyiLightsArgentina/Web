@@ -5,9 +5,11 @@ const publicPath = '/storage/v1/object/public/product-images/'
 export type ImageSize = 'thumb' | 'card' | 'detail'
 
 // Catalog cards reuse the same sources across renders and navigation. Bound the
-// cache so browsing or editing many products cannot retain every URL forever.
+// cache so browsing or editing many products cannot retain every URL forever,
+// but keep it above a full admin list's card and thumb URLs: a sweep larger
+// than a FIFO cache misses on every lookup.
 const imageUrlCache = new Map<string, string>()
-const MAX_CACHED_IMAGE_URLS = 256
+const MAX_CACHED_IMAGE_URLS = 1024
 
 export function productImageUrl(source: string | undefined, size: ImageSize): string {
   if (!source) return ''
