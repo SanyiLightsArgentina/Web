@@ -7,7 +7,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ClientLogo } from '@/components/ui/client-logo';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 import { useSiteDraft } from '@/hooks/use-site-draft';
-import { useMediaUpload } from '@/hooks/use-media-upload';
 import { useToast } from '@/hooks/use-toast';
 import { type SiteClient, type SiteSettings } from '@/lib/site-settings';
 
@@ -19,8 +18,7 @@ export function ClientsTab() {
 }
 
 function ClientsEditor({ initial }: { initial: SiteSettings }) {
-  const { upload, isUploading } = useMediaUpload();
-  const { draft, setDraft, submit, busy, isSaving, moved } = useSiteDraft(initial, 'clients', isUploading);
+  const { draft, setDraft, submit, busy, isSaving, isUploading, upload, moved } = useSiteDraft(initial, 'clients');
   const clients = draft.clients;
   const setClients = (action: SetStateAction<SiteClient[]>) => setDraft(previous => ({ ...previous, clients: typeof action === 'function' ? action(previous.clients) : action }));
   const { toast } = useToast();

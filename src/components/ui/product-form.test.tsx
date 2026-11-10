@@ -21,6 +21,7 @@ vi.mock('@/lib/catalog-store', () => ({
   createSupabaseCatalogStore: () => ({
     loadProductMedia: async () => [],
     loadSiteSettings: async () => defaultSettings,
+    loadReferencedMediaUrls: async () => [],
   }),
 }))
 

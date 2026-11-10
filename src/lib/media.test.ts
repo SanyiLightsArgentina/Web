@@ -87,3 +87,15 @@ describe('media removal', () => {
     expect(mediaObjectPaths('not a url')).toEqual([])
   })
 })
+
+describe('managed media namespaces', () => {
+  it('only lets publication retire objects this site uploads', async () => {
+    const { isManagedMediaObject } = await import('./media')
+    expect(isManagedMediaObject({ bucket: 'product-content', path: 'products/A/content/documents/x.pdf' })).toBe(true)
+    expect(isManagedMediaObject({ bucket: 'product-videos', path: 'site/hero/x.mp4' })).toBe(true)
+    expect(isManagedMediaObject({ bucket: 'product-images', path: 'clients/1/x.png' })).toBe(true)
+    expect(isManagedMediaObject({ bucket: 'product-images', path: 'site/hero/x.mp4' })).toBe(false)
+    expect(isManagedMediaObject({ bucket: 'product-videos', path: 'manual/intro.mp4' })).toBe(false)
+    expect(isManagedMediaObject({ bucket: 'other', path: 'products/A/x.png' })).toBe(false)
+  })
+})

@@ -25,6 +25,22 @@ export type SiteSectionUpdate = {
   [K in keyof SiteSettings]: { key: K; value: SiteSettings[K] }
 }[keyof SiteSettings]
 
+/** Media URLs one Site section references; sections without media reference none. */
+export function siteSectionMediaUrls(update: SiteSectionUpdate): string[] {
+  switch (update.key) {
+    case 'hero': return update.value.map(slide => slide.src)
+    case 'videos': return update.value.items.map(video => video.url)
+    case 'clients': return update.value.map(client => client.logo)
+    default: return []
+  }
+}
+
+/** Media URLs every Site section references. */
+export function siteMediaUrls(settings: SiteSettings): string[] {
+  return (Object.keys(settings) as (keyof SiteSettings)[])
+    .flatMap(key => siteSectionMediaUrls({ key, value: settings[key] } as SiteSectionUpdate))
+}
+
 /** Normalize and validate edits, without applying read-time defaults to invalid drafts. */
 export function prepareSiteSection(update: SiteSectionUpdate): SiteSectionUpdate {
   switch (update.key) {

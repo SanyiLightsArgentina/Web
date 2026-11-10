@@ -2,36 +2,19 @@ import { createContext, useContext, useMemo, useRef, useState, type ReactNode } 
 import type { Product } from '@/data/products'
 import { useCatalog } from './use-catalog'
 import { useCatalogWrites } from './use-catalog-writes'
+import { supabaseMediaPublication } from './use-media-publication'
 import { toast } from './use-toast'
 import { applyCatalogQuery } from '@/lib/catalog-query'
-import { createSupabaseCatalogStore } from '@/lib/catalog-store'
 import { summarizeCatalog } from '@/lib/catalog-stats'
-import { createSupabaseMediaStore } from '@/lib/media'
 import {
-  createProductMediaPublishing, ProductMediaUploadError, publishedProductMedia,
+  createProductMediaPublishing, ProductMediaUploadError,
   type ProductDetailsDraft, type ProductMedia,
 } from '@/lib/product-media'
-import { supabase } from '@/lib/supabase'
 
 function useProductAdminState() {
   const catalog = useCatalog()
   const writes = useCatalogWrites()
-  const publishing = useMemo(() => {
-    const read = createSupabaseCatalogStore(supabase)
-    return createProductMediaPublishing(
-      createSupabaseMediaStore(supabase),
-      new URL(import.meta.env.VITE_PUBLIC_SUPABASE_URL).origin,
-      async () => {
-        const [products, settings] = await Promise.all([read.loadProductMedia(), read.loadSiteSettings()])
-        return [
-          ...products.flatMap(publishedProductMedia),
-          ...settings.hero.map(slide => slide.src),
-          ...settings.videos.items.map(video => video.url),
-          ...settings.clients.map(client => client.logo),
-        ]
-      },
-    )
-  }, [])
+  const publishing = useMemo(() => createProductMediaPublishing(supabaseMediaPublication()), [])
   type Editor = { product?: Product; session: ReturnType<typeof publishing.start> }
   const [editor, setEditor] = useState<Editor | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)

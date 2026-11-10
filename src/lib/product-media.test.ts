@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createProductMediaPublishing, productMedia, ProductMediaUploadError, resolveProductMedia } from './product-media'
+import { createMediaPublication } from './media-publication'
 
 describe('product media', () => {
   it('resolves mixed URLs and files in field order without changing the draft', async () => {
@@ -33,7 +34,7 @@ function publishing() {
   }
   const references = vi.fn(async (): Promise<string[]> => [])
   const resize = vi.fn(async () => new Blob(['resized'], { type: 'image/webp' }))
-  return { store, references, media: createProductMediaPublishing(store, origin, references, resize) }
+  return { store, references, media: createProductMediaPublishing(createMediaPublication(store, origin, references, resize)) }
 }
 
 describe('Product media publishing', () => {
