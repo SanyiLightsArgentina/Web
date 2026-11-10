@@ -112,6 +112,18 @@ export function mediaDestination(
   }
 }
 
+/**
+ * Whether an object lives in a namespace this site uploads to (see
+ * mediaDestination), so publication may retire it once nothing references it.
+ * Anything else in the buckets was placed by hand and is never removed.
+ */
+export function isManagedMediaObject({ bucket, path }: MediaObject): boolean {
+  if (path.startsWith('products/')) return ['product-images', 'product-content', 'product-videos'].includes(bucket)
+  if (path.startsWith('site/')) return bucket === 'product-videos'
+  if (path.startsWith('clients/')) return bucket === 'product-images'
+  return false
+}
+
 export function contentTypeFor(file: File): string {
   if (file.name.toLowerCase().endsWith('.mp4')) return 'video/mp4'
   return file.type || 'application/octet-stream'
