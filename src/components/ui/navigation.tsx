@@ -1,4 +1,4 @@
-import { productImageUrl } from '@/lib/product-images';
+import { primaryProductImage } from '@/lib/product-images';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X } from 'lucide-react';
@@ -38,7 +38,7 @@ export const Navigation = () => {
               {items.map(model => {
                 const product = findProductByModel(products, model);
                 return <div key={model} className="flex items-center gap-3 p-3 rounded-md border bg-background">
-                  <img src={productImageUrl(product?.images?.[0], 'thumb')} alt={product?.description || model} className="w-16 h-16 rounded object-contain bg-muted" onError={event => { event.currentTarget.style.visibility = 'hidden' }} />
+                  <img src={primaryProductImage(product, 'thumb')} alt={product?.description || model} className="w-16 h-16 rounded object-contain bg-muted" onError={event => { event.currentTarget.style.visibility = 'hidden' }} />
                   <div className="flex-1 min-w-0"><div className="font-medium truncate">{product?.model || model}</div><div className="text-sm text-muted-foreground line-clamp-2">{product?.description || 'Producto'}</div></div>
                   <Button variant="ghost" size="icon" onClick={() => remove(model)} aria-label={`Quitar ${model}`}><X data-icon="inline-start" /></Button>
                 </div>;

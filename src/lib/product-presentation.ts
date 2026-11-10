@@ -1,4 +1,4 @@
-import { productImageUrl } from '@/lib/product-images'
+import { primaryProductImage } from '@/lib/product-images'
 import type { CatalogProduct, Category } from '@/lib/catalog'
 import { buildProductPresentation, type ProductPresentation } from '@/lib/product-summary'
 
@@ -24,8 +24,8 @@ export function presentProduct(
   const presentation = buildProductPresentation(
     product,
     {
-      cardImage: productImageUrl(product.images?.[0], 'card'),
-      thumbImage: productImageUrl(product.images?.[0], 'thumb'),
+      cardImage: primaryProductImage(product, 'card'),
+      thumbImage: primaryProductImage(product, 'thumb'),
     },
     categories
   )
