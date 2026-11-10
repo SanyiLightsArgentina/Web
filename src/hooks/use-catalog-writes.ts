@@ -1,12 +1,7 @@
-import { useMemo } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useBackend } from '@/hooks/use-backend'
 import type { Product } from '@/data/products'
 import { useAdminWrite } from '@/hooks/use-admin-write'
-import {
-  createSupabaseCatalogWrites,
-  type CatalogWriteStore,
-  type ProductDraft,
-} from '@/lib/catalog-writes'
+import type { CatalogWriteStore, ProductDraft } from '@/lib/catalog-writes'
 
 export type { CatalogWriteStore }
 
@@ -14,10 +9,9 @@ export type { CatalogWriteStore }
  * Catalog writes read as domain operations. Busy, feedback and invalidation
  * belong to the shared admin write session.
  */
-export function useCatalogWrites(store?: CatalogWriteStore) {
+export function useCatalogWrites() {
   const { run, isSaving, lastSaved } = useAdminWrite()
-  const supabaseStore = useMemo(() => createSupabaseCatalogWrites(supabase), [])
-  const writes = store ?? supabaseStore
+  const { writes } = useBackend()
 
   return {
     isSaving,

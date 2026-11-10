@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { catalogReturnHref } from '@/lib/catalog-location';
 import { Footer } from "@/components/sections/Footer";
-import { getProductsByCategoryId } from "@/lib/product-utils";
+import { relatedProducts as selectRelatedProducts } from "@/lib/catalog-query";
 import { findProductByModel } from "@/lib/catalog";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useSEO } from "@/hooks/useSEO";
-import { productImageUrl } from "@/lib/product-images";
+import { primaryProductImage } from "@/lib/product-images";
 import {
   ProductHeader,
   ProductTechnicalDescription,
@@ -38,11 +38,11 @@ const ProductDetail = () => {
   useSEO({
     title: product?.model ?? "Producto",
     description: product ? description : "Producto no encontrado.",
-    image: productImageUrl(product?.images?.[0], 'detail') || undefined,
+    image: primaryProductImage(product, 'detail') || undefined,
     noIndex: !product,
   });
 
-  const relatedProducts = getProductsByCategoryId(products, product?.category_id || 0, 3, product?.model || "");
+  const relatedProducts = selectRelatedProducts(products, product, 3);
 
   useEffect(() => {
     window.scrollTo(0, 0);

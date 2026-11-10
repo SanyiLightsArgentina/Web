@@ -1,7 +1,7 @@
 import type { Product } from '@/data/products'
 import { UNCATEGORIZED_LABEL, type CatalogProduct } from '@/lib/catalog'
 import { productRoute } from '@/lib/catalog-query'
-import { productImageUrl } from '@/lib/product-images'
+import { primaryProductImage } from '@/lib/product-images'
 
 /** Counts and flags derived from a Product row; the admin overview tallies these. */
 export interface ProductFacts {
@@ -67,8 +67,8 @@ export function presentProduct(product: CatalogProduct): ProductPresentation {
     description: product.description,
     categoryId: product.category_id,
     categoryLabel: product.category_name || UNCATEGORIZED_LABEL,
-    cardImage: productImageUrl(product.images?.[0], 'card'),
-    thumbImage: productImageUrl(product.images?.[0], 'thumb'),
+    cardImage: primaryProductImage(product, 'card'),
+    thumbImage: primaryProductImage(product, 'thumb'),
     isNew: facts.isNew,
     counts: { images: facts.imageCount, contents: facts.contentCount, videos: facts.videoCount },
     href: productRoute(product.model),

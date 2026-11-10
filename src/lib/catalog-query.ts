@@ -1,6 +1,5 @@
 import type { Product } from '@/data/products'
 import type { Category } from '@/lib/catalog'
-import { selectProducts } from '@/lib/product-utils'
 
 /** The catalog query as the page understands it, independent of URL spelling. */
 export interface CatalogQuery {
@@ -62,17 +61,67 @@ function setOrDelete(params: URLSearchParams, key: string, value: string): void 
   else params.delete(key)
 }
 
+// Products come from react-query and the array keeps its identity between
+// renders, so the lowercase search text is derived once per catalog snapshot.
+const searchTextByProducts = new WeakMap<readonly Product[], { model: string; description: string }[]>()
+
+function searchText(products: readonly Product[]) {
+  let texts = searchTextByProducts.get(products)
+  if (!texts) {
+    texts = products.map(product => ({
+      model: product.model.toLowerCase(),
+      description: (product.description ?? '').toLowerCase(),
+    }))
+    searchTextByProducts.set(products, texts)
+  }
+  return texts
+}
+
+/**
+ * The Products matching a filter, in catalog order. Text matches the model or
+ * the description (never across both), case-insensitively; a category name
+ * matches every Category with that name. Returns a new array.
+ */
 export function applyCatalogQuery<T extends Product>(
-  products: T[],
+  products: readonly T[],
   filter: CatalogFilter = {},
-  categories: Category[] = []
+  categories: readonly Category[] = []
 ): T[] {
-  return selectProducts(products, {
-    query: filter.text,
-    categoryName: filter.categoryName,
-    categoryId: filter.categoryId,
-    onlyNew: filter.onlyNew,
-  }, categories)
+  const text = (filter.text ?? '').trim().toLowerCase()
+  const categoryName = filter.categoryName ?? ''
+  const categoryIds = filter.categoryId != null
+    ? new Set([filter.categoryId])
+    : categoryName ? new Set(categories.filter(category => category.name === categoryName).map(category => category.id)) : null
+
+  // The unfiltered catalog is the most common state; avoid walking it at all.
+  if (!text && !categoryIds && !filter.onlyNew) return products.slice()
+
+  const texts = text ? searchText(products) : null
+  return products.filter((product, index) =>
+    (!filter.onlyNew || product.new) &&
+    (!categoryIds || categoryIds.has(product.category_id)) &&
+    (!texts || texts[index].model.includes(text) || texts[index].description.includes(text)))
+}
+
+/** The first `limit` Products matching `keep`, in catalog order; stops reading once full. */
+function firstMatching<T>(products: readonly T[], limit: number, keep: (product: T) => boolean): T[] {
+  const matches: T[] = []
+  for (const product of products) {
+    if (matches.length >= limit) break
+    if (keep(product)) matches.push(product)
+  }
+  return matches
+}
+
+/** New Products in catalog order (newest first), up to `limit`. */
+export function newProducts<T extends Product>(products: readonly T[], limit = Infinity): T[] {
+  return firstMatching(products, limit, product => product.new === true)
+}
+
+/** Other Products in the same Category as `product`, in catalog order, up to `limit`. */
+export function relatedProducts<T extends Product>(products: readonly T[], product: Product | undefined, limit: number): T[] {
+  if (!product?.category_id) return []
+  return firstMatching(products, limit, other => other.category_id === product.category_id && other.model !== product.model)
 }
 
 export interface Page<T> {

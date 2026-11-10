@@ -9,8 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Search, X, Star } from "lucide-react";
 import { useState } from "react";
-import { getFeaturedProducts } from "@/lib/product-utils";
-import { applyCatalogQuery } from "@/lib/catalog-query";
+import { applyCatalogQuery, newProducts } from "@/lib/catalog-query";
 import { presentProduct } from "@/lib/product-presentation";
 import { ProductCard } from "@/components/ui/product-card";
 import { useCatalog } from "@/hooks/use-catalog";
@@ -19,7 +18,7 @@ export const SearchDialog = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { products } = useCatalog();
-  const featuredProducts = getFeaturedProducts(products, 8);
+  const featuredProducts = newProducts(products, 8);
   const hasQuery = searchQuery.trim() !== "";
   const searchResults = hasQuery ? applyCatalogQuery(products, { text: searchQuery }) : [];
 

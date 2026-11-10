@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Product } from '@/data/products'
 import type { Category } from '@/lib/catalog'
-import type { SiteSettings } from '@/lib/site-settings'
+import { siteMediaUrls, type SiteSettings } from '@/lib/site-settings'
+import { publishedProductMedia } from './product-media'
 import { createSiteSectionStore } from './site-section-store'
 
 /** Everything the public site reads, behind one adapter seam. */
@@ -14,6 +15,17 @@ export interface CatalogReadStore {
 type ProductMediaRow = Pick<Product, 'images' | 'contents' | 'videos'>
 
 export function createSupabaseCatalogStore(client: SupabaseClient) {
+  const loadSiteSettings = createSiteSectionStore(client).load
+  async function loadProductMedia(): Promise<ProductMediaRow[]> {
+    const { data, count, error } = await client.from('products')
+      .select('images, contents, videos', { count: 'exact' })
+    // Cleanup needs a complete reference set, even when the catalog read is capped.
+    if (error || !data || data.length !== count) {
+      throw new Error('No se pudieron verificar los archivos en uso')
+    }
+    return data
+  }
+
   return {
     async loadProducts() {
       const { data, error } = await client
@@ -35,16 +47,17 @@ export function createSupabaseCatalogStore(client: SupabaseClient) {
       return data ?? []
     },
 
-    loadSiteSettings: createSiteSectionStore(client).load,
+    loadSiteSettings,
 
-    async loadProductMedia(): Promise<ProductMediaRow[]> {
-      const { data, count, error } = await client.from('products')
-        .select('images, contents, videos', { count: 'exact' })
-      // Cleanup needs a complete reference set, even when the catalog read is capped.
-      if (error || !data || data.length !== count) {
-        throw new Error('No se pudieron verificar los archivos en uso')
-      }
-      return data
+    loadProductMedia,
+
+    /** Every media URL any Product or Site section references, for safe retirement. */
+    async loadReferencedMediaUrls(): Promise<string[]> {
+      const [products, settings] = await Promise.all([loadProductMedia(), loadSiteSettings()])
+      return [...products.flatMap(publishedProductMedia), ...siteMediaUrls(settings)]
     },
-  } satisfies CatalogReadStore & { loadProductMedia(): Promise<ProductMediaRow[]> }
+  } satisfies CatalogReadStore & {
+    loadProductMedia(): Promise<ProductMediaRow[]>
+    loadReferencedMediaUrls(): Promise<string[]>
+  }
 }
