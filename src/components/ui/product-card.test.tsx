@@ -3,25 +3,20 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { QuoteListProvider } from '@/hooks/use-quote-list'
-import { buildProductPresentation } from '@/lib/product-summary'
+import { presentProduct } from '@/lib/product-presentation'
 import { ProductCard } from './product-card'
 
-const presentation = buildProductPresentation(
-  {
-    model: 'SPL LED 800',
-    description: 'LED moving head',
-    category_id: 2,
-    category_name: 'Moving Head',
-    images: ['https://example.com/detail.webp'],
-    contents: [],
-    videos: [],
-    new: true,
-  },
-  {
-    cardImage: 'https://example.com/card.webp',
-    thumbImage: 'https://example.com/thumb.webp',
-  },
-)
+// A non-Storage image URL passes through unchanged for every size.
+const presentation = presentProduct({
+  model: 'SPL LED 800',
+  description: 'LED moving head',
+  category_id: 2,
+  category_name: 'Moving Head',
+  images: ['https://example.com/card.webp'],
+  contents: [],
+  videos: [],
+  new: true,
+})
 
 function renderCard() {
   return render(

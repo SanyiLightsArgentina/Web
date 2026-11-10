@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Image as ImageIcon, Video, FileText } from 'lucide-react';
-import type { ProductPresentation } from '@/lib/product-summary';
+import type { ProductPresentation } from '@/lib/product-presentation';
 
 interface ProductCardProps {
   presentation: ProductPresentation;

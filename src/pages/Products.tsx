@@ -164,7 +164,7 @@ const Products = () => {
               <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {page.items.map((product) => (
                   <div key={product.model} className="w-full">
-                    <ProductCard product={presentProduct(product, categories)} />
+                    <ProductCard product={presentProduct(product)} />
                   </div>
                 ))}
               </div>

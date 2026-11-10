@@ -83,7 +83,7 @@ export const ProductsTab = () => {
         </div>
         <div aria-hidden="true" className="hidden md:grid grid-cols-[minmax(0,1fr)_140px_100px] xl:grid-cols-[minmax(0,1fr)_140px_160px_100px] gap-5 px-5 py-3 bg-muted/25 border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"><span>Producto</span><span>Categoría</span><span className="hidden xl:block">Archivos</span><span className="text-right">Acciones</span></div>
         <div className="divide-y divide-border/60">
-          {visibleProducts.map(product => <ProductCard key={product.id || product.model} presentation={presentProduct(product, categories)} onEdit={() => onEditProduct(product)} onDelete={() => onDeleteProduct(product)} />)}
+          {visibleProducts.map(product => <ProductCard key={product.id || product.model} presentation={presentProduct(product)} onEdit={() => onEditProduct(product)} onDelete={() => onDeleteProduct(product)} />)}
         </div>
         {visibleProducts.length > 0 && <div className="border-t border-border/70 px-5 py-3 text-xs text-muted-foreground">Mostrando {visibleProducts.length} de {summary.totalProducts} productos</div>}
       </section>

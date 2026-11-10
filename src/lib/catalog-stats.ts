@@ -1,6 +1,6 @@
 import type { Product } from '@/data/products'
 import type { Category } from '@/lib/catalog'
-import { productFacts } from '@/lib/product-facts'
+import { productFacts } from '@/lib/product-presentation'
 
 export interface CategoryStat {
   name: string
