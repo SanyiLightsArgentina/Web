@@ -1,5 +1,6 @@
 import type { CatalogProduct, Category } from '@/lib/catalog'
 import { productFacts } from '@/lib/product-facts'
+import { productRoute } from '@/lib/catalog-query'
 
 export interface ProductImages {
   cardImage: string
@@ -39,6 +40,6 @@ export function buildProductPresentation(
     thumbImage: images.thumbImage,
     isNew: facts.isNew,
     counts: { images: facts.imageCount, contents: facts.contentCount, videos: facts.videoCount },
-    href: `/producto/${encodeURIComponent(product.model)}`,
+    href: productRoute(product.model),
   }
 }

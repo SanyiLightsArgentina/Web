@@ -13,20 +13,19 @@ const QuoteListContext = createContext<QuoteListContextValue | undefined>(undefi
 
 const STORAGE_KEY = "quote_list_models";
 
-export const QuoteListProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [items, setItems] = useState<string[]>([]);
+function readStoredItems(): string[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string") : [];
+  } catch (err) {
+    console.warn("Failed to read quote list from storage", err);
+    return [];
+  }
+}
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setItems(parsed.filter((x) => typeof x === "string"));
-      }
-    } catch (err) {
-      console.warn("Failed to read quote list from storage", err);
-    }
-  }, []);
+export const QuoteListProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [items, setItems] = useState<string[]>(readStoredItems);
 
   useEffect(() => {
     try {
@@ -53,5 +52,3 @@ export const useQuoteList = (): QuoteListContextValue => {
   if (!ctx) throw new Error("useQuoteList must be used within a QuoteListProvider");
   return ctx;
 };
-
-

@@ -49,7 +49,7 @@ describe('catalog → Product → catalog', () => {
     fireEvent.scroll(window)
     await user.click(screen.getByRole('button', { name: 'Buscar productos' }))
     const dialog = screen.getByRole('dialog')
-    await user.type(within(dialog).getByPlaceholderText('Buscar por nombre, categoría o descripción...'), 'Lamp 00')
+    await user.type(within(dialog).getByRole('textbox', { name: 'Buscar productos' }), 'Lamp 00')
     await user.click(within(dialog).getByRole('button', { name: 'Ver Detalles' }))
     expect(screen.getByRole('heading', { level: 1, name: 'Lamp 00' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Volver a Productos' })).toHaveAttribute('href', origin)

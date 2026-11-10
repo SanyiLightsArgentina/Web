@@ -1,7 +1,6 @@
 import { Navigation } from "@/components/ui/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Award, Truck, Shield, ChevronLeft, ChevronRight } from "lucide-react";
 import { Footer } from "@/components/sections/Footer";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
@@ -76,7 +75,7 @@ const About = () => {
   
   return (
     <div className="min-h-screen bg-background">
-      <Navigation isTransparent={false} />
+      <Navigation />
       
       <div className="pt-20">
         <div className="container mx-auto px-4 py-8">
@@ -144,6 +143,8 @@ const About = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => goToImage(index)}
+                    aria-label={`Ver imagen ${index + 1}`}
+                    aria-current={index === currentImageIndex}
                     className={`w-8 h-8 rounded-full p-0 transition-all duration-700 font-bold text-sm relative overflow-hidden group ${
                       index === currentImageIndex
                         ? 'bg-gradient-to-br from-white via-white to-gray-100 text-black scale-125 shadow-2xl shadow-white/50 border-2 border-white/60 hover:scale-110'
@@ -225,7 +226,7 @@ const About = () => {
               Contáctanos para obtener asesoramiento especializado y cotizaciones personalizadas
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/products">
+              <Link to="/productos">
                 <Button size="lg" className="bg-primary hover:bg-primary/90" >
                   Ver Productos
                 </Button>

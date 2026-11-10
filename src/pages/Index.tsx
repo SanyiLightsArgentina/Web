@@ -21,7 +21,7 @@ const Index = () => {
 
   return (  
     <div className="min-h-screen bg-background">
-      <Navigation isTransparent={true} />
+      <Navigation />
       <HeroSection />
       <FeaturedProducts />
       <WhyChooseUs />

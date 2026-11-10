@@ -27,10 +27,12 @@ const ProductDetail = () => {
 
   const product = findProductByModel(products, model || "");
 
-  const description =
-    product?.description?.slice(0, MAX_META_DESCRIPTION_LENGTH).trim() +
-    (product?.description && product.description.length > MAX_META_DESCRIPTION_LENGTH ? "…" : "") ||
-    `Equipo de iluminación profesional ${product?.model || model}. Cotizá por WhatsApp.`;
+  const summary = product?.description?.trim() ?? "";
+  const description = summary
+    ? summary.length > MAX_META_DESCRIPTION_LENGTH
+      ? `${summary.slice(0, MAX_META_DESCRIPTION_LENGTH).trim()}…`
+      : summary
+    : `Equipo de iluminación profesional ${product?.model || model}. Cotizá por WhatsApp.`;
 
   useSEO({
     title: product?.model ?? "Producto",
@@ -48,7 +50,7 @@ const ProductDetail = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation isTransparent={false} />
+        <Navigation />
         <div className="pt-20">
           <div className="container mx-auto px-4 py-8 text-center" role="alert">
             <p className="text-muted-foreground mb-4">No se pudo cargar el producto.</p>
@@ -62,7 +64,7 @@ const ProductDetail = () => {
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation isTransparent={false} />
+        <Navigation />
         <div className="pt-20">
           <div className="container mx-auto px-4 py-8">
             <div className="text-center">
@@ -80,7 +82,7 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation isTransparent={false} />
+        <Navigation />
         <div className="pt-20">
           <div className="container mx-auto px-4 py-8">
             <div className="text-center">
@@ -100,7 +102,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation isTransparent={false} />
+      <Navigation />
       
       <div className="pt-20">
         <div className="container mx-auto px-4 py-4">

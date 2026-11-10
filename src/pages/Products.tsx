@@ -49,7 +49,7 @@ const Products = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation isTransparent={false} />
+      <Navigation />
       
       <div className="pt-20">
         <div className="container mx-auto px-4 py-6 sm:py-8">
@@ -189,6 +189,7 @@ const Products = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToFirstPage}
+                      aria-label="Primera página"
                       disabled={page.page === 1}
                       className="h-8 w-8 p-0"
                     >
@@ -199,6 +200,7 @@ const Products = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToPreviousPage}
+                      aria-label="Página anterior"
                       disabled={page.page === 1}
                       className="h-8 w-8 p-0"
                     >
@@ -225,6 +227,7 @@ const Products = () => {
                             variant={page.page === pageNumber ? "default" : "outline"}
                             size="sm"
                             onClick={() => goToPage(pageNumber)}
+                            aria-current={page.page === pageNumber ? "page" : undefined}
                             className="h-8 w-8 p-0 text-xs"
                           >
                             {pageNumber}
@@ -237,6 +240,7 @@ const Products = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToNextPage}
+                      aria-label="Página siguiente"
                       disabled={page.page === page.totalPages}
                       className="h-8 w-8 p-0"
                     >
@@ -247,6 +251,7 @@ const Products = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToLastPage}
+                      aria-label="Última página"
                       disabled={page.page === page.totalPages}
                       className="h-8 w-8 p-0"
                     >

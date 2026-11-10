@@ -186,12 +186,11 @@ export function createMediaUploadSession(
       if (target.kind !== 'product-image') return put(destination.path, file)
       const detailPath = `${destination.path}/optimized-v1/detail.webp`
       if (completed.has(detailPath)) return completed.get(detailPath)!
-      const sizes: ImageSize[] = ['thumb', 'card', 'detail']
       // Decode before storing the original, so unsupported images leave no upload behind.
-      const variants = await Promise.all(sizes.map(size => resize(file, size)))
+      const variants = await Promise.all(OPTIMIZED_SIZES.map(size => resize(file, size)))
       await put(destination.path, file)
       let detailUrl = ''
-      for (const [index, size] of sizes.entries()) {
+      for (const [index, size] of OPTIMIZED_SIZES.entries()) {
         detailUrl = await put(`${destination.path}/optimized-v1/${size}.webp`, new File([variants[index]], `${size}.webp`, { type: 'image/webp' }))
       }
       return detailUrl

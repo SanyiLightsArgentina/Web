@@ -8,13 +8,11 @@ import { SearchDialog } from './search-dialog';
 import { NavigationLinks } from './navigation-links';
 import { useCatalog } from '@/hooks/use-catalog';
 import { findProductByModel } from '@/lib/catalog';
-import logo from '/src/assets/logo.png';
+import logo from '@/assets/logo.png';
 import { useQuoteList } from '@/hooks/use-quote-list';
 import { openWhatsAppForModels } from '@/lib/contact';
 
-interface NavigationProps { isTransparent?: boolean }
-
-export const Navigation = (_props: NavigationProps) => {
+export const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const { items, remove, clear } = useQuoteList();

@@ -1,5 +1,3 @@
-import { Product } from "@/data/products";
-
 interface ProductTechnicalDescriptionProps {
   technical_description: string;
 }

@@ -13,7 +13,6 @@ interface ResponsiveDeleteModalProps {
   confirmText?: string;
   cancelText?: string;
   loading?: boolean;
-  variant?: 'danger' | 'warning';
 }
 
 export const ResponsiveDeleteModal: React.FC<ResponsiveDeleteModalProps> = ({
@@ -28,7 +27,6 @@ export const ResponsiveDeleteModal: React.FC<ResponsiveDeleteModalProps> = ({
   confirmText = 'Eliminar',
   cancelText = 'Cancelar',
   loading = false,
-  variant = 'danger'
 }) => {
   const getIcon = () => {
     switch (itemType) {
@@ -71,17 +69,11 @@ export const ResponsiveDeleteModal: React.FC<ResponsiveDeleteModalProps> = ({
     }
   };
 
-  const getWarningColor = () => {
-    return variant === 'danger' ? 'red' : 'amber';
-  };
-
-  const warningColor = getWarningColor();
-
   return (
     <AlertDialog open={isOpen} onOpenChange={open => { if (!open && !loading) onClose(); }}>
       <AlertDialogContent className="max-w-md sm:max-w-lg">
         <AlertDialogHeader className="space-y-4">
-          <AlertDialogTitle className={`flex items-center gap-3 text-${warningColor}-600`}>
+          <AlertDialogTitle className="flex items-center gap-3 text-red-600">
             {getIcon()}
             {title}
           </AlertDialogTitle>
@@ -97,7 +89,7 @@ export const ResponsiveDeleteModal: React.FC<ResponsiveDeleteModalProps> = ({
             {itemUrl && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                 <div className="flex items-start gap-2">
-                  <svg className={`h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="text-sm">
@@ -110,14 +102,14 @@ export const ResponsiveDeleteModal: React.FC<ResponsiveDeleteModalProps> = ({
               </div>
             )}
             
-            <div className={`bg-${warningColor}-50 border border-${warningColor}-200 rounded-lg p-3`}>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-start gap-2">
-                <svg className={`h-5 w-5 text-${warningColor}-500 mt-0.5 flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
                 <div className="text-sm">
-                  <p className={`font-medium text-${warningColor}-800`}>Esta acción no se puede deshacer</p>
-                  <p className={`text-${warningColor}-600 mt-1`}>
+                  <p className="font-medium text-red-800">Esta acción no se puede deshacer</p>
+                  <p className="text-red-600 mt-1">
                     {itemType === 'producto' 
                       ? 'Se eliminarán todos los datos del producto, incluyendo imágenes, contenido y videos.'
                       : `El ${itemType} será eliminado permanentemente del sistema.`
@@ -139,7 +131,7 @@ export const ResponsiveDeleteModal: React.FC<ResponsiveDeleteModalProps> = ({
               if (!loading) onConfirm();
             }}
             disabled={loading}
-            className={`bg-${warningColor}-600 hover:bg-${warningColor}-700 focus:ring-${warningColor}-500`}
+            className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
           >
             {loading ? (
               <>
