@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { FormEvent } from 'react'
 import { createMediaPublication } from '@/lib/media-publication'
 import { defaultSettings, type SiteSectionUpdate, type SiteSettings } from '@/lib/site-settings'
+import { backendWrapper } from '@/test/backend'
 import { useSiteDraft } from './use-site-draft'
 
 const save = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }))
 vi.mock('./use-site-settings', () => ({ useSaveSiteSection: () => save }))
-vi.mock('./use-media-publication', () => ({ supabaseMediaPublication: () => { throw new Error('inject a publication') } }))
 const event = { preventDefault: () => {} } as FormEvent
 
 const origin = 'https://project.supabase.co'
@@ -34,7 +34,7 @@ describe('site draft', () => {
   it('saves just the chosen section and adopts the normalized result', async () => {
     const saved: SiteSectionUpdate = { key: 'clients', value: [{ id: '1', company: 'Company', logo: '', link: '' }] }
     save.mutateAsync.mockResolvedValueOnce(saved)
-    const { result } = renderHook(() => useSiteDraft(defaultSettings, 'clients', storage().publication))
+    const { result } = renderHook(() => useSiteDraft(defaultSettings, 'clients'), { wrapper: backendWrapper({ media: storage().publication }) })
     act(() => result.current.setDraft(d => ({ ...d, clients: [{ id: '1', company: ' Company ', logo: '', link: '' }] })))
     await act(async () => { await result.current.submit(event) })
     expect(save.mutateAsync).toHaveBeenCalledWith({ key: 'clients', value: [{ id: '1', company: ' Company ', logo: '', link: '' }] })
@@ -43,7 +43,7 @@ describe('site draft', () => {
   })
 
   it('preserves the draft on save failure', async () => {
-    const { result } = renderHook(() => useSiteDraft(defaultSettings, 'contact', storage().publication))
+    const { result } = renderHook(() => useSiteDraft(defaultSettings, 'contact'), { wrapper: backendWrapper({ media: storage().publication }) })
     act(() => result.current.setDraft(d => ({ ...d, contact: { ...d.contact, phone: '123456789' } })))
     save.mutateAsync.mockRejectedValueOnce(new Error('offline'))
     await act(async () => { await result.current.submit(event) })
@@ -57,7 +57,7 @@ describe('site draft', () => {
       await new Promise<void>(resolve => { finishUpload = resolve })
       return url(bucket, path)
     })
-    const { result } = renderHook(() => useSiteDraft(defaultSettings, 'clients', publication))
+    const { result } = renderHook(() => useSiteDraft(defaultSettings, 'clients'), { wrapper: backendWrapper({ media: publication }) })
     let uploading!: Promise<string>
     act(() => { uploading = result.current.upload(logo('a.png'), { kind: 'client-logo', clientId: '1' }) })
     expect(result.current.isUploading).toBe(true)
@@ -75,7 +75,7 @@ describe('site draft', () => {
   it('retires a replaced client logo and an upload the save did not use', async () => {
     const old = url('product-images', 'clients/0/old.png')
     const { store, publication } = storage()
-    const { result } = renderHook(() => useSiteDraft(withClients([old]), 'clients', publication))
+    const { result } = renderHook(() => useSiteDraft(withClients([old]), 'clients'), { wrapper: backendWrapper({ media: publication }) })
     let kept = ''
     await act(async () => {
       await result.current.upload(logo('unused.png'), { kind: 'client-logo', clientId: '0' })
@@ -99,7 +99,7 @@ describe('site draft', () => {
     ] }
     const { store, references, publication } = storage()
     references.mockResolvedValue([shared])
-    const { result } = renderHook(() => useSiteDraft(initial, 'hero', publication))
+    const { result } = renderHook(() => useSiteDraft(initial, 'hero'), { wrapper: backendWrapper({ media: publication }) })
     act(() => result.current.setDraft(d => ({ ...d, hero: [defaultSettings.hero[0]] })))
     await act(async () => { await result.current.submit(event) })
     expect(references).toHaveBeenCalledOnce()
@@ -108,7 +108,7 @@ describe('site draft', () => {
 
   it('releases unsaved uploads when the editor closes', async () => {
     const { store, publication } = storage()
-    const { result, unmount } = renderHook(() => useSiteDraft(defaultSettings, 'videos', publication))
+    const { result, unmount } = renderHook(() => useSiteDraft(defaultSettings, 'videos'), { wrapper: backendWrapper({ media: publication }) })
     await act(async () => { await result.current.upload(new File(['v'], 'clip.mp4', { type: 'video/mp4' }), { kind: 'site-video', section: 'videos' }) })
     unmount()
     await vi.waitFor(() => expect(store.remove).toHaveBeenCalledExactlyOnceWith('product-videos', expect.stringMatching(/^site\/videos\/.+\.mp4$/)))

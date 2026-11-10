@@ -44,3 +44,24 @@ describe('product admin', () => {
     expect(writes.deleteProduct).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('product admin media, through the Backend seam', () => {
+  it('retires a replaced Product image only after the edit is saved', async () => {
+    const { createMediaPublication } = await import('@/lib/media-publication')
+    const { backendWrapper } = await import('@/test/backend')
+    const origin = 'https://project.supabase.co'
+    const old = `${origin}/storage/v1/object/public/product-content/products/Lamp/manual.pdf`
+    const store = { upload: vi.fn(), remove: vi.fn(async () => {}) }
+    const wrapper = backendWrapper({ media: createMediaPublication(store, origin, async () => []) }, ProductAdminProvider)
+    const { result } = renderHook(useProductAdmin, { wrapper })
+    const edited = { ...product, contents: [old] }
+
+    act(() => result.current.onEditProduct(edited))
+    writes.updateProduct.mockRejectedValueOnce(new Error('offline'))
+    await act(async () => { await expect(result.current.onSaveProduct(product, productMedia())).rejects.toThrow('offline') })
+    expect(store.remove).not.toHaveBeenCalled()
+
+    await act(async () => { await result.current.onSaveProduct(product, productMedia()) })
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith('product-content', 'products/Lamp/manual.pdf')
+  })
+})

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { MediaTarget } from '@/lib/media'
-import type { MediaPublication } from '@/lib/media-publication'
 import { siteSectionMediaUrls, type SiteSectionUpdate, type SiteSettings } from '@/lib/site-settings'
-import { supabaseMediaPublication } from './use-media-publication'
+import { useBackend } from './use-backend'
 import { useSaveSiteSection } from './use-site-settings'
 
 const sectionUpdate = (settings: SiteSettings, section: keyof SiteSettings) =>
@@ -14,11 +13,8 @@ const sectionUpdate = (settings: SiteSettings, section: keyof SiteSettings) =>
  * Files uploaded while editing are published with the section save; replaced
  * and abandoned uploads are retired once nothing references them.
  */
-export function useSiteDraft(
-  initial: SiteSettings,
-  section: keyof SiteSettings,
-  publication: MediaPublication = supabaseMediaPublication(),
-) {
+export function useSiteDraft(initial: SiteSettings, section: keyof SiteSettings) {
+  const publication = useBackend().media
   const [draft, setDraft] = useState(() => structuredClone(initial))
   const [media] = useState(() => publication.start())
   const published = useRef(siteSectionMediaUrls(sectionUpdate(initial, section)))

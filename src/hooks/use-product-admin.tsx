@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useRef, useState, type ReactNode } 
 import type { Product } from '@/data/products'
 import { useCatalog } from './use-catalog'
 import { useCatalogWrites } from './use-catalog-writes'
-import { supabaseMediaPublication } from './use-media-publication'
+import { useBackend } from './use-backend'
 import { toast } from './use-toast'
 import { applyCatalogQuery } from '@/lib/catalog-query'
 import { summarizeCatalog } from '@/lib/catalog-stats'
@@ -14,7 +14,8 @@ import {
 function useProductAdminState() {
   const catalog = useCatalog()
   const writes = useCatalogWrites()
-  const publishing = useMemo(() => createProductMediaPublishing(supabaseMediaPublication()), [])
+  const { media } = useBackend()
+  const publishing = useMemo(() => createProductMediaPublishing(media), [media])
   type Editor = { product?: Product; session: ReturnType<typeof publishing.start> }
   const [editor, setEditor] = useState<Editor | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)

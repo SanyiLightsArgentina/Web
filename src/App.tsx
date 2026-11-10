@@ -10,6 +10,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { openWhatsApp } from "./lib/contact";
 import { QuoteListProvider } from "@/hooks/use-quote-list";
+import { BackendProvider } from "@/hooks/use-backend";
+import { getSupabaseBackend } from "@/lib/backend";
 
 // Lazy load pages to reduce initial bundle and improve TTI
 const Products = lazy(() => import("./pages/Products"));
@@ -53,6 +55,7 @@ const WhatsAppButton = () => {
 
 function App() {
   return (
+    <BackendProvider backend={getSupabaseBackend()}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -80,6 +83,7 @@ function App() {
         <SpeedInsights />
       </TooltipProvider>
     </QueryClientProvider>
+    </BackendProvider>
   );
 }
 
