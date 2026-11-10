@@ -21,6 +21,20 @@ export interface SiteSettings {
   contact: ContactSettings;
   category_order: number[];
 }
+/**
+ * Limits every Site section save must respect. save_site_section
+ * (scripts/save-site-section.sql) enforces the same values server-side;
+ * site-section-rules.test.ts fails when the two drift apart.
+ */
+export const SITE_SECTION_LIMITS = {
+  maxClients: 100,
+  maxCompanyLength: 160,
+  maxSectionBytes: 262144,
+} as const
+
+/** Category IDs are positive integers (serial keys). */
+export const isCategoryId = (id: unknown): id is number => Number.isInteger(id) && (id as number) > 0
+
 export type SiteSectionUpdate = {
   [K in keyof SiteSettings]: { key: K; value: SiteSettings[K] }
 }[keyof SiteSettings]
@@ -61,13 +75,19 @@ export function prepareSiteSection(update: SiteSectionUpdate): SiteSectionUpdate
       break
     case 'clients': {
       const value = update.value.map(c => ({ ...c, company: c.company.trim(), logo: c.logo.trim(), link: c.link.trim() }))
-      if (value.some(c => !c.company || (c.logo && !isWebUrl(c.logo)) || (c.link && !isWebUrl(c.link)))) {
-        throw new Error('Completá el nombre de cada empresa. Los logos y links deben ser URLs válidas (https://...).')
+      if (value.length > SITE_SECTION_LIMITS.maxClients) {
+        throw new Error(`Podés cargar hasta ${SITE_SECTION_LIMITS.maxClients} empresas.`)
+      }
+      if (value.some(c => !c.id || !c.company || c.company.length > SITE_SECTION_LIMITS.maxCompanyLength || (c.logo && !isWebUrl(c.logo)) || (c.link && !isWebUrl(c.link)))) {
+        throw new Error(`Completá el nombre de cada empresa (hasta ${SITE_SECTION_LIMITS.maxCompanyLength} caracteres). Los logos y links deben ser URLs válidas (https://...).`)
+      }
+      if (new Set(value.map(c => c.id)).size !== value.length) {
+        throw new Error('Hay empresas repetidas. Recargá la página y volvé a intentar.')
       }
       return { key: 'clients', value }
     }
     case 'category_order':
-      if (update.value.some(id => !Number.isInteger(id) || id <= 0) || new Set(update.value).size !== update.value.length) {
+      if (!update.value.every(isCategoryId) || new Set(update.value).size !== update.value.length) {
         throw new Error('Revisá el orden de las categorías.')
       }
   }
@@ -233,7 +253,7 @@ function parseContact(value: unknown): ContactSettings {
 
 function parseCategoryOrder(value: unknown): number[] {
   if (!Array.isArray(value)) return clone(defaultSettings.category_order)
-  return value.filter((id): id is number => Number.isInteger(id) && id >= 0)
+  return value.filter(isCategoryId)
 }
 
 function parseClients(value: unknown): SiteClient[] {

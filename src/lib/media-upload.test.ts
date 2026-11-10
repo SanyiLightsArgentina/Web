@@ -21,11 +21,30 @@ describe('media upload session', () => {
     expect(paths).toHaveLength(4)
     expect(paths.every(path => /^products\/Lamp\/.+_lamp\.png\/optimized-v1\/(thumb|card|detail)\.webp$/.test(path))).toBe(true)
     expect(paths.filter(path => path.endsWith('/thumb.webp'))).toHaveLength(1)
-    expect(paths[2]).toBe(paths[1])
-    expect(url).toBe(`https://example.com/${paths[3]}`)
+    // The variants upload together: detail completes even though card failed,
+    // and the retry uploads only the card.
+    expect(paths[2]).toMatch(/\/detail\.webp$/)
+    expect(paths[3]).toBe(paths[1])
+    expect(url).toBe(`https://example.com/${paths[2]}`)
     expect(await upload(file, target)).toBe(url)
     expect(store.upload).toHaveBeenCalledTimes(4)
     expect(store.remove).not.toHaveBeenCalled()
+  })
+
+  it('reports a failed variant only after its sibling uploads settle', async () => {
+    let finishDetail!: () => void
+    const store = { remove: vi.fn(), upload: vi.fn(async (_bucket: string, path: string) => {
+      if (path.endsWith('/card.webp')) throw new Error('offline')
+      if (path.endsWith('/detail.webp')) await new Promise<void>(resolve => { finishDetail = resolve })
+      return `https://example.com/${path}`
+    }) }
+    let settled = false
+    const result = createMediaUploadSession(store, resize)(image(), target).finally(() => { settled = true })
+    await vi.waitFor(() => expect(store.upload).toHaveBeenCalledTimes(3))
+    await Promise.resolve()
+    expect(settled).toBe(false)
+    finishDetail()
+    await expect(result).rejects.toThrow('offline')
   })
 
   it('retains completed files across partial resolution and failed Product saving', async () => {

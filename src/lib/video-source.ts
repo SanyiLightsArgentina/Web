@@ -1,3 +1,6 @@
+/** File extensions a browser can play directly; anything else needs an embed. */
+export const DIRECT_VIDEO_FILE = /\.(mp4|webm|m4v|mov|avi|mkv)$/i
+
 export type VideoSource =
   | { kind: 'youtube'; url: string; id: string; startSeconds: number; embedUrl: string; heroEmbedUrl: string; thumbnailUrl: string }
   | { kind: 'direct' | 'unsupported'; url: string }
@@ -27,7 +30,7 @@ export function parseVideoSource(value: string): VideoSource {
         thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
       }
     }
-    return { kind: /\.(mp4|webm|m4v|mov|avi|mkv)$/i.test(url.pathname) ? 'direct' : 'unsupported', url: value }
+    return { kind: DIRECT_VIDEO_FILE.test(url.pathname) ? 'direct' : 'unsupported', url: value }
   } catch {
     return { kind: 'unsupported', url: value }
   }
