@@ -116,7 +116,8 @@ const PUBLIC_OBJECT_MARKER = '/storage/v1/object/public/'
 
 /**
  * The storage objects behind one public media URL. Product images also own
- * their optimized variants, including the original an optimized URL came from.
+ * their optimized variants, including the original an optimized URL came from
+ * (legacy uploads stored it; new uploads store only the variants).
  */
 export function mediaObjectPaths(url: string): MediaObject[] {
   let parsed: URL
@@ -186,9 +187,11 @@ export function createMediaUploadSession(
       if (target.kind !== 'product-image') return put(destination.path, file)
       const detailPath = `${destination.path}/optimized-v1/detail.webp`
       if (completed.has(detailPath)) return completed.get(detailPath)!
-      // Decode before storing the original, so unsupported images leave no upload behind.
+      // Only the optimized variants are stored: the catalog never serves the
+      // uploaded original, and keeping it would multiply Storage use ~20x.
+      // The original path remains the key the variants hang off.
+      // Decode before uploading, so unsupported images leave no upload behind.
       const variants = await Promise.all(OPTIMIZED_SIZES.map(size => resize(file, size)))
-      await put(destination.path, file)
       let detailUrl = ''
       for (const [index, size] of OPTIMIZED_SIZES.entries()) {
         detailUrl = await put(`${destination.path}/optimized-v1/${size}.webp`, new File([variants[index]], `${size}.webp`, { type: 'image/webp' }))

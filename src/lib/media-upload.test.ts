@@ -7,7 +7,7 @@ const target = { kind: 'product-image', model: 'Lamp' } as const
 const image = () => new File(['image'], 'lamp.png', { type: 'image/png' })
 
 describe('media upload session', () => {
-  it('retries only failed image variants, keeping the original destination', async () => {
+  it('stores only the optimized variants and retries only failed ones', async () => {
     let fail = true
     const store = { remove: vi.fn(), upload: vi.fn(async (_bucket: string, path: string) => {
       if (path.endsWith('/card.webp') && fail) { fail = false; throw new Error('offline') }
@@ -18,13 +18,13 @@ describe('media upload session', () => {
     await expect(upload(file, target)).rejects.toThrow('offline')
     const url = await upload(file, target)
     const paths = store.upload.mock.calls.map(([, path]) => path)
-    expect(paths).toHaveLength(5)
-    expect(paths[0]).toContain('products/Lamp/')
-    expect(paths[3]).toBe(paths[2])
-    expect(paths.filter(path => path === paths[0])).toHaveLength(1)
-    expect(url).toBe(`https://example.com/${paths[4]}`)
+    expect(paths).toHaveLength(4)
+    expect(paths.every(path => /^products\/Lamp\/.+_lamp\.png\/optimized-v1\/(thumb|card|detail)\.webp$/.test(path))).toBe(true)
+    expect(paths.filter(path => path.endsWith('/thumb.webp'))).toHaveLength(1)
+    expect(paths[2]).toBe(paths[1])
+    expect(url).toBe(`https://example.com/${paths[3]}`)
     expect(await upload(file, target)).toBe(url)
-    expect(store.upload).toHaveBeenCalledTimes(5)
+    expect(store.upload).toHaveBeenCalledTimes(4)
     expect(store.remove).not.toHaveBeenCalled()
   })
 

@@ -43,7 +43,7 @@ describe('Product media publishing', () => {
     draft.images = [{ type: 'file', value: new File(['image'], 'lamp.png', { type: 'image/png' }) }]
     const upload = store.upload.getMockImplementation()!
     store.upload.mockImplementation(async (bucket, path) => {
-      if (path.endsWith('card.webp') && store.upload.mock.calls.length === 3) throw new Error('offline')
+      if (path.endsWith('card.webp') && store.upload.mock.calls.length === 2) throw new Error('offline')
       return upload(bucket, path)
     })
     const write = vi.fn(async () => {})
@@ -53,7 +53,7 @@ describe('Product media publishing', () => {
     expect(write).not.toHaveBeenCalled()
     await edit.publish(details, draft, write)
 
-    expect(store.upload).toHaveBeenCalledTimes(5)
+    expect(store.upload).toHaveBeenCalledTimes(4)
     expect(write).toHaveBeenCalledExactlyOnceWith({
       ...details, images: [expect.stringMatching(/detail\.webp$/)], contents: [], videos: [],
     })
