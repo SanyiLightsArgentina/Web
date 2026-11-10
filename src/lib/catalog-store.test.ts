@@ -68,3 +68,24 @@ it('rejects incomplete Product media references before cleanup', async () => {
   const capped = createSupabaseCatalogStore(fakeClient({ products: { data, count: 2 } }))
   await expect(capped.loadProductMedia()).rejects.toThrow('verificar los archivos')
 })
+
+it('collects media every Product and Site section references', async () => {
+  const store = createSupabaseCatalogStore(fakeClient({
+    products: { data: [{ images: ['image'], contents: ['manual'], videos: null }], count: 1 },
+    site_settings: { data: [
+      { key: 'clients', value: [{ id: '1', company: 'Co', logo: 'https://example.com/logo.png', link: '' }] },
+      { key: 'videos', value: { items: [{ id: 'v', title: 'Demo', url: 'https://example.com/demo.mp4' }], channelUrl: '' } },
+    ], error: null },
+  }))
+  const urls = await store.loadReferencedMediaUrls()
+  expect(urls).toEqual(expect.arrayContaining(['image', 'manual', 'https://example.com/logo.png', 'https://example.com/demo.mp4']))
+  expect(urls).toEqual(expect.arrayContaining(parseSiteSettings(null).hero.map(slide => slide.src)))
+})
+
+it('refuses to report references when Site settings cannot be read', async () => {
+  const store = createSupabaseCatalogStore(fakeClient({
+    products: { data: [], count: 0 },
+    site_settings: { error: { message: 'offline', code: '500' } },
+  }))
+  await expect(store.loadReferencedMediaUrls()).rejects.toThrow()
+})

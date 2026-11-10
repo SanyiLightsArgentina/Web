@@ -64,6 +64,8 @@ El catálogo se puede leer públicamente. Los cambios del catálogo, las categor
 
 La migración aplicada está documentada en `scripts/enable-admin-auth.sql`. El frontend que usa Auth debe publicarse junto con este cambio: una versión anterior del panel no puede usar las escrituras protegidas con sesión.
 
+La función `save_site_section`, la única vía de escritura de las secciones del sitio, tiene una sola definición: `scripts/save-site-section.sql`. Se puede volver a ejecutar sin riesgo y replica las reglas de `src/lib/site-settings.ts`; `src/lib/site-section-rules.test.ts` falla si se desalinean.
+
 ## Videos del admin
 
 Los archivos MP4 se suben al bucket `product-videos` y se guarda su URL pública, con un nombre único y tipo `video/mp4`. Si una subida falla, el formulario conserva los archivos y no guarda un producto incompleto. Las pestañas Hero y Videos también permiten subir archivos MP4/WebM; la página de videos los reproduce directamente. Los límites de tamaño de Supabase siguen aplicando y sus errores se muestran al usuario.

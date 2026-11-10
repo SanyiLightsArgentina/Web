@@ -1,4 +1,3 @@
-import { useMediaUpload } from '@/hooks/use-media-upload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,8 +31,7 @@ export function SiteContentTab({ section }: { section: Section }) {
 }
 
 function ContentEditor({ section, initial }: { section: Section; initial: SiteSettings }) {
-  const { upload, isUploading } = useMediaUpload();
-  const { draft, setDraft, submit, busy, isSaving, moved } = useSiteDraft(initial, section, isUploading);
+  const { draft, setDraft, submit, busy, isSaving, isUploading, upload, moved } = useSiteDraft(initial, section);
   const { toast } = useToast();
   const setHero = (index: number, updates: Partial<SiteSettings['hero'][number]>) => setDraft(d => ({ ...d, hero: d.hero.map((slide, i) => i === index ? { ...slide, ...updates } : slide) }));
   const setVideo = (index: number, updates: Partial<SiteSettings['videos']['items'][number]>) => setDraft(d => ({ ...d, videos: { ...d.videos, items: d.videos.items.map((video, i) => i === index ? { ...video, ...updates } : video) } }));
