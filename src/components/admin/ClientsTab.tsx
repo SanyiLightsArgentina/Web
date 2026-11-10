@@ -9,7 +9,7 @@ import { useSiteSettings } from '@/hooks/use-site-settings';
 import { useSiteDraft } from '@/hooks/use-site-draft';
 import { useMediaUpload } from '@/hooks/use-media-upload';
 import { useToast } from '@/hooks/use-toast';
-import { type SiteClient, type SiteSettings } from '@/lib/site-settings';
+import { SITE_SECTION_LIMITS, type SiteClient, type SiteSettings } from '@/lib/site-settings';
 
 export function ClientsTab() {
   const { settings, isLoading, isError, refetch } = useSiteSettings();
@@ -57,7 +57,7 @@ function ClientsEditor({ initial }: { initial: SiteSettings }) {
                 <Button type="button" variant="outline" size="icon" aria-label={`Eliminar empresa ${index + 1}`} onClick={() => setClients(items => items.filter(item => item.id !== client.id))}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
-            <Label className="grid gap-2">Nombre de la empresa<Input value={client.company} maxLength={160} required placeholder="Nombre de la empresa" onChange={event => update(client.id, { company: event.target.value })} /></Label>
+            <Label className="grid gap-2">Nombre de la empresa<Input value={client.company} maxLength={SITE_SECTION_LIMITS.maxCompanyLength} required placeholder="Nombre de la empresa" onChange={event => update(client.id, { company: event.target.value })} /></Label>
             <div className="grid gap-4 sm:grid-cols-[120px_1fr] sm:items-center">
               <div className="h-28 rounded-lg border bg-white flex items-center justify-center p-3"><ClientLogo company={client.company || 'la empresa'} src={client.logo} /></div>
               <div className="space-y-4">
@@ -67,7 +67,7 @@ function ClientsEditor({ initial }: { initial: SiteSettings }) {
             </div>
             <Label className="grid gap-2">Link de la empresa (opcional)<Input type="url" value={client.link} placeholder="https://empresa.com" onChange={event => update(client.id, { link: event.target.value })} /></Label>
           </div>)}
-          <Button type="button" variant="outline" onClick={() => setClients(items => [...items, { id: crypto.randomUUID(), company: '', logo: '', link: '' }])}><Plus className="mr-2 h-4 w-4" />Agregar empresa</Button>
+          <Button type="button" variant="outline" disabled={clients.length >= SITE_SECTION_LIMITS.maxClients} onClick={() => setClients(items => [...items, { id: crypto.randomUUID(), company: '', logo: '', link: '' }])}><Plus className="mr-2 h-4 w-4" />Agregar empresa</Button>
         </fieldset>
         <Button type="submit" disabled={busy}>{isUploading ? 'Subiendo logo...' : isSaving ? 'Guardando...' : 'Guardar clientes'}</Button>
       </form>
