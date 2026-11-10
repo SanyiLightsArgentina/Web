@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { DIRECT_VIDEO_FILE } from './video-source'
 import {
   IMAGE_SIZES,
   PRODUCT_IMAGE_BUCKET,
@@ -33,7 +34,6 @@ export interface MediaStore {
 }
 
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']
-const VIDEO_NAME = /\.(mp4|webm|mov|m4v|avi)$/i
 const MAX_CLIENT_LOGO_BYTES = 10 * 1024 * 1024
 
 export function sanitizePathSegment(value: string, fallback = 'archivo'): string {
@@ -65,7 +65,7 @@ export function validateMedia(target: MediaTarget, file: File): string | null {
     return isStaticImage(file) ? null : STATIC_IMAGE_REQUIRED
   }
   if (target.kind === 'product-video' || target.kind === 'site-video') {
-    if (!file.type.startsWith('video/') && !VIDEO_NAME.test(file.name)) {
+    if (!file.type.startsWith('video/') && !DIRECT_VIDEO_FILE.test(file.name)) {
       return 'Seleccioná un archivo de video válido.'
     }
   }
