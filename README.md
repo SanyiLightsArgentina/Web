@@ -24,6 +24,7 @@ npm test           # corre toda la suite una vez
 npm run test:watch # modo interactivo
 npm run test:coverage
 npm run typecheck  # tsc sobre src
+npm run check      # tipos, lint, tests y build de producción
 ```
 
 Los tests viven junto al código (`src/**/*.test.ts|tsx`). Los helpers puros del catálogo, medios, configuración y presentación se prueban directamente; los componentes se montan con React Testing Library.
@@ -40,6 +41,17 @@ src/
 ├── pages/               # Páginas del sitio
 └── test/                # Setup de Vitest
 ```
+
+### Mapa de tareas
+
+| Si cambiás… | Empezá por… | Verificá con… |
+| --- | --- | --- |
+| Filtros, URL o navegación de regreso en el catálogo | [use-catalog.ts](src/hooks/use-catalog.ts), [catalog-location.ts](src/lib/catalog-location.ts) | [catalog-location.test.ts](src/lib/catalog-location.test.ts), [catalog-return.mjs](scripts/verification/catalog-return.mjs) |
+| Tarjetas, miniaturas o imágenes al compartir un producto | [product-presentation.ts](src/lib/product-presentation.ts), [product-images.ts](src/lib/product-images.ts) | [product-presentation.test.ts](src/lib/product-presentation.test.ts), [product-images.test.ts](src/lib/product-images.test.ts) |
+| Carga, publicación, reintentos o limpieza de archivos de productos | [product-media.ts](src/lib/product-media.ts), [media.ts](src/lib/media.ts), [media-publication.ts](src/lib/media-publication.ts) | [media-upload.test.ts](src/lib/media-upload.test.ts), [product-media.test.ts](src/lib/product-media.test.ts) |
+| Edición y guardado de secciones del sitio | [site-settings.ts](src/lib/site-settings.ts), [site-section-store.ts](src/lib/site-section-store.ts), [save-site-section.sql](scripts/save-site-section.sql) | [site-section-rules.test.ts](src/lib/site-section-rules.test.ts), [site-section-store.test.ts](src/lib/site-section-store.test.ts) |
+
+Los adaptadores de Supabase se conectan en [backend.ts](src/lib/backend.ts).
 
 ### 📚 Recursos Adicionales
 

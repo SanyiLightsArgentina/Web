@@ -1,0 +1,2 @@
+- Catalog, Product media, admin, and Site section changes → [README task map](README.md#mapa-de-tareas) for entry points and verification.
+- Run `npm run check` before opening a PR.
